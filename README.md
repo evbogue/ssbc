@@ -8,7 +8,7 @@ Project goals include:
 + Refactoring code to use modern JavaScript standards
 + Write a simple websocket-based lite client "Bay" as in "set sail on the bay via my local ssbc pub!"
 
-The reason for this project is I often meet people at events who would like to try SSB but there is no easy way for them to try it. Often times I am comparing SSB to Bluesky/ATProto, Nostr, Wiredove/Bog5 in casual conversation. Many people never tried SSB when it was popular, so they are unable to compare it's usefulness to modern day distributed social media projects in the way that experience professionals in the space are able to compare and/or contrast the various trade-offs between the protocols.
+The reason for this project is I often meet people at events who would like to try SSB but there is no easy way for them to try it. Often times I am comparing SSB to Bluesky/ATProto, Nostr, Wiredove/Bog5 in casual conversation. Many people never tried SSB when it was popular, so they are unable to compare it's usefulness to modern day distributed social media projects in the way that experienced professionals in the decentralized space are able to compare and/or contrast the various trade-offs between the protocols.
 
 I want to be able to refer people I meet to a repo and pub server where they can easily try or deploy.
 
