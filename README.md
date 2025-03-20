@@ -2,15 +2,27 @@
 
 A WIP SSB revival.
 
-Project goals include: 
+**Project goals** 
 
 + Restoring SSBC functionality to original protocol spec as presented at https://scuttlebot.io/
 + Refactoring code to use modern JavaScript standards
 + Write a simple websocket-based lite client "Bay" as in "set sail on the bay via my local ssbc pub!"
 
-The reason for this project is I often meet people at events who would like to try SSB but there is no easy way for them to try it. Often times I am comparing SSB to Bluesky/ATProto, Nostr, Wiredove/Bog5 in casual conversation. Many people never tried SSB when it was popular, so they are unable to compare it's usefulness to modern day distributed social media projects in the way that experienced professionals in the decentralized space are able to compare and/or contrast the various trade-offs between the protocols.
+**Why SSB Classic?**
 
-I want to be able to refer people I meet to a repo and pub server where they can easily try or deploy.
+I often meet people at events who would like to try SSB but there is no easy way for them to try it. Often times I am comparing SSB to Bluesky/ATProto, Nostr, Wiredove/Bog5 in casual conversation. Many people never tried SSB when it was popular, so they are unable to compare it's usefulness to modern day distributed social media projects in the way that experienced professionals in the decentralized space are able to compare and/or contrast the various trade-offs between the protocols.
+
+I want to be able to refer people I meet to a repo and pub server that they can easily try or deploy.
+
+**What was SSB?**
+
+Secure-Scuttlebot was a distributed social network that existed from 2015-2019 designed by Paul Frazee and Dominic Tarr. Operators ran "pub" servers that stored append-only cryptographically signed logs that were gossiped between peers. SSB also allowed you to send encrypted messages to friends, as well as share blobs such as images, music, and ivideos with your friends over the Internet or via Sneakernet.
+
+**What happened to SSB?**
+
+This depends on who you ask. My view is many people felt the protocol was too limiting because of how the append-only logs were structured and wanted to branch out leading to newer projects such as ATProto, Nostr, Wiredove/Bog5, etc. A team did try to keep SSB going for awhile, but by constantly changing the underlying protocol ideas and sync strategies they made SSB development a moving target that was impossible to build reliably upon eventually leading to the project being scuttled and the community disbanding.
+
+The purpose of SSBC is to restore a modern working version of the original SSB, hence the name SSB Classic.
 
 ---
 
