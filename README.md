@@ -16,7 +16,7 @@ I want to be able to refer people I meet to a repo and pub server that they can 
 
 **What was SSB?**
 
-Secure-Scuttlebot was a distributed social network that existed from 2015-2019 designed by Paul Frazee and Dominic Tarr. Operators ran "pub" servers that stored append-only cryptographically signed logs that were gossiped between peers. SSB also allowed you to send encrypted messages to friends, as well as share blobs such as images, music, and ivideos with your friends over the Internet or via Sneakernet.
+Secure-Scuttlebot was a distributed social network that existed from 2015-2019 designed by Paul Frazee and Dominic Tarr. Operators ran "pub" servers that stored append-only cryptographically signed logs that were gossiped between peers. SSB also allowed you to send encrypted messages to friends, as well as share blobs such as images, music, and videos with your friends over the Internet or via Sneakernet.
 
 **What happened to SSB?**
 
