@@ -10,7 +10,7 @@ export const generate = async () => {
     curve,
     public: encode(keys.publicKey) + '.' + curve,
     private: encode(keys.secretKey) + '.' + curve,
-    id: '@' + encode(keys) + '.' + curve
+    id: '@' + encode(keys.publicKey) + '.' + curve
   }
 }
 
