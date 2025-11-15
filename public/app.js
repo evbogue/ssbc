@@ -1,7 +1,7 @@
 ;(function () {
   var statusEl = document.getElementById('status')
   var keysEl = document.getElementById('keys')
-  var logEl = document.getElementById('log')
+  var feedEl = document.getElementById('feed')
   var composeTextEl = document.getElementById('compose-text')
   var composeSendEl = document.getElementById('compose-send')
 
@@ -19,9 +19,9 @@
     keysEl.textContent = JSON.stringify(obj, null, 2)
   }
 
-  function setLog (text) {
-    if (!logEl) return
-    logEl.textContent = text
+  function clearFeed () {
+    if (!feedEl) return
+    while (feedEl.firstChild) feedEl.removeChild(feedEl.firstChild)
   }
 
   function loadKeys () {
@@ -140,14 +140,6 @@
     return signKeyPromise
   }
 
-  function formatMsg (msg) {
-    try {
-      return JSON.stringify(msg, null, 2)
-    } catch (e) {
-      return String(msg)
-    }
-  }
-
   function loadLog () {
     setStatus('Keys ready; loading log…')
 
@@ -156,6 +148,7 @@
       .then(function (msgs) {
         if (!Array.isArray(msgs)) msgs = []
         feedState = {}
+        clearFeed()
 
         // messages are newest-first (reverse: true), so first seen is latest
         msgs.forEach(function (msg) {
@@ -169,15 +162,40 @@
               timestamp: value.timestamp
             }
           }
-        })
 
-        var lines = msgs.map(formatMsg).join('\n\n')
-        setLog(lines || '(no messages)')
+          if (!feedEl || !value || !value.content) return
+
+          var text = value.content && value.content.text
+          var type = value.content && value.content.type
+          var ts = value.timestamp
+          var date = ts ? new Date(ts).toISOString() : ''
+
+          var postDiv = document.createElement('div')
+          postDiv.className = 'post'
+
+          var metaDiv = document.createElement('div')
+          metaDiv.className = 'post-meta'
+          metaDiv.textContent = (type || 'message') + ' · ' + (author || '') + (date ? ' · ' + date : '')
+
+          var textDiv = document.createElement('div')
+          textDiv.className = 'post-text'
+          textDiv.textContent = text || JSON.stringify(value.content)
+
+          postDiv.appendChild(metaDiv)
+          postDiv.appendChild(textDiv)
+          feedEl.appendChild(postDiv)
+        })
         setStatus('Keys ready; log loaded')
       })
       .catch(function (err) {
         console.error('failed to load log', err)
-        setLog('failed to load log: ' + err.message)
+        clearFeed()
+        if (feedEl) {
+          var errDiv = document.createElement('div')
+          errDiv.className = 'post'
+          errDiv.textContent = 'failed to load log: ' + err.message
+          feedEl.appendChild(errDiv)
+        }
         setStatus('Keys ready; failed to load log')
       })
   }

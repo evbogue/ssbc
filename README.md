@@ -1,6 +1,6 @@
-# ssb-server
+# Secure-Scuttlebot Classic
 
-ssb-server is an open source **peer-to-peer log store** used as a database, identity provider, and messaging system.
+sbotc is an open source **peer-to-peer log store** used as a database, identity provider, and messaging system.
 It has:
 
  - Global replication
@@ -12,260 +12,98 @@ In the background, it syncs with known peers.
 Peers do not have to be trusted, and can share logs and files on behalf of other peers, as each log is an unforgeable append-only message feed.
 This means ssb-servers comprise a [global gossip-protocol mesh](https://en.wikipedia.org/wiki/Gossip_protocol) without any host dependencies.
 
-If you are looking to use ssb-server to run a pub, consider using [ssb-minimal-pub-server](https://github.com/ssbc/ssb-minimal-pub-server) instead.
+### Classic rational
 
-**Join us in #scuttlebutt on [Libera Chat](https://libera.chat/).**
+ssb was abandoned in 2024, this is an attempt to restore the original "classic" functionality. This repo is maintained by Everett Bogue. please reach out if you have any questions to the contact information present at https://evbogue.com/
 
-[![build status](https://secure.travis-ci.org/ssbc/ssb-server.png)](http://travis-ci.org/ssbc/ssb-server)
+## Patchbay Lite web client
 
-## Install
+This repo bundles the original browser version of Patchbay (circa 2016) as a lightweight web client.
+It runs entirely in the browser and connects to your local ssb server over `ssb-ws`.
 
-How to Install `ssb-server` and create a working pub 
+### What it is
 
-1. `sudo apt install curl autotools-dev automake`
+- `patchbay/` is a copy of the original Patchbay codebase, lightly wired into this server
+- `lib/frontend.js` serves the Patchbay Lite bundle at `/` when it has been built
+- The code and UI are kept as close as possible to the 2016 era version
 
-2. Install the Node Version Manager (NVM):
+### Building the Patchbay Lite bundle
 
-```
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
-```
+From the repo root:
 
-3. Close and reopen your terminal to start using nvm or run the following:
+- `cd patchbay`
+- `npm install --ignore-scripts`
+- `npm run lite`
 
-```
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-```
+This produces `patchbay/build/index.html`, which is what the server will serve to browsers.
 
-4. `nvm install 10`
+### Running Patchbay Lite
 
-5. `nvm alias default 10`
+With the bundle built:
 
-6. `npm install -g node-gyp`
+- From the repo root, start the server with `npm start`
+- Open `http://localhost:8989/` in a browser
 
-7. Then to add `ssb-server` to your available CLI commands, install it using the `-g` global flag:
+The server will:
 
-```
-npm install -g ssb-server
-```
+- Serve the Patchbay Lite UI at `/`
+- Expose the RPC and blob endpoints needed by the client over `ssb-ws`
 
-If you are running as the root user this command will fail. Ideally you would run ssb-server as a non-priviledged user, but if you have to run it as root you can do so with `npm install -g ssb-server --unsafe-perm`.
+You can then:
 
-8. `nano ~/run-server.sh` and input:
+- Browse and publish messages from the browser
+- Edit your avatar and name using `about` messages
 
-```
-#!/bin/bash
-while true; do
-  ssb-server start
-  sleep 3
-done
-```
+## Getting Started
 
-Input Ctrl-X to save and quit.
+### Install dependencies
 
-Be sure to start the pub server from this script (as shown in step 10), as this script will run the pub server and restart it even if it crashes.      
+From the repo root:
 
-9. `mkdir ~/.ssb/`
+- `npm install`
 
-10. `nano ~/.ssb/config` and input:
+### Start the sbot server
 
-```
-{
-  "connections": {
-    "incoming": {
-      "net": [
-        { "scope": "public", "host": "0.0.0.0", "external": "Your Host Name or Public IP", "transform": "shs", "port": 8008 }
-      ]
-    },
-    "outgoing": {
-      "net": [{ "transform": "shs" }]
-    }
-  }
-}
-```
+From the repo root:
 
-11. Now run `sh ~/run-server.sh` in a detachable session (e.g. screens)
+- `npm start`
 
-12. Detach the session and run `ssb-server whoami` to check to see if the server is working.
+This is equivalent to:
 
-13. Now is the time to think of a really cool name for your new pub server.  Once you have it run:
+- `node bin start`
 
-`ssb-server publish --type about --about {pub-id (this is the output from ssb-server whoami)} --name {Your pubs awesome name}`
+By default this will:
 
-14. Now it's time to create those invites! 
-Just run `ssb-server invite.create 1` and send those codes to your friends.
+- Use the appname from `process.env.ssb_appname` (or the default `ssb` app name) for its config and data directory.
+- Create (or reuse) keys under that app directory.
+- Write the RPC manifest to `~/.ssb/manifest.json` (or the appname-specific path).
 
-Congratulations!  You are now ready to scuttlebutt with your friends! 
+You should see output like:
 
->Note for those running `ssb-server` from a home computer.
->You will need to make sure that your router will allow connections to port 8008.  Thus, you will need to forward port 8008 to the local IP address of the computer running the server (look up how to do this online).
->If you haven't done this step, when a client tries to connect to your server using the invite code, they will get an error that your invite code is not valid.
+- `ssb-server <version> <path> logging.level:<level>`
+- `my key ID: <@yourPublicKey>`
 
+Leave that process running; it is your local sbot node.
 
+### Connecting as a client
 
-## Applications
+With the server running, you can run additional commands using the same CLI:
 
-There are already several applications built on `ssb-server`,
-one of the best ways to learn about secure-scuttlebutt is to poke around in these applications.
+- `node bin <command> [...args]`
 
-* [patchwork](http://github.com/ssbc/patchwork) is a discussion platform that we use to anything and everything concerning ssb and decentralization.
-* [patchbay](http://github.com/ssbc/patchbay) is another take on patchwork - it's compatible, less polished, but more modular. The main goal of patchbay is to be very easy to add features to.
-* [git-ssb](https://github.com/clehner/git-ssb) is git (& github!) on top of secure-scuttlebutt. Although we still keep our repos on github, primary development is via git-ssb.
+Examples:
 
-It is recommended to get started with patchwork, and then look into git-ssb and patchbay.
-
-## Starting an `ssb-server`
-
-### Command Line Usage Example
-
-Start the server with extra log detail
-Leave this running in its own terminal/window
-```bash
-ssb-server start --logging.level=info
-```
-
-### Javascript Usage Example
-
-```js
-var Server = require('ssb-server')
-var config = require('ssb-config')
-var fs = require('fs')
-var path = require('path')
-
-// add plugins
-Server
-  .use(require('ssb-master'))
-  .use(require('ssb-gossip'))
-  .use(require('ssb-replicate'))
-  .use(require('ssb-backlinks'))
-
-var server = Server(config)
-
-// save an updated list of methods this server has made public
-// in a location that ssb-client will know to check
-var manifest = server.getManifest()
-fs.writeFileSync(
-  path.join(config.path, 'manifest.json'), // ~/.ssb/manifest.json
-  JSON.stringify(manifest)
-)
-```
-see: [github.com/ssbc/**ssb-config**](https://github.com/ssbc/ssb-config) for custom configuration.
-
-## Calling `ssb-server` Functions
-
-There are a variety of ways to call `ssb-server` methods, from a command line as well as in a javascript program.
-
-### Command Line Usage Example
-
-The command `ssb-server` can also used to call the running `ssb-server`.
-
-Now, in a separate terminal from the one where you ran `ssb-server start`, you can run commands such as the following:
-```bash
-# publish a message
-ssb-server publish --type post --text "My First Post!"
-
-# stream all messages in all feeds, ordered by publish time
-ssb-server feed
-
-# stream all messages in all feeds, ordered by receive time
-ssb-server log
-
-# stream all messages by one feed, ordered by sequence number
-ssb-server hist --id $FEED_ID
-```
-
-### Javascript Usage Example
-
-Note that the following involves using a separate JS package, called [ssb-client](https://github.com/ssbc/ssb-client). It is most suitable for connecting to a running `ssb-server` and calling its methods. To see further distinctions between `ssb-server` and `ssb-client`, check out this [handbook article](https://handbook.scuttlebutt.nz/guides/ssb-server-context).
-
-```js
-var pull = require('pull-stream')
-var Client = require('ssb-client')
-
-// create a ssb-server client using default settings
-// (server at localhost:8080, using key found at ~/.ssb/secret, and manifest we wrote to `~/.ssb/manifest.json` above)
-Client(function (err, server) {
-  if (err) throw err
-
-  // publish a message
-  server.publish({ type: 'post', text: 'My First Post!' }, function (err, msg) {
-    // msg.key           == hash(msg.value)
-    // msg.value.author  == your id
-    // msg.value.content == { type: 'post', text: 'My First Post!' }
-    // ...
-  })
-
-  // stream all messages in all feeds, ordered by publish time
-  pull(
-    server.createFeedStream(),
-    pull.collect(function (err, msgs) {
-      // msgs[0].key == hash(msgs[0].value)
-      // msgs[0].value...
-    })
-  )
-
-  // stream all messages in all feeds, ordered by receive time
-  pull(
-    server.createLogStream(),
-    pull.collect(function (err, msgs) {
-      // msgs[0].key == hash(msgs[0].value)
-      // msgs[0].value...
-    })
-  )
-
-  // stream all messages by one feed, ordered by sequence number
-  pull(
-    server.createHistoryStream({ id: < feedId > }),
-    pull.collect(function (err, msgs) {
-      // msgs[0].key == hash(msgs[0].value)
-      // msgs[0].value...
-    })
-  )
-})
-```
-
-## Use Cases
-
-`ssb-server`'s message-based data structure makes it ideal for mail and forum applications (see [Patchwork](https://ssbc.github.io/patchwork/)).
-However, it is sufficiently general to be used to build:
-
- - Office tools (calendars, document-sharing, tasklists)
- - Wikis
- - Package managers
-
-Because `ssb-server` doesn't depend on hosts, its users can synchronize over WiFi or any other connective medium, making it great for [Sneakernets](https://en.wikipedia.org/wiki/Sneakernet).
-
-`ssb-server` is [eventually-consistent with peers](https://en.wikipedia.org/wiki/Eventual_consistency), and requires exterior coordination to create strictly-ordered transactions.
-Therefore, by itself, it would probably make a poor choice for implementing a crypto-currency.
-(We get asked that a lot.)
+- `node bin whoami`
+- `node bin gossip.peers`
+- `node bin status`
+
+### Creating an invite
+
+Once the server is running and reachable, you can create an invite code:
+
+- `node bin invite.create 1`
+
+This will print an invite string you can pass to another peer so they can join and follow your server.
 
 ---
-
-### Getting Started
-
-- [Install](https://handbook.scuttlebutt.nz/guides/ssb-server/install) - Setup instructions
-- [Tutorial](https://handbook.scuttlebutt.nz/guides/ssb-server/tutorial) - Primer on developing with ssb-server
-- [API / CLI Reference](https://scuttlebot.io/apis/scuttlebot/ssb.html) (out of date, but still the best reference)
-- [ssb-config](https://github.com/ssbc/ssb-config) - a module which helps build config to start ssb-server with
-- [ssb-client](https://github.com/ssbc/ssb-client) - make a remote connection to the server
-- [Modules docs](https://modules.scuttlebutt.nz) - see an overview of all the modules
-
-### Key Concepts
-
-- [Secure Scuttlebutt](https://ssbc.github.io/scuttlebutt-protocol-guide/), ssb-server's global database protocol
-- [Content Hash Linking](https://ssbc.github.io/docs/ssb/linking.html)
-- [Secret Handshake](https://ssbc.github.io/docs/ssb/secret-handshake.html), ssb-server's transport-layer security protocol
-- [Private Box](https://ssbc.github.io/docs/ssb/end-to-end-encryption.html), ssb-server's end-to-end security protocol
-- [Frequently Asked Questions](https://ssbc.github.io/docs/ssb/faq.html)
-
-### Further Reading
-
-- [Design Challenge: Avoid Centralization and Singletons](https://handbook.scuttlebutt.nz/stories/design-challenge-avoid-centralization-and-singletons)
-- [Design Challenge: Sybil Attacks](https://handbook.scuttlebutt.nz/stories/design-challenge-sybil-attacks)
-- [Using Trust in Open Networks](https://handbook.scuttlebutt.nz/stories/using-trust-in-open-networks)
-
-
-# License
-
 MIT
