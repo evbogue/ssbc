@@ -19,26 +19,34 @@ var self_id = require('../keys').id
 //
 
 function crop (d, cb) {
-  var data
-  var canvas = hypercrop(h('img', {src: d}))
-
-  return h('div.column.avatar_pic',
-    canvas,
-    //canvas.selection,
-    h('div.row.avatar_pic__controls',
-      h('button', 'okay', {onclick: function () {
-        cb(null, canvas.selection.toDataURL())
-      }}),
-      h('button', 'cancel', {onclick: function () {
-        cb(new Error('canceled'))
-      }})
-    )
+  var canvas
+  var controls = h('div.row.avatar_pic__controls',
+    h('button', 'okay', {onclick: function () {
+      if (!canvas || !canvas.selection) return cb(new Error('image not ready'))
+      cb(null, canvas.selection.toDataURL())
+    }}),
+    h('button', 'cancel', {onclick: function () {
+      cb(new Error('canceled'))
+    }})
   )
+
+  var container = h('div.column.avatar_pic',
+    // canvas will be inserted above controls once the image loads
+    controls
+  )
+
+  var img = new Image()
+  img.onload = function () {
+    canvas = hypercrop(img)
+    container.insertBefore(canvas, controls)
+  }
+  img.src = d
+
+  return container
 }
 
 exports.needs = {
   message_confirm: 'first',
-  sbot_blobs_add: 'first',
   blob_url: 'first',
   sbot_links: 'first',
   avatar_name: 'first'
@@ -102,23 +110,26 @@ exports.create = function (api) {
             if(data) {
               img.src = data
               var _data = dataurl.parse(data)
-              pull(
-                pull.once(_data.data),
-                api.sbot_blobs_add(function (err, hash) {
-                  //TODO. Alerts are EVIL.
-                  //I use them only in a moment of weakness.
-
-                  if(err) return alert(err.stack)
-                  selected = {
-                    link: hash,
-                    size: _data.data.length,
-                    type: _data.mimetype,
-                    width: 512,
-                    height: 512
-                  }
-
-                })
-              )
+              var xhr = new XMLHttpRequest()
+              xhr.open('POST', '/blobs/add', true)
+              xhr.responseType = 'text'
+              xhr.onload = function () {
+                if (xhr.status < 200 || xhr.status >= 300) {
+                  return alert('blob upload failed: status ' + xhr.status)
+                }
+                var hash = (xhr.responseText || '').trim()
+                selected = {
+                  link: hash,
+                  size: _data.data.length,
+                  type: _data.mimetype,
+                  width: 512,
+                  height: 512
+                }
+              }
+              xhr.onerror = function () {
+                alert('blob upload network error')
+              }
+              xhr.send(_data.data)
             }
             lb.close()
           })
@@ -133,7 +144,7 @@ exports.create = function (api) {
               type: 'about',
               about: id,
               name: name_input.value || undefined,
-              image: selected
+              image: selected.link || selected
             })
           else if(name_input.value) //name only
             api.message_confirm({

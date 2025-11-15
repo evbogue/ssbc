@@ -48,14 +48,13 @@ exports.create = function (api) {
               timestamp: {$gt: last || 0 },
               value: { content: {
                 type: "about",
-                about: {$prefix: "@"},
-                image: {link: {$prefix: "&"}}
+                about: {$prefix: "@"}
             }}
           }},
           {
             $map: {
               id: ["value", "content", "about"],
-              image: ["value", "content", "image", "link"],
+              image: ["value", "content", "image"],
               by: ["value", "author"],
               ts: 'timestamp'
           }}],
@@ -68,6 +67,16 @@ exports.create = function (api) {
             return
           }
           last = a.ts
+
+          var image = a.image
+          if(image && 'object' === typeof image && 'string' === typeof image.link)
+            image = image.link
+
+          if(!ref.isBlob(image))
+            return
+
+          a.image = image
+
           //set image for avatar.
           //overwrite another avatar
           //you picked.
@@ -107,4 +116,3 @@ exports.create = function (api) {
     }
   }
 }
-

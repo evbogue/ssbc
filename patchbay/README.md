@@ -13,6 +13,16 @@ This has so far been quite successful!
 This makes in very easy to create say, a renderer for a new message type,
 or switch to a different method for choosing user names.
 
+## Installing dependencies without native builds
+
+In this repo, Patchbay is used only as a browser bundle (Patchbay Lite), so you can install its dependencies without compiling native modules by using:
+
+```
+npm install --ignore-scripts
+```
+
+This is enough to run `npm run lite` and regenerate `build/index.html` without requiring a full native toolchain.
+
 ## Running
 
 ```
@@ -80,7 +90,6 @@ square shows api, arrow direction points from user to provider)
 ## License
 
 MIT
-
 
 
 

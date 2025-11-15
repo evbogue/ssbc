@@ -39,7 +39,6 @@ module.exports = {
   },
   gives: {
 //    connection_status: true,
-    sbot_blobs_add: true,
     sbot_links: true,
     sbot_links2: true,
     sbot_query: true,
@@ -96,25 +95,6 @@ module.exports = {
 
     return {
       connection_status: connection_status,
-      sbot_blobs_add: rec.sink(function (cb) {
-        return pull(
-          Hash(function (err, id) {
-            if(err) return cb(err)
-            //completely UGLY hack to tell when the blob has been sucessfully written...
-            var start = Date.now(), n = 5
-            ;(function next () {
-              setTimeout(function () {
-                sbot.blobs.has(id, function (err, has) {
-                  if(has) return cb(null, id)
-                  if(n--) next()
-                  else cb(new Error('write failed'))
-                })
-              }, Date.now() - start)
-            })()
-          }),
-          sbot.blobs.add()
-        )
-      }),
       sbot_links: rec.source(function (query) {
         return sbot.links(query)
       }),
@@ -180,11 +160,6 @@ module.exports = {
     }
   }
 }
-
-
-
-
-
 
 
 

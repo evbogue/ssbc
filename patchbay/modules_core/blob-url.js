@@ -4,10 +4,12 @@ module.exports = {
   gives: 'blob_url',
   create: function () {
     return function (link) {
-      if('string' == typeof link.link)
+      // unwrap common { link: '&...' } shapes, possibly nested
+      while (link && typeof link === 'object' && typeof link.link !== 'undefined') {
         link = link.link
-      return config().blobsUrl + '/'+link
+      }
+
+      return config().blobsUrl + '/' + String(link)
     }
   }
 }
-
