@@ -480,4 +480,123 @@ button:hover {
   background: lightblue;
 }
 
+/* --- dark mode (system) --- */
 
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #181a1f;
+    color: #e4e7ed;
+  }
+
+  .screen {
+    background: #181a1f;
+    color: inherit;
+  }
+
+  a:link, a:visited, a:active {
+    color: #80bfff;
+  }
+
+  a:hover,
+  a:focus {
+    color: #cce6ff;
+  }
+
+  .menu,
+  .lightbox {
+    background: #20232a;
+    border-color: #30343c;
+  }
+
+  .compose {
+    border-color: #30343c;
+    background: #20232a;
+  }
+
+  input, textarea {
+    background: #20232a;
+    color: #e4e7ed;
+  }
+
+  button {
+    background: #262a33;
+    color: #e4e7ed;
+    border-color: #3a3f4b;
+  }
+
+  button:hover {
+    background: #333844;
+    border-color: #4b5263;
+  }
+
+  .message {
+    background: #20232a;
+    border-top-color: #2c313a;
+  }
+
+  .message:hover {
+    background: #262a33;
+  }
+
+  .message_content div > span {
+    color: #aaa;
+  }
+
+  .suggest-box ul {
+    background: #262a33;
+    border-color: #3a3f4b;
+  }
+
+  .suggest-box .selected {
+    background: #333844;
+  }
+
+  .avatar--large,
+  .avatar--thumbnail,
+  .avatar--fullsize {
+    border-color: #3a3f4b;
+  }
+
+  .highlight {
+    background: #333844;
+  }
+
+  .header,
+  .hypertabs__tab {
+    background: #20232a;
+    border-color: #30343c;
+  }
+
+  .header {
+    border-bottom: 1px solid #222;
+  }
+
+  .hypertabs--selected {
+    background: #262a33;
+  }
+
+  .hypertabs__tab > a {
+    color: #ccc;
+  }
+
+  .status {
+    background: #4da3ff;
+  }
+
+  /* scrollbar (webkit) */
+  .scroller::-webkit-scrollbar,
+  .scroller__content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroller::-webkit-scrollbar-track,
+  .scroller__content::-webkit-scrollbar-track {
+    background: #20232a;
+  }
+
+  .scroller::-webkit-scrollbar-thumb,
+  .scroller__content::-webkit-scrollbar-thumb {
+    background-color: #3a3f4b;
+    border-radius: 4px;
+  }
+}
