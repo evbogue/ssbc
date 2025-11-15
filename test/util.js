@@ -1,4 +1,4 @@
-var ref = require('ssb-ref')
+var ref = require('../plugins/ref')
 
 exports.follow = function (id) {
   return {
@@ -29,4 +29,3 @@ exports.file = function (hash) {
     file: hash
   }
 }
-

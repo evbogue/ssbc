@@ -50,9 +50,9 @@ if (argv[0] == 'start') {
     .use(require('ssb-master'))
     .use(require('ssb-gossip'))
     .use(require('ssb-replicate'))
-    .use(require('ssb-friends'))
+    .use(require('./plugins/friends'))
     .use(require('ssb-blobs'))
-    .use(require('ssb-invite'))
+    .use(require('./plugins/invite'))
     .use(require('ssb-local'))
     .use(require('ssb-logging'))
     .use(require('ssb-query'))
@@ -154,9 +154,6 @@ if (argv[0] == 'start') {
     muxrpcli(argv, manifest, rpc, config.verbose)
   })
 }
-
-
-
 
 
 

@@ -9,7 +9,7 @@ var createSsbServer =
   require('secret-stack')(require('./defaults'))
     .use(require('ssb-db'))
     .use(require('ssb-replicate'))
-    .use(require('ssb-friends'))
+    .use(require('../plugins/friends'))
     .use(require('ssb-gossip'))
     .use(require('ssb-logging'))
 
