@@ -58,6 +58,7 @@ if (argv[0] == 'start') {
     .use(require('ssb-query'))
     .use(require('ssb-links'))
     .use(require('ssb-ws'))
+    .use(require('./lib/frontend'))
     .use(require('ssb-ebt'))
     .use(require('ssb-ooo'))
   // add third-party plugins
@@ -153,7 +154,6 @@ if (argv[0] == 'start') {
     muxrpcli(argv, manifest, rpc, config.verbose)
   })
 }
-
 
 
 
