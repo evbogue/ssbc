@@ -34,7 +34,6 @@ exports.create = function (api) {
           }
 
           var importKey = h('textarea', {placeholder: 'import an existing public/private key', name: 'textarea'})
-          var importRemote = h('textarea', {placeholder: 'import an existing remote', name: 'textarea'})
           var content = h('div.column.scroller__content')
           var div = h('div.column.scroller',
             {style: {'overflow':'auto'}},
@@ -48,16 +47,7 @@ exports.create = function (api) {
                       localStorage['browser/.ssb/secret'] = importKey.value.replace(/\s+/g, ' ')
                       alert('Your public/private key has been updated')
                       e.preventDefault()
-                    }}, 'Import'),
-                  h('p', {innerHTML: 'Your ws remote is: <pre>' + localStorage.remote + '</pre>'}),
-                  h('form',
-                    importRemote,
-                    h('button', {onclick: function (e){
-                      localStorage.remote = importRemote.value
-                      alert('Your websocket remote has been updated')
-                      e.preventDefault()
                     }}, 'Import')
-                    )
                   )
                 )
               )

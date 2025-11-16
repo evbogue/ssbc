@@ -6,16 +6,6 @@ function loadRemote () {
 
   if (typeof window !== 'undefined' && window.PATCHBAY_REMOTE) {
     remote = window.PATCHBAY_REMOTE
-
-    if (typeof localStorage !== 'undefined') {
-      try { localStorage.remote = remote } catch (e) {}
-    }
-  } else if (typeof localStorage !== 'undefined') {
-    try {
-      remote = localStorage.remote || null
-    } catch (e) {
-      remote = null
-    }
   }
 
   return remote
@@ -25,31 +15,16 @@ function rewriteRemoteForLocation (remote) {
   if (!remote || typeof window === 'undefined' || !window.location) return remote
 
   try {
-    var parts = remote.split('~')
-    var base = parts[0]
-    var suffix = parts.length > 1 ? '~' + parts.slice(1).join('~') : ''
+    var shsIndex = remote.indexOf('~shs:')
+    if (shsIndex === -1) return remote
 
-    var u = URL.parse(base)
-
-    if (!u || !u.protocol || !/^wss?:$/.test(u.protocol)) return remote
-
-    // Only rewrite when the remote thinks it's localhost
-    if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') return remote
-
+    var key = remote.substring(shsIndex + 5)
     var loc = window.location
 
-    // Use the page's hostname, keep the original port
-    u.protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:'
-    u.hostname = loc.hostname
-    if (!u.port) {
-      u.port = loc.port || (loc.protocol === 'https:' ? '443' : '80')
-    }
+    var proto = loc.protocol === 'https:' ? 'wss' : 'ws'
+    var host = loc.host || (loc.hostname + (loc.port ? ':' + loc.port : ''))
 
-    var formatted = URL.format(u)
-    if (formatted.charAt(formatted.length - 1) === '/')
-      formatted = formatted.slice(0, -1)
-
-    return formatted + suffix
+    return proto + '://' + host + '~shs:' + key
   } catch (e) {
     return remote
   }

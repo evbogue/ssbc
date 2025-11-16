@@ -60,13 +60,6 @@ exports.create = function (api) {
           function next () {
             onProgress('following...')
 
-            //remove the seed from the shs address.
-            //then it's correct address.
-            //this should make the browser connect to this as remote.
-            //we don't want to do this if when using this locally, though.
-            if(process.title === 'browser')
-              localStorage.remote = data.remote
-
             api.sbot_publish({
               type: 'contact',
               contact: data.key,
@@ -115,12 +108,9 @@ exports.create = function (api) {
         })
       }
 
-      // If we are in the browser,
-      // and do not already have a remote set, automatically trigger the invite.
-      if(process.title == 'browser' && !localStorage.remote) attempt()
+      // If we are in the browser, the user can click "accept" to trigger the invite.
 
       return div
     }
   }
 }
-
