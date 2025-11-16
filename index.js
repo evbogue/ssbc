@@ -1,5 +1,17 @@
 var SecretStack = require('secret-stack')
 var caps = require('ssb-caps')
+var AsyncSingle = require('async-single')
+
+// patch async-single to avoid NaN timeouts on first use
+if (!AsyncSingle.prototype._timeoutPatched) {
+  var originalTimeout = AsyncSingle.prototype._timeout
+  AsyncSingle.prototype._timeoutPatched = true
+  AsyncSingle.prototype._timeout = function (delay) {
+    if (delay == null && this._ts == null)
+      this._ts = Date.now()
+    return originalTimeout.call(this, delay)
+  }
+}
 
 // create a sbot with default caps. these can be overridden again when you call create.
 function createSsbServer () {
