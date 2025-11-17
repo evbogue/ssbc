@@ -222,6 +222,7 @@ button:hover {
 
 .message_meta {
   margin-left: auto;
+  align-items: flex-start;
 }
 
 .message_meta > * {
