@@ -5,6 +5,7 @@ var path         = require('path')
 var pull         = require('pull-stream')
 var toPull       = require('stream-to-pull-stream')
 var File         = require('pull-file')
+var spawn        = require('cross-spawn')
 var explain      = require('explain-error')
 var Config       = require('ssb-config/inject')
 var Client       = require('ssb-client')
@@ -150,8 +151,31 @@ if (argv[0] == 'start') {
       return
     }
 
+    if (process.argv[2] === 'git-ssb') {
+      var gitArgs = process.argv.slice(3)
+      var gitPath
+      try {
+        gitPath = require.resolve('git-ssb/bin/git-ssb')
+      } catch (e) {
+        console.error('Error: vendored git-ssb not found in this ssb-server install.')
+        console.error('Try running: npm install git-ssb --save')
+        process.exit(1)
+      }
+
+      var child = spawn(process.execPath, [gitPath].concat(gitArgs), {stdio: 'inherit'})
+
+      child.on('exit', function (code, signal) {
+        if (typeof code === 'number')
+          process.exit(code)
+        else if (signal)
+          process.exit(1)
+        else
+          process.exit(0)
+      })
+      return
+    }
+
     // run commandline flow
     muxrpcli(argv, manifest, rpc, config.verbose)
   })
 }
-
