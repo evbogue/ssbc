@@ -11,7 +11,7 @@ var Scroller = require('pull-scroll')
 exports.needs = {
   message_render: 'first',
   message_compose: 'first',
-  sbot_log: 'first',
+  sbot_query: 'first',
 }
 
 exports.gives = {
@@ -19,6 +19,31 @@ exports.gives = {
 }
 
 exports.create = function (api) {
+
+  function publicFilter (opts) {
+    opts = opts || {}
+    var filter = {
+      $filter: {
+        rts: {}
+      }
+    }
+    if(opts.lt != null) filter.$filter.rts.$lt = opts.lt
+    if(opts.gt != null) filter.$filter.rts.$gt = opts.gt
+    if(!filter.$filter.rts.$lt && !filter.$filter.rts.$gt)
+      filter.$filter.rts.$gt = 0
+    return filter
+  }
+
+  function publicQuery (opts) {
+    opts = opts || {}
+    return api.sbot_query({
+      query: [publicFilter(opts)],
+      reverse: opts.reverse,
+      limit: opts.limit,
+      live: opts.live,
+      old: opts.old
+    })
+  }
 
   return {
     builtin_tabs: function () {
@@ -38,12 +63,17 @@ exports.create = function (api) {
         )
 
         pull(
-          u.next(api.sbot_log, {old: false, limit: 100}),
+          publicQuery({old: false, live: true}),
           Scroller(div, content, api.message_render, true, false)
         )
 
         pull(
-          u.next(api.sbot_log, {reverse: true, limit: 100, live: false}),
+          u.next(publicQuery, {
+            reverse: true,
+            limit: 100,
+            live: false,
+            old: true
+          }, ['rts']),
           Scroller(div, content, api.message_render, false, false)
         )
 
