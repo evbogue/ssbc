@@ -1,5 +1,7 @@
 #! /usr/bin/env node
 
+process.env.CHLORIDE_JS = process.env.CHLORIDE_JS || '1'
+
 var fs           = require('fs')
 var path         = require('path')
 var pull         = require('pull-stream')
@@ -7,22 +9,132 @@ var toPull       = require('stream-to-pull-stream')
 var File         = require('pull-file')
 var spawn        = require('cross-spawn')
 var explain      = require('explain-error')
-var Config       = require('ssb-config/inject')
-var Client       = require('ssb-client')
 var minimist     = require('minimist')
 var muxrpcli     = require('muxrpcli')
 var cmdAliases   = require('./lib/cli-cmd-aliases')
 var ProgressBar  = require('./lib/progress')
+var cliHelp      = require('./lib/cli-help')
+var homeDir      = require('os-homedir')
 var packageJson  = require('./package.json')
 
 //get config as cli options after --, options before that are
 //options to the command.
 var argv = process.argv.slice(2)
 var i = argv.indexOf('--')
-var conf = argv.slice(i+1)
-argv = ~i ? argv.slice(0, i) : argv
+var conf = i === -1 ? [] : argv.slice(i+1)
+argv = i === -1 ? argv : argv.slice(0, i)
 
-var config = Config(process.env.ssb_appname, minimist(conf))
+var overrides = minimist(conf)
+var envAppName = process.env.ssb_appname
+var appName = envAppName || overrides.appname || overrides.ssb_appname || 'ssb'
+var baseHome = homeDir() || 'browser'
+var basePath = overrides.path || path.join(baseHome, '.' + appName)
+var manifestForHelp = {}
+var manifestPathForHelp = path.join(basePath, 'manifest.json')
+if (fs.existsSync(manifestPathForHelp)) {
+  try {
+    manifestForHelp = JSON.parse(fs.readFileSync(manifestPathForHelp))
+  } catch (err) {
+    manifestForHelp = {}
+  }
+}
+var helpCatalog = cliHelp.createCatalog(manifestForHelp)
+
+var helpFlags = ['--help', '-h']
+
+function printCliHelp () {
+  var name = packageJson.name || 'ssb-server'
+  console.log(name + ' ' + packageJson.version)
+  console.log('Usage:')
+  console.log('  ' + name + ' start [--verbose]')
+  console.log('  ' + name + ' <rpc.command> [arguments]')
+  console.log('  ' + name + ' help [command]')
+  console.log('')
+  console.log('Options:')
+  console.log('  --help, -h            show this message')
+  console.log('  --verbose             show verbose RPC errors')
+  console.log('  -- <key>=<value>      pass overrides to ssb-config')
+  console.log('')
+  console.log('Top-level commands (request detailed help for any of them):')
+  var topLevelCommands = helpCatalog.names.filter(function (name) {
+    return name.indexOf('.') === -1
+  })
+  var preview = topLevelCommands.slice(0, 12)
+  console.log('  ' + preview.join(', '))
+  if (topLevelCommands.length > preview.length) {
+  console.log('  ...and ' + (topLevelCommands.length - preview.length) + ' more. Use `' + name + ' help <command>` to see specifics.')
+  } else {
+    console.log('  (Call `' + name + ' help <command>` for the detailed universe of commands.)')
+  }
+  console.log('  Call `' + name + ' list-commands` to dump every command name.')
+  console.log('')
+  console.log('Examples:')
+  console.log('  ' + name + ' start')
+  console.log('  ' + name + ' friends.hops alice')
+  console.log('  ' + name + ' start -- --port 8008')
+  console.log('')
+  console.log('Run `' + name + ' help <command>` for more detail on a specific command.')
+}
+
+function printCommandHelp (requestedCommand) {
+  var resolved = requestedCommand
+  var entry = helpCatalog.get(resolved)
+  if (!entry && cmdAliases[resolved]) {
+    resolved = cmdAliases[resolved]
+    entry = helpCatalog.get(resolved)
+  }
+
+  if (!entry) {
+    console.log('No help data is currently available for `' + requestedCommand + '`.')
+    console.log('Start the server to generate ' + manifestPathForHelp + ' and re-run `' + packageJson.name + ' help ' + requestedCommand + '`.')
+    return
+  }
+
+  console.log('Help for `' + resolved + '`' + (resolved !== requestedCommand ? ' (matched from alias ' + requestedCommand + ')' : '') + ':')
+  if (entry.description)
+    console.log('  ' + entry.description)
+  if (entry.type)
+    console.log('Type: ' + entry.type)
+  var argNames = Object.keys(entry.args || {})
+  if (argNames.length) {
+    console.log('Arguments:')
+    argNames.forEach(function (argName) {
+      var arg = entry.args[argName] || {}
+      var type = arg.type || 'value'
+      var desc = arg.description || ''
+      console.log('  --' + argName + ' <' + type + '>' + (desc ? ' - ' + desc : ''))
+    })
+  }
+  console.log('Example: ' + entry.example)
+}
+
+function printCommandList () {
+  console.log('All available commands:')
+  helpCatalog.names.forEach(function (name) {
+    console.log('  ' + name)
+  })
+}
+
+if (argv[0] === 'help') {
+  if (argv[1])
+    printCommandHelp(argv[1])
+  else
+    printCliHelp()
+  process.exit(0)
+}
+
+if (argv[0] === 'list-commands') {
+  printCommandList()
+  process.exit(0)
+}
+
+if (argv.length === 0 || helpFlags.indexOf(argv[0]) !== -1) {
+  printCliHelp()
+  process.exit(0)
+}
+
+var Config = require('ssb-config/inject')
+var config = Config(process.env.ssb_appname, overrides)
 
 if (config.keys.curve === 'k256')
   throw new Error('k256 curves are no longer supported,'+
@@ -96,6 +208,8 @@ if (argv[0] == 'start') {
     caps: config.caps,
     key: config.key || config.keys.id
   }
+
+  var Client = require('ssb-client')
 
   // connect
   Client(config.keys, opts, function (err, rpc) {
