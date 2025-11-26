@@ -166,6 +166,7 @@ if (argv[0] == 'start') {
     .use(require('./plugins/friends'))
     .use(require('ssb-blobs'))
     .use(require('./plugins/invite'))
+    .use(require('./plugins/rest-bridge'))
     .use(require('ssb-local'))
     .use(require('ssb-logging'))
     .use(require('ssb-query'))
