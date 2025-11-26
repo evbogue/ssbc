@@ -35,7 +35,7 @@ exports.create = function (api) {
       h('a', {href:"#"+about.about},
         about.name || null,
         about.image
-        ? h('img.avatar--fullsize', {src: api.blob_url(asLink(about.image))})
+        ? h('img.avatar--thumbnail', {src: api.blob_url(asLink(about.image))})
         : null
       )
     )
@@ -43,5 +43,4 @@ exports.create = function (api) {
   }
 
 }
-
 
