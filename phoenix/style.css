@@ -1,0 +1,303 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', system-ui, sans-serif;
+  background: #f1f1f1;
+  color: #404040;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-nav {
+  background: #fff;
+  border-bottom: 1px solid #dadada;
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.tabs {
+  display: flex;
+  gap: 16px;
+}
+
+.tab {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  text-transform: lowercase;
+  cursor: pointer;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tab.active {
+  color: #2b2b2b;
+  border-bottom: 2px solid #2b2b2b;
+}
+
+.material-icon {
+  font-family: 'Material Icons';
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tab-label {
+  text-transform: none;
+}
+
+.url-bar {
+  font-size: 0.8rem;
+  color: #7a7a7a;
+}
+
+.layout {
+  flex: 1;
+  padding: 24px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.view-feed.active {
+  display: grid;
+  grid-template-columns: 3fr 1.2fr;
+  gap: 24px;
+}
+
+.feed {
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.post-box {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 20px;
+  background: #fafafa;
+}
+
+.post-box textarea {
+  width: 100%;
+  min-height: 60px;
+  border: none;
+  resize: none;
+  font-size: 1rem;
+  font-family: inherit;
+  background: transparent;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.post-actions button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 18px;
+  background: #2b2b2b;
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+#posts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.post {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #ededed;
+}
+
+.post:last-child {
+  border-bottom: none;
+}
+
+.avatar {
+  width: 54px;
+  height: 54px;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-content {
+  flex: 1;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.meta strong {
+  font-size: 1rem;
+}
+
+.meta span {
+  color: #9b9b9b;
+  font-size: 0.85rem;
+}
+
+.post-content p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.post-meta {
+  display: flex;
+  gap: 18px;
+  font-size: 0.85rem;
+  color: #9b9b9b;
+}
+
+.friends-panel {
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.empty-view {
+  background: transparent;
+}
+
+.empty-state {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  min-height: 280px;
+}
+
+.empty-state h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+
+.friends-panel h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.hex-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 64px);
+  grid-auto-rows: 64px;
+  column-gap: 4px;
+  row-gap: 0;
+  margin: 0 auto 18px;
+  width: 200px;
+}
+
+.hex {
+  width: 64px;
+  height: 72px;
+  clip-path: polygon(
+    50% 0%,
+    100% 25%,
+    100% 75%,
+    50% 100%,
+    0% 75%,
+    0% 25%
+  );
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.friend-hex::after,
+.avatar.hex::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.friend-hex {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.friend-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  color: #6c6c6c;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.friend-actions li {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.friend-actions li:hover {
+  color: #2b2b2b;
+}
+
+.hex img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+@media (max-width: 980px) {
+  .view-feed.active {
+    grid-template-columns: 1fr;
+  }
+
+  .friends-panel {
+    position: static;
+    top: auto;
+    margin-top: 20px;
+  }
+}

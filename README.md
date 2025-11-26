@@ -134,5 +134,24 @@ With the bundle built and your ssb-server running (`npm start`), open your brows
 
 The server will serve the Patchbay Lite UI and expose the necessary endpoints for the client. You can now browse and publish messages from your browser.
 
+## Phoenix Feed View
+
+If you want a static recreation of the classic Phoenix feed layout, the server now hosts that interface on its own port so it never collides with `ssb-ws` (default 8989) or the helper endpoints. Start your sbot (`npm start`) and visit:
+
+- **http://127.0.0.1:9080/**
+
+The view is served by `plugins/phoenix-ui.js` and is backed by the assets in `phoenix/`. You can override the host/port in `~/.ssb/config`:
+
+```json
+{
+  "phoenix": {
+    "host": "127.0.0.1",
+    "port": 9080
+  }
+}
+```
+
+Picking another `port` keeps the Phoenix feed running alongside Patchbay or other services.
+
 ---
 MIT
