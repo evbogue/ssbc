@@ -134,7 +134,28 @@ With the bundle built and your ssb-server running (`npm start`), open your brows
 
 The server will serve the Patchbay Lite UI and expose the necessary endpoints for the client. You can now browse and publish messages from your browser.
 
+## Decent Bundle
+
+The Decent bundle is served on its own port so it does not conflict with `ssb-ws` (default 8989). Start your sbot (`npm start`) and visit:
+
+- **http://127.0.0.1:8888/**
+
+The view is served by `plugins/decent-ui.js` and is backed by the assets in `decent/`. You can override the host/port in `~/.ssb/config`:
+
+```json
+{
+  "decent": {
+    "host": "127.0.0.1",
+    "port": 8888
+  }
+}
+```
+
+Picking another `port` keeps the Decent bundle running alongside Patchbay or other services.
+
 ## Phoenix Feed View
+
+Warning: the Phoenix client is not fully implemented and does not work.
 
 If you want a static recreation of the classic Phoenix feed layout, the server now hosts that interface on its own port so it never collides with `ssb-ws` (default 8989) or the helper endpoints. Start your sbot (`npm start`) and visit:
 

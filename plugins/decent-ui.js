@@ -1,0 +1,177 @@
+var fs = require('fs')
+var http = require('http')
+var path = require('path')
+
+var DEFAULT_PORT = 8888
+var DEFAULT_HOST = '127.0.0.1'
+var MIME_MAP = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml'
+}
+
+function getContentType (filePath) {
+  var ext = path.extname(filePath).toLowerCase()
+  return MIME_MAP[ext] || 'application/octet-stream'
+}
+
+function resolvePath (reqPath) {
+  var pathname = (reqPath || '/').split('?')[0]
+  if (!pathname || pathname === '/') pathname = '/index.html'
+  var relative = pathname.replace(/^\/+/, '')
+  if (!relative) relative = 'index.html'
+  if (relative.indexOf('..') !== -1) return null
+  return relative
+}
+
+exports.name = 'decent-ui'
+exports.version = '1.0.0'
+exports.manifest = {}
+
+exports.init = function (sbot, config) {
+  var decentDir = path.join(__dirname, '..', 'decent', 'build')
+  var cfg = config && config.decent ? config.decent : {}
+  var port = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
+  var hasHost = cfg && Object.prototype.hasOwnProperty.call(cfg, 'host')
+  var host = hasHost && typeof cfg.host === 'string' ? cfg.host : null
+  var wsCfg = config && config.ws ? config.ws : {}
+  if (!host && typeof wsCfg.host === 'string')
+    host = wsCfg.host
+  if (!host)
+    host = DEFAULT_HOST
+  var wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
+
+  function respondNotFound (res) {
+    res.statusCode = 404
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.end('Not found')
+  }
+
+  function respondInvalid (res) {
+    res.statusCode = 400
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.end('Invalid request')
+  }
+
+  function getBaseHost (hostHeader) {
+    if (!hostHeader || typeof hostHeader !== 'string') return null
+    if (hostHeader[0] === '[') {
+      var end = hostHeader.indexOf(']')
+      if (end === -1) return hostHeader
+      return hostHeader.slice(0, end + 1)
+    }
+    var colon = hostHeader.indexOf(':')
+    if (colon === -1) return hostHeader
+    return hostHeader.slice(0, colon)
+  }
+
+  function getRemoteForRequest (req) {
+    if (!sbot || !sbot.id || typeof sbot.id !== 'string') return null
+    if (!req || !req.headers) return null
+
+    var hostHeader = req.headers['x-forwarded-host'] || req.headers.host
+    var baseHost = getBaseHost(hostHeader)
+    if (!baseHost) return null
+
+    var proto = 'http'
+    if (req.connection && req.connection.encrypted)
+      proto = 'https'
+    else if (typeof req.headers['x-forwarded-proto'] === 'string')
+      proto = req.headers['x-forwarded-proto'].split(',')[0].trim()
+
+    var wsProto = proto === 'https' ? 'wss' : 'ws'
+
+    var i = sbot.id.indexOf('.')
+    var key = i === -1 ? sbot.id.substring(1) : sbot.id.substring(1, i)
+
+    return wsProto + '://' + baseHost + ':' + wsPort + '~shs:' + key
+  }
+
+  function serveStatic (req, res) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      respondInvalid(res)
+      return
+    }
+
+    var relPath = resolvePath(req.url)
+    if (!relPath) {
+      respondInvalid(res)
+      return
+    }
+
+    var filePath = path.join(decentDir, relPath)
+    fs.stat(filePath, function (err, stat) {
+      if (err || !stat || !stat.isFile()) {
+        respondNotFound(res)
+        return
+      }
+
+      if (relPath === 'index.html' && req.method === 'GET') {
+        return fs.readFile(filePath, 'utf8', function (readErr, html) {
+          if (readErr) {
+            respondNotFound(res)
+            return
+          }
+
+          var remote = getRemoteForRequest(req)
+          if (remote) {
+            var script = '<script>window.PATCHBAY_REMOTE = ' +
+              JSON.stringify(remote) +
+              ';</script>'
+            html = html.replace('</head>', script + '</head>')
+          }
+
+          res.writeHead(200, {'Content-Type': getContentType(filePath)})
+          res.end(html)
+        })
+      }
+
+      res.writeHead(200, {'Content-Type': getContentType(filePath)})
+
+      if (req.method === 'HEAD') {
+        res.end()
+        return
+      }
+
+      fs.createReadStream(filePath).pipe(res)
+    })
+  }
+
+  var server = http.createServer(serveStatic)
+  var startUrl = null
+
+  server.on('error', function (err) {
+    console.error('decent-ui server error:', err.message || err)
+  })
+
+  server.listen(port, host, function () {
+    var addr = server.address()
+    var address = addr && addr.address ? addr.address : host
+    var listeningPort = addr && addr.port ? addr.port : port
+    startUrl = 'http://' + address + ':' + listeningPort + '/'
+    console.log('Decent launched at ' + startUrl)
+  })
+
+  var closed = false
+  function closeServer (cb) {
+    if (closed) return cb && cb()
+    closed = true
+    server.close(function () {
+      cb && cb()
+    })
+  }
+
+  process.once('exit', closeServer)
+
+  return {
+    decent: {
+      port: port,
+      host: host
+    }
+  }
+}
