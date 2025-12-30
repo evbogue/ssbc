@@ -3,7 +3,7 @@ var http = require('http')
 var path = require('path')
 
 var DEFAULT_PORT = 8888
-var DEFAULT_HOST = '127.0.0.1'
+var DEFAULT_HOST = 'localhost'
 var MIME_MAP = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -37,13 +37,8 @@ exports.init = function (sbot, config) {
   var decentDir = path.join(__dirname, '..', 'decent', 'build')
   var cfg = config && config.decent ? config.decent : {}
   var port = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
-  var hasHost = cfg && Object.prototype.hasOwnProperty.call(cfg, 'host')
-  var host = hasHost && typeof cfg.host === 'string' ? cfg.host : null
+  var host = DEFAULT_HOST
   var wsCfg = config && config.ws ? config.ws : {}
-  if (!host && typeof wsCfg.host === 'string')
-    host = wsCfg.host
-  if (!host)
-    host = DEFAULT_HOST
   var wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
 
   function respondNotFound (res) {
@@ -174,9 +169,8 @@ exports.init = function (sbot, config) {
 
   server.listen(port, host, function () {
     var addr = server.address()
-    var address = addr && addr.address ? addr.address : host
     var listeningPort = addr && addr.port ? addr.port : port
-    startUrl = 'http://' + address + ':' + listeningPort + '/'
+    startUrl = 'http://' + host + ':' + listeningPort + '/'
     console.log('Decent launched at ' + startUrl)
   })
 
