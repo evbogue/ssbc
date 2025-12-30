@@ -6,7 +6,12 @@ module.exports = {
   gives: 'app',
   create: function (api) {
     return function () {
-      document.head.appendChild(h('style', require('../style.css.json')))
+      var hasStylesheet = document.querySelector('link[rel="stylesheet"][href$="style.css"]')
+      if (!hasStylesheet) {
+        document.head.appendChild(
+          h('style', {'data-decent-style': 'true'}, require('../style.css.json'))
+        )
+      }
 
       window.addEventListener('error', window.onError = function (e) {
         document.body.appendChild(h('div.error',

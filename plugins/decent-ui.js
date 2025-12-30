@@ -105,40 +105,63 @@ exports.init = function (sbot, config) {
     }
 
     var filePath = path.join(decentDir, relPath)
-    fs.stat(filePath, function (err, stat) {
-      if (err || !stat || !stat.isFile()) {
-        respondNotFound(res)
-        return
-      }
-
+    function serveFile (resolvedPath) {
       if (relPath === 'index.html' && req.method === 'GET') {
-        return fs.readFile(filePath, 'utf8', function (readErr, html) {
+        return fs.readFile(resolvedPath, 'utf8', function (readErr, html) {
           if (readErr) {
             respondNotFound(res)
             return
           }
 
-          var remote = getRemoteForRequest(req)
-          if (remote) {
-            var script = '<script>window.PATCHBAY_REMOTE = ' +
-              JSON.stringify(remote) +
-              ';</script>'
-            html = html.replace('</head>', script + '</head>')
+          var headInsert = ''
+          if (html.indexOf('rel="stylesheet" href="/style.css"') === -1 &&
+            html.indexOf('rel="stylesheet" href="style.css"') === -1) {
+            headInsert += '<link rel="preload" as="style" href="/style.css">' +
+              '<link rel="stylesheet" href="/style.css">'
           }
 
-          res.writeHead(200, {'Content-Type': getContentType(filePath)})
+          var remote = getRemoteForRequest(req)
+          if (remote) {
+            headInsert += '<script>window.PATCHBAY_REMOTE = ' +
+              JSON.stringify(remote) +
+              ';</script>'
+          }
+
+          if (headInsert)
+            html = html.replace('</head>', headInsert + '</head>')
+
+          res.writeHead(200, {'Content-Type': getContentType(resolvedPath)})
           res.end(html)
         })
       }
 
-      res.writeHead(200, {'Content-Type': getContentType(filePath)})
+      res.writeHead(200, {'Content-Type': getContentType(resolvedPath)})
 
       if (req.method === 'HEAD') {
         res.end()
         return
       }
 
-      fs.createReadStream(filePath).pipe(res)
+      fs.createReadStream(resolvedPath).pipe(res)
+    }
+
+    fs.stat(filePath, function (err, stat) {
+      if (err || !stat || !stat.isFile()) {
+        if (relPath === 'style.css') {
+          var fallbackPath = path.join(__dirname, '..', 'decent', 'style.css')
+          return fs.stat(fallbackPath, function (fallbackErr, fallbackStat) {
+            if (fallbackErr || !fallbackStat || !fallbackStat.isFile()) {
+              respondNotFound(res)
+              return
+            }
+            serveFile(fallbackPath)
+          })
+        }
+        respondNotFound(res)
+        return
+      }
+
+      serveFile(filePath)
     })
   }
 
