@@ -40,6 +40,26 @@ exports.init = function (sbot, config) {
   var host = DEFAULT_HOST
   var wsCfg = config && config.ws ? config.ws : {}
   var wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
+  var wsHost = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
+  if (!wsHost && typeof wsCfg.host === 'string')
+    wsHost = wsCfg.host
+
+  function splitHostPort (rawHost) {
+    if (!rawHost || typeof rawHost !== 'string') return null
+    if (rawHost[0] === '[') {
+      var end = rawHost.indexOf(']')
+      if (end === -1) return {host: rawHost, port: null}
+      var rest = rawHost.slice(end + 1)
+      if (rest[0] === ':' && /^\d+$/.test(rest.slice(1)))
+        return {host: rawHost.slice(0, end + 1), port: Number(rest.slice(1))}
+      return {host: rawHost, port: null}
+    }
+    if (/:\\d+$/.test(rawHost)) {
+      var lastColon = rawHost.lastIndexOf(':')
+      return {host: rawHost.slice(0, lastColon), port: Number(rawHost.slice(lastColon + 1))}
+    }
+    return {host: rawHost, port: null}
+  }
 
   function respondNotFound (res) {
     res.statusCode = 404
@@ -84,7 +104,12 @@ exports.init = function (sbot, config) {
     var i = sbot.id.indexOf('.')
     var key = i === -1 ? sbot.id.substring(1) : sbot.id.substring(1, i)
 
-    return wsProto + '://' + baseHost + ':' + wsPort + '~shs:' + key
+    var wsTarget = wsHost || baseHost
+    var parsedHost = splitHostPort(wsTarget)
+    var hostName = parsedHost ? parsedHost.host : wsTarget
+    var hostPort = parsedHost && parsedHost.port ? parsedHost.port : wsPort
+
+    return wsProto + '://' + hostName + ':' + hostPort + '~shs:' + key
   }
 
   function serveStatic (req, res) {
