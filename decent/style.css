@@ -261,12 +261,25 @@ textarea {
   margin-bottom: 0;
 }
 
+.navbar .container-fluid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .navbar .nav.pull-left {
-  float: left;
+  float: none;
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .navbar .pull-right {
-  float: right;
+  float: none;
+  margin-left: auto;
+  order: 3;
 }
 
 .material-symbols-outlined {
@@ -287,4 +300,24 @@ textarea {
 
 .nav__icon {
   margin-right: 4px;
+}
+
+@media (max-width: 640px) {
+  .navbar .container-fluid {
+    flex-wrap: wrap;
+  }
+
+  .navbar .nav.pull-left {
+    gap: 0;
+  }
+
+  .navbar .nav.pull-left li a span:not(.nav__icon) {
+    display: none;
+  }
+
+  .navbar .nav.pull-left li a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 6px;
+  }
 }
