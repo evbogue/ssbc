@@ -36,11 +36,13 @@ exports.manifest = {}
 exports.init = function (sbot, config) {
   var decentDir = path.join(__dirname, '..', 'decent', 'build')
   var cfg = config && config.decent ? config.decent : {}
+  console.log('decent-ui config:', JSON.stringify(cfg))
   var port = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
   var host = DEFAULT_HOST
   var wsCfg = config && config.ws ? config.ws : {}
   var wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
   var wsHost = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
+  var wsRemote = typeof cfg.wsRemote === 'string' ? cfg.wsRemote : null
   if (!wsHost && typeof wsCfg.host === 'string')
     wsHost = wsCfg.host
 
@@ -103,6 +105,10 @@ exports.init = function (sbot, config) {
 
     var i = sbot.id.indexOf('.')
     var key = i === -1 ? sbot.id.substring(1) : sbot.id.substring(1, i)
+
+    if (wsRemote) {
+      return wsRemote + '~shs:' + key
+    }
 
     var wsTarget = wsHost || baseHost
     var parsedHost = splitHostPort(wsTarget)
