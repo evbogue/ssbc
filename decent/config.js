@@ -22,6 +22,10 @@ function rewriteRemoteForLocation (remote) {
     var parsed = URL.parse(base)
     var key = remote.substring(shsIndex + 5)
     var loc = window.location
+    var isLocal = parsed && (parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' || parsed.hostname === '::1')
+
+    if (!isLocal) return remote
 
     var proto = loc.protocol === 'https:' ? 'wss' : 'ws'
     var hostname = loc.hostname || loc.host
