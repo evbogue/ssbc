@@ -81,7 +81,7 @@ textarea {
   max-width: 680px;
   margin-left: auto;
   margin-right: auto;
-  padding: 0 20px 20px;
+  padding: 0 0 20px;
 }
 
 .message img {
@@ -261,10 +261,18 @@ textarea {
   margin-bottom: 0;
 }
 
+.navbar .brand {
+  padding-left: 0;
+  margin-left: 0;
+  padding-right: 10px;
+}
+
 .navbar .container-fluid {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .navbar .nav.pull-left {

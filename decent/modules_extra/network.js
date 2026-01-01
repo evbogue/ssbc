@@ -106,16 +106,16 @@ exports.create = function (api) {
 
   return {
     menu_items: function () {
-      return h('a', {href: '#/network'}, '/network')
+      return h('a', {href: '#network'}, 'Network')
     },
 
     builtin_tabs: function () {
-      return ['/network']
+      return ['network']
     },
 
     screen_view: function (path) {
 
-      if(path !== '/network') return
+      if(path !== 'network') return
 
       var ol = h('ul.network')
 
@@ -172,5 +172,4 @@ exports.create = function (api) {
     }
   }
 }
-
 

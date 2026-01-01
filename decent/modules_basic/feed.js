@@ -24,7 +24,6 @@ exports.create = function (api) {
 
   return function (id) {
     //TODO: header of user info, avatars, names, follows.
-
     if(ref.isFeed(id)) {
 
       var content = h('div.column.scroller__content')
@@ -63,4 +62,3 @@ exports.create = function (api) {
   }
 
 }
-

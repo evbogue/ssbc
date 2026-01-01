@@ -22,10 +22,10 @@ module.exports = {
 
       function getRoute () {
         var raw = window.location.hash.substring(1).trim()
-        if (!raw || raw === 'tabs') return '/public'
-        if (raw[0] === '/' || raw[0] === '@' || raw[0] === '%' || raw[0] === '#')
-          return raw
-        return '/' + raw
+        if (!raw || raw === 'tabs') return 'public'
+        if (raw[0] === '@' || raw[0] === '%' || raw[0] === '#') return raw
+        if (raw[0] === '/') return raw.slice(1)
+        return raw
       }
 
       function renderRoute (route, container) {
@@ -44,11 +44,13 @@ module.exports = {
         setTitle(route, view)
       }
 
+      var selfId = require('../keys').id
       var navItems = [
-        {route: '/public', label: 'Public', icon: 'public'},
-        {route: '/private', label: 'Private', icon: 'lock'},
-        {route: '/notifications', label: 'Notifications', icon: 'notifications'},
-        {route: '/key', label: 'Key', icon: 'key'}
+        {route: 'public', label: 'Public', icon: 'public'},
+        {route: selfId, label: 'Profile', icon: 'person'},
+        {route: 'private', label: 'Private', icon: 'lock'},
+        {route: 'notifications', label: 'Notifications', icon: 'notifications'},
+        {route: 'key', label: 'Key', icon: 'key'}
       ]
 
       var nav = h('ul.nav.pull-left', navItems.map(function (item) {
@@ -63,6 +65,7 @@ module.exports = {
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
+            h('a.brand', {href: '#public'}, 'Decent'),
             nav,
             h('div.pull-right', api.menu())
           )
@@ -86,11 +89,11 @@ module.exports = {
         var base = 'Decent SSB'
         var suffix = (view && view.title) || null
         if (!suffix) {
-          if (route === '/public') suffix = 'Public'
-          else if (route === '/private') suffix = 'Private'
-          else if (route === '/notifications') suffix = 'Notifications'
-          else if (route === '/key') suffix = 'Key'
-          else if (route.indexOf('/channel/') === 0) suffix = 'Channel ' + route.slice(9)
+          if (route === 'public') suffix = 'Public'
+          else if (route === 'private') suffix = 'Private'
+          else if (route === 'notifications') suffix = 'Notifications'
+          else if (route === 'key') suffix = 'Key'
+          else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)
           else if (route[0] === '@') suffix = 'Profile'
           else if (route[0] === '%') suffix = 'Thread'
           else if (route[0] === '#') suffix = 'Message'

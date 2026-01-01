@@ -48,6 +48,7 @@ function crop (d, cb) {
 exports.needs = {
   message_confirm: 'first',
   blob_url: 'first',
+  blobs_url: 'first',
   sbot_links: 'first',
   avatar_name: 'first'
 }
@@ -111,7 +112,10 @@ exports.create = function (api) {
               img.src = data
               var _data = dataurl.parse(data)
               var xhr = new XMLHttpRequest()
-              xhr.open('POST', '/blobs/add', true)
+              var blobsUrl = api.blobs_url()
+              var addUrl = blobsUrl.replace(/\/blobs\/get\/?$/, '/blobs/add')
+              if (addUrl === blobsUrl) addUrl = '/blobs/add'
+              xhr.open('POST', addUrl, true)
               xhr.responseType = 'text'
               xhr.onload = function () {
                 if (xhr.status < 200 || xhr.status >= 300) {

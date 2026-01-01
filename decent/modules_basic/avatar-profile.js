@@ -71,18 +71,19 @@ exports.create = function (api) {
 
 
     return h('div.column.profile',
-      api.avatar_edit(id),
-      api.avatar_action(id),
-      h('div.profile__relationships.column',
-        h('strong', 'follows'),
-        follows_el,
-        h('strong', 'friends'),
-        friends_el,
-        h('strong', 'followers'),
-        followers_el
+      h('div.message.message-card',
+        api.avatar_edit(id),
+        api.avatar_action(id),
+        h('div.profile__relationships.column',
+          h('strong', 'follows'),
+          follows_el,
+          h('strong', 'friends'),
+          friends_el,
+          h('strong', 'followers'),
+          followers_el
+        )
       )
     )
   }
 
 }
-

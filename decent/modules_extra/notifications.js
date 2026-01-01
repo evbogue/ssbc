@@ -117,11 +117,11 @@ exports.create = function (api) {
 
   return {
     builtin_tabs: function () {
-      return ['/notifications']
+      return ['notifications']
     },
 
     screen_view: function (path) {
-      if(path === '/notifications') {
+      if(path === 'notifications') {
         var ids = {}
         var oldest
 

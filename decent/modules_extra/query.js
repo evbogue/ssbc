@@ -16,15 +16,15 @@ exports.create = function (api) {
 
   return {
     menu_items: function () {
-      return h('a', {href:'#/query'}, '/query')
+      return h('a', {href:'#query'}, 'Query')
     },
 
     builtin_tabs: function () {
-      return ['/query']
+      return ['query']
     },
 
     screen_view: function (path) {
-      if(path != '/query') return
+      if(path != 'query') return
       var output, status, editor, stream, query
 
       function parse () {

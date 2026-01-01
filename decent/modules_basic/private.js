@@ -46,11 +46,11 @@ exports.create = function (api) {
 
   return {
     builtin_tabs: function () {
-      return ['/private']
+      return ['private']
     },
 
     screen_view: function (path) {
-      if(path !== '/private') return
+      if(path !== 'private') return
 
       var div = h('div.column.scroller',
           {style: {'overflow':'auto'}})

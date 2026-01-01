@@ -130,7 +130,7 @@ exports.create = function (api) {
 
   exports.screen_view = function (path) {
 
-    if(path !== '/setup') return
+    if(path !== 'setup') return
 
     var id = require('../keys').id
 

@@ -18,10 +18,10 @@ exports.gives = {
 exports.create = function (api) {
   return {
     menu_items: function () {
-      return h('a', {href: '#/key'}, '/key')
+      return h('a', {href: '#key'}, 'Key')
     },
     screen_view: function (path, sbot) {
-      if(path === '/key') {
+      if(path === 'key') {
         if(process.title === 'browser') {
           var storedSecret = null
           try { storedSecret = localStorage['browser/.ssb/secret'] } catch (_) {}
@@ -39,7 +39,7 @@ exports.create = function (api) {
             {style: {'overflow':'auto'}},
             h('div.scroller__wrapper',
               h('div.column.scroller__content',
-                h('div.message',
+                h('div.message.message-card',
                   h('p', {innerHTML: 'Your secret key is: <pre><code>' + (storedSecret || '') + '</code></pre>'}),
                   h('form',
                     importKey,
@@ -55,7 +55,7 @@ exports.create = function (api) {
           )
           return div
         } else { 
-          return h('p', 'Your key is saved at .ssb/secret')
+          return h('div.message.message-card', 'Your key is saved at .ssb/secret')
         }
       }
     }

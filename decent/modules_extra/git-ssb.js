@@ -21,11 +21,11 @@ exports.gives = {
 exports.create = function (api) {
   return {
     menu_items: function () {
-      return h('a', {href: '#/git-ssb'}, '/git-ssb')
+      return h('a', {href: '#git-ssb'}, 'Git SSB')
     },
 
     screen_view: function (path, sbot) {
-      if(path === '/git-ssb') {
+      if(path === 'git-ssb') {
 
         var content = h('div.column.scroller__content')
         var div = h('div.column.scroller',

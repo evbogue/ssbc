@@ -10,15 +10,15 @@ exports.create = function () {
 
   return {
     menu_items: function () {
-      return h('a', {href: '#/versions'}, '/versions')
+      return h('a', {href: '#versions'}, 'Versions')
     },
 
     builtin_tabs: function () {
-      return ['/versions']
+      return ['versions']
     },
 
     screen_view: function (path) {
-      if(path !== '/versions') return
+      if(path !== 'versions') return
 
       if('undefined' === typeof WebBoot)
         return h('h1', 'must run with web-boot enabled enviroment')
@@ -30,7 +30,7 @@ exports.create = function () {
           content.appendChild(
             h('div.row',
               h('a', {
-                href: '#/run:'+e.value,
+                href: '#run:'+e.value,
                 onclick: function () {
                   WebBoot.run(e.value, function () {
                     console.log('rebooting to:', e.value)

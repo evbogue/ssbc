@@ -7,13 +7,20 @@ var split = require('split-buffer')
 var fileInputId = 0
 
 module.exports = {
-  needs: {},
+  needs: {blobs_url: 'first'},
   gives: 'file_input',
   create: function (api) {
 
+    function blobsAddUrl () {
+      var url = api.blobs_url && api.blobs_url()
+      if (!url) return '/blobs/add'
+      var addUrl = url.replace(/\/blobs\/get\/?$/, '/blobs/add')
+      return addUrl === url ? '/blobs/add' : addUrl
+    }
+
     function uploadViaHttp (file, cb) {
       var xhr = new XMLHttpRequest()
-      xhr.open('POST', '/blobs/add', true)
+      xhr.open('POST', blobsAddUrl(), true)
       xhr.responseType = 'text'
       xhr.onload = function () {
         if (xhr.status >= 200 && xhr.status < 300)

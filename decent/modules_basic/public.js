@@ -47,11 +47,11 @@ exports.create = function (api) {
 
   return {
     builtin_tabs: function () {
-      return ['/public']
+      return ['public']
     },
 
     screen_view: function (path, sbot) {
-      if(path === '/public') {
+      if(path === 'public') {
 
         var content = h('div.column.scroller__content')
         var div = h('div.column.scroller',
