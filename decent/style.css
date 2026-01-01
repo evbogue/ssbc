@@ -240,10 +240,10 @@ textarea {
 }
 
 .status {
-  display: inline-block;
+  display: block;
   width: 10px;
   height: 10px;
-  margin-top: 15px;
+  margin-top: 0px;
   border-radius: 100%;
   background: #08c;
 }
@@ -253,8 +253,9 @@ textarea {
 }
 
 .navbar .menu {
-  display: inline-block;
-  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
 }
 
 .navbar {
