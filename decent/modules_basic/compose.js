@@ -118,7 +118,7 @@ exports.create = function (api) {
     }
 
 
-    var publishBtn = h('button.btn.btn-primary', 'Publish', {onclick: publish})
+    var publishBtn = h('button.btn.btn-primary', 'Preview', {onclick: publish})
     var composer =
       h('div.message.message-card.compose', h('div.column', ta,
         accessories = h('div.row.compose__controls',
