@@ -133,6 +133,16 @@ With the bundle built and your ssb-server running (`npm start`), open your brows
 - **http://localhost:8989/**
 
 The server will serve the Patchbay Lite UI and expose the necessary endpoints for the client. You can now browse and publish messages from your browser.
+If you need a different host/port, add this to `~/.ssb/config`:
+
+```json
+{
+  "ws": {
+    "host": "127.0.0.1",
+    "port": 8989
+  }
+}
+```
 
 ## Decent Bundle
 

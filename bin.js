@@ -136,6 +136,12 @@ if (argv.length === 0 || helpFlags.indexOf(argv[0]) !== -1) {
 var Config = require('ssb-config/inject')
 var config = Config(process.env.ssb_appname, overrides)
 
+if (config.ws !== false) {
+  if (!config.ws || typeof config.ws !== 'object') config.ws = {}
+  if (typeof config.ws.port !== 'number') config.ws.port = 8989
+  if (typeof config.ws.host !== 'string') config.ws.host = '127.0.0.1'
+}
+
 if (config.keys.curve === 'k256')
   throw new Error('k256 curves are no longer supported,'+
                   'please delete' + path.join(config.path, 'secret'))
