@@ -22,7 +22,7 @@ module.exports = {
 
       function getRoute () {
         var raw = window.location.hash.substring(1).trim()
-        if (!raw || raw === 'tabs') return 'public'
+        if (!raw || raw === 'tabs' || raw === '/') return 'public'
         if (raw[0] === '@' || raw[0] === '%' || raw[0] === '#') return raw
         if (raw[0] === '/') return raw.slice(1)
         return raw
@@ -54,8 +54,9 @@ module.exports = {
       ]
 
       var nav = h('ul.nav.pull-left', navItems.map(function (item) {
+        var href = item.route === 'public' ? '#/' : '#' + item.route
         return h('li', {'data-route': item.route},
-          h('a', {href: '#' + item.route}, [
+          h('a', {href: href}, [
             h('span.material-symbols-outlined.nav__icon', item.icon),
             h('span', item.label)
           ])
@@ -65,7 +66,7 @@ module.exports = {
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            h('a.brand', {href: '#public'}, 'Decent'),
+            h('a.brand', {href: '#/'}, 'Decent'),
             nav,
             h('div.pull-right', api.menu())
           )

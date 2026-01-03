@@ -96,7 +96,19 @@ exports.create = function (api) {
     else
       content = h('div.message_content', el)
 
-    var msg = h('div.message.message-card',
+    var replyLink = h('button.btn', {type: 'button'}, 'Reply')
+    replyLink.addEventListener('click', function () {
+      var event
+      try {
+        event = new CustomEvent('decent:reply', {detail: {msg: msg}})
+      } catch (err) {
+        event = document.createEvent('CustomEvent')
+        event.initCustomEvent('decent:reply', false, false, {msg: msg})
+      }
+      window.dispatchEvent(event)
+    })
+
+    var msgEl = h('div.message.message-card',
       h('div.title.row',
         h('div.avatar', api.avatar(msg.value.author, 'thumbnail')),
         h('div.message_meta.row', api.message_meta(msg))
@@ -104,7 +116,7 @@ exports.create = function (api) {
       content,
       h('div.message_actions.row',
         h('div.actions', api.message_action(msg),
-          h('a', {href: '#' + msg.key}, 'Reply')
+          replyLink
         )
       ),
       backlinks,
@@ -116,14 +128,14 @@ exports.create = function (api) {
           if (ev.target.nodeName === 'INPUT'
             || ev.target.nodeName === 'TEXTAREA') return
 
-          msg.querySelector('.enter').click()
+          msgEl.querySelector('.enter').click()
         }
       }}
     )
 
     // ); hyperscript does not seem to set attributes correctly.
-    msg.setAttribute('tabindex', '0')
+    msgEl.setAttribute('tabindex', '0')
 
-    return msg
+    return msgEl
   }
 }

@@ -141,7 +141,6 @@ exports.create = function (api) {
             content
           )
         )
-        div.title = 'Notifications'
         div.setAttribute('data-icon', 'notifications')
 
         pull(

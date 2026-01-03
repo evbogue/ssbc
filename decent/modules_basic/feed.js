@@ -35,9 +35,7 @@ exports.create = function (api) {
         )
       )
 
-      api.signifier(id, function (_, names) {
-        if(names.length) div.title = names[0].name
-      })
+      api.signifier(id, function (_, names) {})
 
 
       pull(

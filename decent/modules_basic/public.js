@@ -57,11 +57,13 @@ exports.create = function (api) {
         var div = h('div.column.scroller',
           {style: {'overflow':'auto'}},
           h('div.scroller__wrapper',
-            api.message_compose({type: 'post'}, {placeholder: 'Write a public message'}),
+            api.message_compose(
+              {type: 'post'},
+              {placeholder: 'Write a public message', modal: true, triggerLabel: 'Compose', listenReplyEvents: true}
+            ),
             content
           )
         )
-        div.title = 'Public'
         div.setAttribute('data-icon', 'key')
 
         pull(

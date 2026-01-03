@@ -54,7 +54,6 @@ exports.create = function (api) {
 
       var div = h('div.column.scroller',
           {style: {'overflow':'auto'}})
-      div.title = 'Private'
       div.setAttribute('data-icon', 'lock')
 
       var compose = api.message_compose(

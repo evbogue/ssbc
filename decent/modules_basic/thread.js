@@ -68,6 +68,16 @@ exports.create = function (api) {
 
   return function (id) {
     if(ref.isMsg(id)) {
+      function normalizeId (value) {
+        try { return decodeURIComponent(value) } catch (err) { return value }
+      }
+      var normalizedId = normalizeId(id)
+      var autoOpen = false
+      try {
+        autoOpen = window.sessionStorage.getItem('decent_reply_intent') === normalizedId
+        if (autoOpen) window.sessionStorage.removeItem('decent_reply_intent')
+      } catch (err) {}
+
       var meta = {
         type: 'post',
         root: id,
@@ -79,13 +89,22 @@ exports.create = function (api) {
         {style: {'overflow-y': 'auto'}},
         h('div.scroller__wrapper',
           content,
-          api.message_compose(meta, {shrink: false, placeholder: 'Write a reply'})
+          api.message_compose(
+            meta,
+            {
+              shrink: false,
+              placeholder: 'Write a reply',
+              modal: true,
+              triggerLabel: 'Reply',
+              title: 'Reply',
+              autoOpen: autoOpen,
+              listenReplyEvents: true
+            }
+          )
         )
       )
 
-      api.message_name(id, function (err, name) {
-        div.title = name
-      })
+      api.message_name(id, function (err, name) {})
 
       pull(
         api.sbot_links({

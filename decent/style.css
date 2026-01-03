@@ -7,6 +7,10 @@ body {
   margin: 0;
 }
 
+body.lightbox-open {
+  overflow: hidden;
+}
+
 textarea {
   width: 100%;
   box-sizing: border-box;
@@ -30,12 +34,74 @@ textarea {
 .lightbox {
   background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .lightbox__content {
   max-width: 680px;
   margin: 40px auto;
   padding: 0 20px;
+}
+
+.compose-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.25);
+  padding: 12px;
+  transition: opacity 160ms ease;
+  opacity: 0;
+}
+
+.compose-modal--animate {
+  opacity: 1;
+}
+
+.compose-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.compose-modal__title {
+  font-weight: 600;
+}
+
+.compose-modal__hint {
+  margin-bottom: 8px;
+}
+
+.compose-reply-hint {
+  margin-bottom: 8px;
+}
+
+.compose-modal__close {
+  font-size: 0.9em;
+}
+
+.compose-trigger {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1001;
+  margin: 0;
+}
+
+.compose-trigger__button {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compose-trigger__icon {
+  line-height: 1;
+  display: block;
 }
 
 .message-confirm {
@@ -305,6 +371,10 @@ textarea {
   direction: ltr;
   -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
+}
+
+.compose-trigger__icon.material-symbols-outlined {
+  font-size: 21px;
 }
 
 .nav__icon {
