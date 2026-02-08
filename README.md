@@ -163,26 +163,5 @@ The view is served by `plugins/decent-ui.js` and is backed by the assets in `dec
 
 Picking another `port` keeps the Decent bundle running alongside Patchbay or other services.
 
-## Phoenix Feed View
-
-Warning: the Phoenix client is not fully implemented and does not work.
-
-If you want a static recreation of the classic Phoenix feed layout, the server now hosts that interface on its own port so it never collides with `ssb-ws` (default 8989) or the helper endpoints. Start your sbot (`npm start`) and visit:
-
-- **http://127.0.0.1:9080/**
-
-The view is served by `plugins/phoenix-ui.js` and is backed by the assets in `phoenix/`. You can override the host/port in `~/.ssb/config`:
-
-```json
-{
-  "phoenix": {
-    "host": "127.0.0.1",
-    "port": 9080
-  }
-}
-```
-
-Picking another `port` keeps the Phoenix feed running alongside Patchbay or other services.
-
 ---
 MIT
