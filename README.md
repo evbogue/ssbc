@@ -105,35 +105,59 @@ This will print an invite string you can pass to another person so they can conn
 
 ---
 
-## (Optional) Patchbay Lite Web Client
+## (Optional) Web Clients (Patchbay + Decent)
 
-This repository also includes Patchbay, a lightweight web client to interact with your sbot from a browser.
+This repository includes two browser UIs:
 
-### 1. Build the Client
+- `patchbay/` served through `ssb-ws` (default `:8989`)
+- `decent/` served by `plugins/decent-ui.js` (default `:8888`)
 
-This step only needs to be done once. From the repo root:
+### 1. Build Patchbay
+
+From the repo root:
 
 ```bash
-# 1. Navigate into the patchbay directory
-cd patchbay
-
-# 2. Install patchbay's dependencies
-npm install --ignore-scripts
-
-# 3. Build the client bundle
-npm run lite
+npm --prefix patchbay install --ignore-scripts
+npm --prefix patchbay run lite
 ```
 
-This produces `patchbay/build/index.html`, which is what the server will serve to browsers.
+Build output:
 
-### 2. Run Patchbay
+- `patchbay/build/index.html`
 
-With the bundle built and your ssb-server running (`npm start`), open your browser to:
+Optional alternative build:
+
+```bash
+npm --prefix patchbay run bundle
+```
+
+### 2. Build Decent
+
+From the repo root:
+
+```bash
+npm --prefix decent install --ignore-scripts
+npm --prefix decent run lite
+```
+
+Build output:
+
+- `decent/build/index.html`
+- `decent/build/style.css`
+
+Optional alternative build:
+
+```bash
+npm --prefix decent run bundle
+```
+
+### 3. Run Patchbay
+
+With your sbot running (`npm start`), open:
 
 - **http://localhost:8989/**
 
-The server will serve the Patchbay Lite UI and expose the necessary endpoints for the client. You can now browse and publish messages from your browser.
-If you need a different host/port, add this to `~/.ssb/config`:
+If you need a different host/port for `ssb-ws`, add this to `~/.ssb/config`:
 
 ```json
 {
@@ -144,13 +168,13 @@ If you need a different host/port, add this to `~/.ssb/config`:
 }
 ```
 
-## Decent Bundle
+### 4. Run Decent
 
-The Decent bundle is served on its own port so it does not conflict with `ssb-ws` (default 8989). Start your sbot (`npm start`) and visit:
+The Decent bundle is served on its own port so it does not conflict with `ssb-ws` (default `8989`). Start your sbot (`npm start`) and visit:
 
 - **http://127.0.0.1:8888/**
 
-The view is served by `plugins/decent-ui.js` and is backed by the assets in `decent/`. You can override the host/port in `~/.ssb/config`:
+The view is served by `plugins/decent-ui.js` and reads assets from `decent/build/`. You can override the host/port in `~/.ssb/config`:
 
 ```json
 {
