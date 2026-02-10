@@ -18,11 +18,18 @@ function rewriteRemoteForLocation (remote) {
     var shsIndex = remote.indexOf('~shs:')
     if (shsIndex === -1) return remote
 
+    var base = remote.substring(0, shsIndex)
+    var parsed = URL.parse(base)
     var key = remote.substring(shsIndex + 5)
     var loc = window.location
 
     var proto = loc.protocol === 'https:' ? 'wss' : 'ws'
-    var host = loc.host || (loc.hostname + (loc.port ? ':' + loc.port : ''))
+    var hostname = loc.hostname || loc.host
+    if (hostname && hostname.indexOf(':') !== -1 && hostname[0] !== '[')
+      hostname = '[' + hostname + ']'
+
+    var port = parsed && parsed.port ? parsed.port : loc.port
+    var host = hostname + (port ? ':' + port : '')
 
     return proto + '://' + host + '~shs:' + key
   } catch (e) {
