@@ -1,3 +1,1 @@
-module.exports = require('../modules_core/sbot')
-
-
+module.exports = require('../../patchbay/modules_embedded/sbot.js')

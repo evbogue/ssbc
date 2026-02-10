@@ -1,11 +1,1 @@
-var config = require('../config')
-
-module.exports = {
-  gives: 'blobs_url',
-  create: function () {
-    return function () {
-      return config().blobsUrl
-    }
-  }
-}
-
+module.exports = require('../../patchbay/modules_core/blobs-url.js')

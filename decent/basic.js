@@ -1,6 +1,5 @@
 require('depject')(
-  require('./modules_core'),
-  require('./modules_basic')
+  // from more specialized to more general
+  require('../patchbay/modules_core'),
+  require('../patchbay/modules_basic')
 ).app[0]()
-
-
