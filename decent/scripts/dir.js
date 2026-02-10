@@ -1,18 +1,10 @@
-var fs = require('fs')
 var path = require('path')
+var patchbay = require('../../patchbay/public')
 
-console.log(
-  'module.exports = {\n'
-  +
-  fs.readdirSync(path.join(process.cwd(), process.argv[2]))
-  .filter(function (file) {
-    return file !== 'index.js' && /\.js$/.test(file)
-  })
-  .map(function (file) {
-    return '  '+JSON.stringify(file) + ":  require('./"+file+"')"
-  }).join(',\n')
-  +
-  '\n}'
-)
-
+patchbay.printRequireMap({
+  baseDir: process.cwd(),
+  targetDir: process.argv[2],
+  jsOnly: true,
+  excludeName: 'index.js'
+})
 
