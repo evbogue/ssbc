@@ -43,6 +43,7 @@ exports.init = function (sbot, config) {
   var wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
   var wsHost = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
   var wsRemote = typeof cfg.wsRemote === 'string' ? cfg.wsRemote : null
+  var loggedRemote = false
   if (!wsHost && typeof wsCfg.host === 'string')
     wsHost = wsCfg.host
 
@@ -107,7 +108,12 @@ exports.init = function (sbot, config) {
     var key = i === -1 ? sbot.id.substring(1) : sbot.id.substring(1, i)
 
     if (wsRemote) {
-      return wsRemote + '~shs:' + key
+      var explicitRemote = wsRemote + '~shs:' + key
+      if (!loggedRemote) {
+        loggedRemote = true
+        console.log('decent-ui ws remote:', explicitRemote)
+      }
+      return explicitRemote
     }
 
     var wsTarget = wsHost || baseHost
@@ -115,7 +121,12 @@ exports.init = function (sbot, config) {
     var hostName = parsedHost ? parsedHost.host : wsTarget
     var hostPort = parsedHost && parsedHost.port ? parsedHost.port : wsPort
 
-    return wsProto + '://' + hostName + ':' + hostPort + '~shs:' + key
+    var remote = wsProto + '://' + hostName + ':' + hostPort + '~shs:' + key
+    if (!loggedRemote) {
+      loggedRemote = true
+      console.log('decent-ui ws remote:', remote)
+    }
+    return remote
   }
 
   function serveStatic (req, res) {

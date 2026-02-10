@@ -4,13 +4,23 @@ module.exports = {
   needs: {},
   gives: {connection_status: true, menu: true},
   create: function () {
-    var status = h('span.menu', h('span.status.error')) //start off disconnected
+    var dot = h('span.status.error', {title: 'Disconnected'})
+    var message = h('span.status-message')
+    var status = h('span.menu', [dot, message]) //start off disconnected
 
     return {
       connection_status: function (err) {
-        var dot = status.firstChild
-        if (err) dot.classList.add('error')
-        else dot.classList.remove('error')
+        if (err) {
+          var reason = err.message || String(err)
+          dot.classList.add('error')
+          dot.title = reason
+          message.textContent = 'Disconnected: ' + reason
+          return
+        }
+
+        dot.classList.remove('error')
+        dot.title = 'Connected'
+        message.textContent = ''
       },
       menu: function () {
         return status
@@ -18,7 +28,6 @@ module.exports = {
     }
   }
 }
-
 
 
 

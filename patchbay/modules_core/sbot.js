@@ -58,24 +58,42 @@ module.exports = {
     var opts = createConfig()
     var sbot = null
     var connection_status = []
+    var clientConfig = require('../config')()
+    var remote = clientConfig && clientConfig.remote
+    var remoteLabel = remote || '(no remote configured)'
+    var loggedRemote = false
+
+    function formatConnectError (err) {
+      var reason = err && (err.message || err.name) ? (err.message || err.name) : String(err || 'unknown error')
+      return new Error('Could not connect to sbot at ' + remoteLabel + ': ' + reason)
+    }
 
     var rec = Reconnect(function (isConn) {
       function notify (value) {
         isConn(value); api.connection_status(value) //.forEach(function (fn) { fn(value) })
       }
 
+      if (!loggedRemote) {
+        loggedRemote = true
+        console.log('[sbot] remote:', remoteLabel)
+      }
+
       createClient(keys, {
         manifest: require('../manifest.json'),
-        remote: require('../config')().remote,
+        remote: remote,
         caps: config.caps
       }, function (err, _sbot) {
-        if(err)
-          return notify(err)
+        if(err) {
+          var wrapped = formatConnectError(err)
+          wrapped.originalError = err
+          console.error('[sbot] connect error:', wrapped.message)
+          return notify(wrapped)
+        }
 
         sbot = _sbot
         sbot.on('closed', function () {
           sbot = null
-          notify(new Error('closed'))
+          notify(new Error('sbot connection closed (' + remoteLabel + ')'))
         })
 
         notify()
@@ -160,6 +178,5 @@ module.exports = {
     }
   }
 }
-
 
 

@@ -314,6 +314,17 @@ textarea {
   background: #08c;
 }
 
+.status-message {
+  margin-left: 8px;
+  color: #bd362f;
+  font-size: 12px;
+  line-height: 1.2;
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .error {
   background: #bd362f;
 }
