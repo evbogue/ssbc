@@ -112,6 +112,12 @@ This repository includes two browser UIs:
 - `patchbay/` served through `ssb-ws` (default `:8989`)
 - `decent/` served by `plugins/decent-ui.js` (default `:8888`)
 
+Build both from repo root:
+
+```bash
+npm run build:web
+```
+
 ### 1. Build Patchbay
 
 From the repo root:

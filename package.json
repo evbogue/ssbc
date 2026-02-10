@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "node bin start",
+    "build:web": "npm --prefix patchbay run lite && npm --prefix decent run lite",
     "prepublishOnly": "npm test",
     "test": "set -e; for t in test/*.js; do echo TEST $t; node $t; done",
     "test:pretty": "npm run test | tap-spec",
