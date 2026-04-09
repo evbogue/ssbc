@@ -1,25 +1,21 @@
-var SecretStack = require('secret-stack')
-var caps = require('ssb-caps')
-var AsyncSingle = require('async-single')
+'use strict'
 
-// patch async-single to avoid NaN timeouts on first use
-if (!AsyncSingle.prototype._timeoutPatched) {
-  var originalTimeout = AsyncSingle.prototype._timeout
-  AsyncSingle.prototype._timeoutPatched = true
-  AsyncSingle.prototype._timeout = function (delay) {
-    if (delay == null && this._ts == null)
-      this._ts = Date.now()
-    return originalTimeout.call(this, delay)
-  }
+const SecretStack = require('secret-stack')
+
+// SSB capability keys (previously from the ssb-caps npm package).
+// These are the canonical keys for the SSB network.
+const caps = {
+  shs:  Buffer.from('1KHLiKZvAvjbY1ziZEHMXawbCEIM6qwjCDm3VYRan/s=', 'base64'),
+  sign: Buffer.from('g3hPVPsvangkUmIoNFJsKGNfBFiaTBmNxpJyNVqKMnA=', 'base64')
 }
 
-// create a sbot with default caps. these can be overridden again when you call create.
-function createSsbServer () {
+// Create an sbot with default caps. These can be overridden when you call create.
+function createSsbServer() {
   return SecretStack({
-    caps: caps,
+    caps,
     permissions: {
       anonymous: {
-        // allow Patchbay / browser clients over ssb-ws + noauth
+        // allow Decent / browser clients over ssb-ws + noauth
         allow: [
           'whoami',
           'createLogStream',
@@ -44,10 +40,8 @@ function createSsbServer () {
         ]
       }
     }
-  })
-    .use(require('ssb-db'))
+  }).use(require('ssb-db'))
 }
-module.exports = createSsbServer()
 
-// this isn't really needed anymore.
+module.exports = createSsbServer()
 module.exports.createSsbServer = createSsbServer

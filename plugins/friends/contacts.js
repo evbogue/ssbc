@@ -1,27 +1,25 @@
-var Reduce = require('flumeview-reduce')
-var isFeed = require('../ref').isFeed
-//track contact messages, follow, unfollow, block
+'use strict'
+
+const Reduce = require('flumeview-reduce')
+const isFeed = require('../ref').isFeed
+
+// track contact messages: follow, unfollow, block
 
 module.exports = function (sbot, createLayer, config) {
+  const layer = createLayer('contacts')
+  let initial = false
 
-  var layer = createLayer('contacts')
-  var initial = false
-  var hops = {}
-  hops[sbot.id] = 0
-  var index = sbot._flumeUse('contacts2', Reduce(9, function (g, data) {
-    if(!g) g = {}
+  const index = sbot._flumeUse('contacts2', Reduce(9, (g, data) => {
+    if (!g) g = {}
 
-    var from = data.value.author
-    var to = data.value.content.contact
-    var value =
+    const from  = data.value.author
+    const to    = data.value.content.contact
+    const value =
       data.value.content.blocking || data.value.content.flagged ? -1 :
-      data.value.content.following === true ? 1
-      : -2
+      data.value.content.following === true ? 1 : -2
 
-    if(isFeed(from) && isFeed(to)) {
-      if(initial) {
-        layer(from, to, value)
-      }
+    if (isFeed(from) && isFeed(to)) {
+      if (initial) layer(from, to, value)
       g[from] = g[from] || {}
       g[from][to] = value
     }
@@ -29,10 +27,9 @@ module.exports = function (sbot, createLayer, config) {
   }))
 
   // trigger flume machinery to wait until index is ready,
-  // otherwise there is a race condition when rebuilding the graph.
-  index.get(function (err, g) {
+  // avoiding a race condition when rebuilding the graph
+  index.get((err, g) => {
     initial = true
     layer(g || {})
   })
 }
-

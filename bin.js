@@ -1,49 +1,73 @@
 #! /usr/bin/env node
+'use strict'
 
 process.env.CHLORIDE_JS = process.env.CHLORIDE_JS || '1'
 
-var fs           = require('fs')
-var path         = require('path')
-var pull         = require('pull-stream')
-var toPull       = require('stream-to-pull-stream')
-var File         = require('pull-file')
-var spawn        = require('cross-spawn')
-var explain      = require('explain-error')
-var minimist     = require('minimist')
-var muxrpcli     = require('muxrpcli')
-var cmdAliases   = require('./lib/cli-cmd-aliases')
-var ProgressBar  = require('./lib/progress')
-var cliHelp      = require('./lib/cli-help')
-var homeDir      = require('os-homedir')
-var packageJson  = require('./package.json')
+const fs            = require('fs')
+const path          = require('path')
+const os            = require('os')
+const { spawn }     = require('child_process')
+const pull          = require('pull-stream')
+const toPull        = require('stream-to-pull-stream')
+const File          = require('pull-file')
+const muxrpcli      = require('muxrpcli')
+const cmdAliases    = require('./lib/cli-cmd-aliases')
+const ProgressBar   = require('./lib/progress')
+const cliHelp       = require('./lib/cli-help')
+const packageJson   = require('./package.json')
 
-//get config as cli options after --, options before that are
-//options to the command.
-var argv = process.argv.slice(2)
-var i = argv.indexOf('--')
-var conf = i === -1 ? [] : argv.slice(i+1)
-argv = i === -1 ? argv : argv.slice(0, i)
+// Split process.argv at '--': args before are the command, args after are config overrides.
+const allArgv  = process.argv.slice(2)
+const splitAt  = allArgv.indexOf('--')
+const conf     = splitAt === -1 ? [] : allArgv.slice(splitAt + 1)
+let   argv     = splitAt === -1 ? allArgv : allArgv.slice(0, splitAt)
 
-var overrides = minimist(conf)
-var envAppName = process.env.ssb_appname
-var appName = envAppName || overrides.appname || overrides.ssb_appname || 'ssb'
-var baseHome = homeDir() || 'browser'
-var basePath = overrides.path || path.join(baseHome, '.' + appName)
-var manifestForHelp = {}
-var manifestPathForHelp = path.join(basePath, 'manifest.json')
-if (fs.existsSync(manifestPathForHelp)) {
-  try {
-    manifestForHelp = JSON.parse(fs.readFileSync(manifestPathForHelp))
-  } catch (err) {
-    manifestForHelp = {}
+// Minimal inline argument parser for '--key value' / '--key=value' / '--flag' config overrides.
+// Auto-casts numbers and booleans, matching minimist's default behaviour for ssb-config.
+function parseConf(args) {
+  const result = {}
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (!arg.startsWith('--')) continue
+    const eq = arg.indexOf('=')
+    let key, val
+    if (eq !== -1) {
+      key = arg.slice(2, eq)
+      val = arg.slice(eq + 1)
+    } else {
+      key = arg.slice(2)
+      const next = args[i + 1]
+      if (next !== undefined && !next.startsWith('--')) {
+        val = next; i++
+      } else {
+        val = 'true'
+      }
+    }
+    if (val === 'true')       val = true
+    else if (val === 'false') val = false
+    else if (val !== '' && !isNaN(val)) val = Number(val)
+    result[key] = val
   }
+  return result
 }
-var helpCatalog = cliHelp.createCatalog(manifestForHelp)
 
-var helpFlags = ['--help', '-h']
+const overrides    = parseConf(conf)
+const envAppName   = process.env.ssb_appname
+const appName      = envAppName || overrides.appname || overrides.ssb_appname || 'ssb'
+const baseHome     = os.homedir() || 'browser'
+const basePath     = overrides.path || path.join(baseHome, '.' + appName)
+const manifestPathForHelp = path.join(basePath, 'manifest.json')
 
-function printCliHelp () {
-  var name = packageJson.name || 'ssb-server'
+let manifestForHelp = {}
+if (fs.existsSync(manifestPathForHelp)) {
+  try { manifestForHelp = JSON.parse(fs.readFileSync(manifestPathForHelp)) } catch (_) {}
+}
+
+const helpCatalog = cliHelp.createCatalog(manifestForHelp)
+const helpFlags   = ['--help', '-h']
+
+function printCliHelp() {
+  const name = packageJson.name || 'ssb-server'
   console.log(name + ' ' + packageJson.version)
   console.log('Usage:')
   console.log('  ' + name + ' start [--verbose]')
@@ -55,17 +79,14 @@ function printCliHelp () {
   console.log('  --verbose             show verbose RPC errors')
   console.log('  -- <key>=<value>      pass overrides to ssb-config')
   console.log('')
-  console.log('Top-level commands (request detailed help for any of them):')
-  var topLevelCommands = helpCatalog.names.filter(function (name) {
-    return name.indexOf('.') === -1
-  })
-  var preview = topLevelCommands.slice(0, 12)
+  console.log('Top-level commands:')
+  const topLevel = helpCatalog.names.filter((n) => !n.includes('.'))
+  const preview  = topLevel.slice(0, 12)
   console.log('  ' + preview.join(', '))
-  if (topLevelCommands.length > preview.length) {
-  console.log('  ...and ' + (topLevelCommands.length - preview.length) + ' more. Use `' + name + ' help <command>` to see specifics.')
-  } else {
+  if (topLevel.length > preview.length)
+    console.log('  ...and ' + (topLevel.length - preview.length) + ' more. Use `' + name + ' help <command>` to see specifics.')
+  else
     console.log('  (Call `' + name + ' help <command>` for the detailed universe of commands.)')
-  }
   console.log('  Call `' + name + ' list-commands` to dump every command name.')
   console.log('')
   console.log('Examples:')
@@ -76,50 +97,42 @@ function printCliHelp () {
   console.log('Run `' + name + ' help <command>` for more detail on a specific command.')
 }
 
-function printCommandHelp (requestedCommand) {
-  var resolved = requestedCommand
-  var entry = helpCatalog.get(resolved)
+function printCommandHelp(requestedCommand) {
+  let resolved = requestedCommand
+  let entry    = helpCatalog.get(resolved)
   if (!entry && cmdAliases[resolved]) {
     resolved = cmdAliases[resolved]
-    entry = helpCatalog.get(resolved)
+    entry    = helpCatalog.get(resolved)
   }
-
   if (!entry) {
     console.log('No help data is currently available for `' + requestedCommand + '`.')
     console.log('Start the server to generate ' + manifestPathForHelp + ' and re-run `' + packageJson.name + ' help ' + requestedCommand + '`.')
     return
   }
-
   console.log('Help for `' + resolved + '`' + (resolved !== requestedCommand ? ' (matched from alias ' + requestedCommand + ')' : '') + ':')
-  if (entry.description)
-    console.log('  ' + entry.description)
-  if (entry.type)
-    console.log('Type: ' + entry.type)
-  var argNames = Object.keys(entry.args || {})
+  if (entry.description) console.log('  ' + entry.description)
+  if (entry.type)        console.log('Type: ' + entry.type)
+  const argNames = Object.keys(entry.args || {})
   if (argNames.length) {
     console.log('Arguments:')
-    argNames.forEach(function (argName) {
-      var arg = entry.args[argName] || {}
-      var type = arg.type || 'value'
-      var desc = arg.description || ''
+    for (const argName of argNames) {
+      const arg  = entry.args[argName] || {}
+      const type = arg.type || 'value'
+      const desc = arg.description || ''
       console.log('  --' + argName + ' <' + type + '>' + (desc ? ' - ' + desc : ''))
-    })
+    }
   }
   console.log('Example: ' + entry.example)
 }
 
-function printCommandList () {
+function printCommandList() {
   console.log('All available commands:')
-  helpCatalog.names.forEach(function (name) {
-    console.log('  ' + name)
-  })
+  for (const name of helpCatalog.names) console.log('  ' + name)
 }
 
 if (argv[0] === 'help') {
-  if (argv[1])
-    printCommandHelp(argv[1])
-  else
-    printCliHelp()
+  if (argv[1]) printCommandHelp(argv[1])
+  else         printCliHelp()
   process.exit(0)
 }
 
@@ -128,13 +141,13 @@ if (argv[0] === 'list-commands') {
   process.exit(0)
 }
 
-if (argv.length === 0 || helpFlags.indexOf(argv[0]) !== -1) {
+if (argv.length === 0 || helpFlags.includes(argv[0])) {
   printCliHelp()
   process.exit(0)
 }
 
-var Config = require('ssb-config/inject')
-var config = Config(process.env.ssb_appname, overrides)
+const Config = require('ssb-config/inject')
+const config = Config(process.env.ssb_appname, overrides)
 
 if (config.ws !== false) {
   if (!config.ws || typeof config.ws !== 'object') config.ws = {}
@@ -143,32 +156,27 @@ if (config.ws !== false) {
 }
 
 if (config.keys.curve === 'k256')
-  throw new Error('k256 curves are no longer supported,'+
-                  'please delete' + path.join(config.path, 'secret'))
+  throw new Error('k256 curves are no longer supported, please delete ' + path.join(config.path, 'secret'))
 
-var manifestFile = path.join(config.path, 'manifest.json')
+const manifestFile = path.join(config.path, 'manifest.json')
 
-if (argv[0] == 'server') {
+if (argv[0] === 'server') {
   console.log('WARNING-DEPRECATION: `sbot server` has been renamed to `ssb-server start`')
-  argv[0] = 'start'
+  argv = ['start', ...argv.slice(1)]
 }
 
-if (argv[0] == 'start') {
-  console.log(packageJson.name, packageJson.version, config.path, 'logging.level:'+config.logging.level)
+if (argv[0] === 'start') {
+  console.log(packageJson.name, packageJson.version, config.path, 'logging.level:' + config.logging.level)
   console.log('my key ID:', config.keys.public)
 
-  // special start command:
-  // import ssbServer and start the server
-
-  var createSsbServer = require('./')
+  const createSsbServer = require('./')
     .use(require('ssb-private1'))
-    .use(require('ssb-onion'))
     .use(require('ssb-unix-socket'))
     .use(require('ssb-no-auth'))
     .use(require('ssb-plugins'))
     .use(require('ssb-master'))
     .use(require('ssb-gossip'))
-    .use(require('ssb-replicate'))
+    .use(require('ssb-ebt'))
     .use(require('./plugins/friends'))
     .use(require('ssb-blobs'))
     .use(require('./plugins/invite'))
@@ -178,125 +186,102 @@ if (argv[0] == 'start') {
     .use(require('ssb-query'))
     .use(require('ssb-links'))
     .use(require('ssb-ws'))
-    .use(require('./lib/frontend'))
-    .use(require('ssb-ebt'))
     .use(require('ssb-ooo'))
-  // add third-party plugins
 
   require('ssb-plugins').loadUserPlugins(createSsbServer, config)
 
-  // start server
-  var server = createSsbServer(config)
-
-  // write RPC manifest to ~/.ssb/manifest.json
+  const server = createSsbServer(config)
   fs.writeFileSync(manifestFile, JSON.stringify(server.getManifest(), null, 2))
 
-  if(process.stdout.isTTY && (config.logging.level != 'info'))
+  if (process.stdout.isTTY && config.logging.level !== 'info')
     ProgressBar(server.progress)
-} else {
-  // normal command:
-  // create a client connection to the server
 
-  // read manifest.json
-  var manifest
+} else {
+  // Client mode: connect to the running sbot and issue an RPC command.
+
+  let manifest
   try {
     manifest = JSON.parse(fs.readFileSync(manifestFile))
   } catch (err) {
-    throw explain(err,
-      'no manifest file'
-      + '- should be generated first time server is run'
-    )
+    throw new Error('no manifest file - should be generated first time server is run: ' + err.message)
   }
 
-  var opts = {
-    manifest: manifest,
+  const opts = {
+    manifest,
     port: config.port,
     host: config.host || 'localhost',
     caps: config.caps,
-    key: config.key || config.keys.id
+    key:  config.key || config.keys.id
   }
 
-  var Client = require('ssb-client')
+  const Client = require('ssb-client')
 
-  // connect
-  Client(config.keys, opts, function (err, rpc) {
-    if(err) {
+  // blobs.add: pipe a file or stdin into the blob store
+  if (argv[0] === 'blobs.add') {
+    const filename = argv[1]
+    const source   = filename
+      ? File(filename)
+      : !process.stdin.isTTY ? toPull.source(process.stdin)
+      : (() => {
+          console.error('USAGE:')
+          console.error('  blobs.add <filename>  # add a file')
+          console.error('  source | blobs.add    # read from stdin')
+          process.exit(1)
+        })()
+
+    Client(config.keys, opts, (err, rpc) => {
+      if (err) throw err
+      pull(source, rpc.blobs.add((addErr, hash) => {
+        if (addErr) throw addErr
+        console.log(hash)
+        process.exit()
+      }))
+    })
+    return
+  }
+
+  // git-ssb passthrough
+  if (argv[0] === 'git-ssb') {
+    const gitArgs = argv.slice(1)
+    let gitPath
+    try {
+      gitPath = require.resolve('git-ssb/bin/git-ssb')
+    } catch (_) {
+      console.error('Error: vendored git-ssb not found in this ssb-server install.')
+      console.error('Try running: npm install git-ssb --save')
+      process.exit(1)
+    }
+    const child = spawn(process.execPath, [gitPath, ...gitArgs], { stdio: 'inherit' })
+    child.on('exit', (code, signal) => {
+      process.exit(typeof code === 'number' ? code : signal ? 1 : 0)
+    })
+    return
+  }
+
+  // Normal RPC command
+  Client(config.keys, opts, (err, rpc) => {
+    if (err) {
       if (/could not connect/.test(err.message)) {
         console.error('Error: Could not connect to ssb-server ' + opts.host + ':' + opts.port)
         console.error('Use the "start" command to start it.')
-        console.error('Use --verbose option to see full error')
-        if(config.verbose) throw err
+        if (config.verbose) throw err
         process.exit(1)
       }
       throw err
     }
 
-    // add aliases
-    for (var k in cmdAliases) {
-      rpc[k] = rpc[cmdAliases[k]]
+    // add aliases to rpc and manifest
+    for (const k in cmdAliases) {
+      rpc[k]      = rpc[cmdAliases[k]]
       manifest[k] = manifest[cmdAliases[k]]
     }
 
-    // add some extra commands
-//    manifest.version = 'async'
     manifest.config = 'sync'
-//    rpc.version = function (cb) {
-//      console.log(packageJson.version)
-//      cb()
-//    }
-    rpc.config = function (cb) {
+    rpc.config = (cb) => {
       console.log(JSON.stringify(config, null, 2))
       cb()
     }
 
-    if (process.argv[2] === 'blobs.add') {
-      var filename = process.argv[3]
-      var source =
-        filename ? File(process.argv[3])
-      : !process.stdin.isTTY ? toPull.source(process.stdin)
-      : (function () {
-        console.error('USAGE:')
-        console.error('  blobs.add <filename> # add a file')
-        console.error('  source | blobs.add   # read from stdin')
-        process.exit(1)
-      })()
-      pull(
-        source,
-        rpc.blobs.add(function (err, hash) {
-          if (err)
-            throw err
-          console.log(hash)
-          process.exit()
-        })
-      )
-      return
-    }
-
-    if (process.argv[2] === 'git-ssb') {
-      var gitArgs = process.argv.slice(3)
-      var gitPath
-      try {
-        gitPath = require.resolve('git-ssb/bin/git-ssb')
-      } catch (e) {
-        console.error('Error: vendored git-ssb not found in this ssb-server install.')
-        console.error('Try running: npm install git-ssb --save')
-        process.exit(1)
-      }
-
-      var child = spawn(process.execPath, [gitPath].concat(gitArgs), {stdio: 'inherit'})
-
-      child.on('exit', function (code, signal) {
-        if (typeof code === 'number')
-          process.exit(code)
-        else if (signal)
-          process.exit(1)
-        else
-          process.exit(0)
-      })
-      return
-    }
-
-    // run commandline flow
     muxrpcli(argv, manifest, rpc, config.verbose)
   })
 }
