@@ -8,8 +8,6 @@ const path          = require('path')
 const os            = require('os')
 const { spawn }     = require('child_process')
 const pull          = require('pull-stream')
-const toPull        = require('stream-to-pull-stream')
-const File          = require('pull-file')
 const muxrpcli      = require('muxrpcli')
 const cmdAliases    = require('./lib/cli-cmd-aliases')
 const ProgressBar   = require('./lib/progress')
@@ -220,9 +218,26 @@ if (argv[0] === 'start') {
   // blobs.add: pipe a file or stdin into the blob store
   if (argv[0] === 'blobs.add') {
     const filename = argv[1]
+
+    // Convert a Node.js readable stream to a pull-stream source.
+    function nodeStreamToPull(stream) {
+      const queue = []
+      let ended = null
+      let waiting = null
+      stream.on('data',  (chunk) => { if (waiting) { const cb = waiting; waiting = null; cb(null, chunk) } else { queue.push(chunk); stream.pause() } })
+      stream.on('end',   ()      => { ended = true;  if (waiting) { const cb = waiting; waiting = null; cb(true) } })
+      stream.on('error', (err)   => { ended = err;   if (waiting) { const cb = waiting; waiting = null; cb(err) } })
+      return function read(end, cb) {
+        if (end)         { if (stream.destroy) stream.destroy(); return cb(end) }
+        if (queue.length) return cb(null, queue.shift())
+        if (ended)        return cb(ended)
+        waiting = cb; stream.resume()
+      }
+    }
+
     const source   = filename
-      ? File(filename)
-      : !process.stdin.isTTY ? toPull.source(process.stdin)
+      ? nodeStreamToPull(fs.createReadStream(filename))
+      : !process.stdin.isTTY ? nodeStreamToPull(process.stdin)
       : (() => {
           console.error('USAGE:')
           console.error('  blobs.add <filename>  # add a file')

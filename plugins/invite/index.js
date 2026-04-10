@@ -1,6 +1,5 @@
 'use strict'
 
-const valid   = require('muxrpc-validation')({})
 const crypto  = require('crypto')
 const net     = require('net')
 const ssbKeys = require('ssb-keys')
@@ -103,7 +102,7 @@ module.exports = {
     }
 
     return {
-      create: valid.async(function (opts, cb) {
+      create: function (opts, cb) {
         opts = opts || {}
         if (isNumber(opts))
           opts = { uses: opts }
@@ -161,9 +160,9 @@ module.exports = {
             ].join(':') + '~' + seed.toString('base64'))
           }
         })
-      }, 'number|object', 'string?'),
+      },
 
-      use: valid.async(function (req, cb) {
+      use: function (req, cb) {
         const rpc = this
         codesDB.get(rpc.id, (err, invite) => {
           if (err) return cb(err)
@@ -191,9 +190,9 @@ module.exports = {
             })
           })
         })
-      }, 'object'),
+      },
 
-      accept: valid.async(function (invite, cb) {
+      accept: function (invite, cb) {
         if (isObject(invite)) invite = invite.invite
         if (invite.charAt(0) === '"' && invite.charAt(invite.length - 1) === '"')
           invite = invite.slice(1, -1)
@@ -264,7 +263,7 @@ module.exports = {
             }).catch(cb)
           })
         })
-      }, 'string')
+      }
     }
   }
 }
