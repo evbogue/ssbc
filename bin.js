@@ -44,7 +44,18 @@ function parseConf(args) {
     if (val === 'true')       val = true
     else if (val === 'false') val = false
     else if (val !== '' && !isNaN(val)) val = Number(val)
-    result[key] = val
+    // Expand dot-notation keys (e.g. 'caps.shs') into nested objects
+    if (key.includes('.')) {
+      const parts = key.split('.')
+      let obj = result
+      for (let j = 0; j < parts.length - 1; j++) {
+        if (typeof obj[parts[j]] !== 'object' || !obj[parts[j]]) obj[parts[j]] = {}
+        obj = obj[parts[j]]
+      }
+      obj[parts[parts.length - 1]] = val
+    } else {
+      result[key] = val
+    }
   }
   return result
 }
@@ -145,7 +156,13 @@ if (argv.length === 0 || helpFlags.includes(argv[0])) {
 }
 
 const Config = require('ssb-config/inject')
-const config = Config(process.env.ssb_appname, overrides)
+// For the 'start' command, also parse any --key=value flags from argv (before
+// the '--' separator) so that e.g. `ssb-server start --port=9001` works without
+// requiring the -- convention.  Explicit post-'--' overrides take precedence.
+const argvOverrides = argv[0] === 'start' || argv[0] === 'server'
+  ? parseConf(argv.slice(1))
+  : {}
+const config = Config(process.env.ssb_appname, Object.assign(argvOverrides, overrides))
 
 if (config.ws !== false) {
   if (!config.ws || typeof config.ws !== 'object') config.ws = {}
