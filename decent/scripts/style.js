@@ -1,13 +1,20 @@
-var fs = require('fs')
-var path = require('path')
-var patchbay = require('../../patchbay/public')
+'use strict'
+const fs   = require('fs')
+const path = require('path')
 
-var buildDir = path.join(__dirname, '..', 'build')
+const buildDir   = path.join(__dirname, '..', 'build')
+const srcCss     = path.join(__dirname, '..', 'style.css')
+const destCss    = path.join(buildDir, 'style.css')
+// app.js does require('../style.css.json') to inline styles as a fallback when
+// no <link rel="stylesheet"> is present.  Generate it from the source CSS.
+const destCssJson = path.join(__dirname, '..', 'style.css.json')
 
 if (!fs.existsSync(buildDir))
-  fs.mkdirSync(buildDir)
+  fs.mkdirSync(buildDir, { recursive: true })
 
-patchbay.writeStyleAssets({
-  appDir: path.join(__dirname, '..'),
-  copyCssToBuild: true
-})
+if (fs.existsSync(srcCss)) {
+  // Copy CSS for standalone serving
+  fs.copyFileSync(srcCss, destCss)
+  // Write JSON representation for the browserify inline-fallback in app.js
+  fs.writeFileSync(destCssJson, JSON.stringify(fs.readFileSync(srcCss, 'utf8')))
+}

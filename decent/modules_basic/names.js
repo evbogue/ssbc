@@ -1,183 +1,109 @@
-var pull = require('pull-stream')
-var many = require('pull-many')
-var mfr = require('map-filter-reduce')
+'use strict'
 
-function all(stream, cb) {
-  pull(stream, pull.collect(cb))
+const pull = require('pull-stream')
+
+// In-memory name cache built from 'about' messages.
+// Previously used sbot_links2 and sbot_query (Flume-based, now removed).
+// Now queries the SQLite store directly via sbot_messagesByType.
+
+let names = []
+let ready = false
+const waiting = []
+
+function update (name) {
+  const n = names.find(function (e) {
+    return e.id === name.id && e.name === name.name
+  })
+  if (!n) {
+    name.rank = name.rank || 1
+    names.push(name)
+  } else {
+    n.rank = (n.rank || 0) + (name.rank || 1)
+    if (name.ts > (n.ts || 0)) n.ts = name.ts
+  }
 }
 
-//var plugs = require('../plugs')
-//var sbot_links2 = plugs.first(exports.sbot_links2 = [])
-//var sbot_query = plugs.first(exports.sbot_query = [])
-//
+function addSigil (e) {
+  if (e && e.id && e.name && e.id[0] !== e.name[0])
+    e.name = e.id[0] + e.name
+  return e
+}
+
+function toNameEntry (d) {
+  return addSigil({
+    name: d.value.content.name,
+    id:   d.value.content.about,
+    ts:   d.timestamp || (d.value && d.value.timestamp) || 0,
+    rank: 1
+  })
+}
+
+function isAboutWithName (d) {
+  return d && d.value && d.value.content &&
+         typeof d.value.content.name === 'string' &&
+         d.value.content.name.length > 0 &&
+         d.value.content.about
+}
+
 exports.needs = {
-  sbot_links2: 'first',
-  sbot_query: 'first'
+  sbot_messagesByType: 'first'
 }
 
 exports.gives = {
   connection_status: true,
   signifier: true,
-  signified: true,
+  signified: true
 }
 
-/*
-  filter(rel: ['mentions', prefix('@')]) | reduce(name: rel[1], value: count())
-*/
-
-var filter = {
-  $filter: {
-    rel: ["mentions", {$prefix: "@"}]
-  }
-}
-var map = {
-  $map: {
-    name: ['rel', 1],
-    id: 'dest',
-    ts: 'ts',
-  }
-}
-
-var reduce = {
-  $reduce: {
-    name: 'name',
-    id: 'id',
-    rank: {$count: true},
-    ts: {$max: 'ts'}
-  }
-}
-
-var filter2 = {
-  $filter: {
-    value: {
-      content: {
-        type: "about",
-        name: {"$prefix": ""},
-        about: {"$prefix": ""}
-      }
-    }
-  }
-}
-
-var map2 = {
- $map: {
-    name: ["value", "content", "name"],
-    id: ['value', 'content', 'about'],
-    ts: "timestamp"
-  }
-}
-
-//union with this query...
-
-var names = NAMES = []
-function update(name) {
-  var n = names.find(function (e) {
-    return e.id == name.id && e.name == e.name
-  })
-  if(!n) {
-    name.rank = 1
-    //this should be inserted at the right place...
-    names.push(name)
-  }
-  else
-    n.rank = n.rank += (name.rank || 1)
-}
-
-var ready = false, waiting = []
-
-var merge = {
-  $reduce: {
-    name: 'name',
-    id: 'id',
-    rank: {$sum: 'rank'},
-    ts: {$max: 'ts'}
-  }
-}
-
-function add_sigil(stream) {
-  return pull(stream, pull.map(function (e) {
-      if (e && e.id && e.name && e.id[0] !== e.name[0])
-        e.name = e.id[0] + e.name
-      return e
-    })
-  )
-}
-
-var queryNamedGitRepos = [
-  {$filter: {
-    value: {
-      content: {
-        type: "git-repo",
-        name: {"$prefix": ""}
-      }
-    }
-  }},
-  {$map: {
-    name: ["value", "content", "name"],
-    id: ['key'],
-    ts: "timestamp"
-  }},
-  reduce
-]
 exports.create = function (api) {
+  const out = {}
 
-  var exports = {}
-  exports.connection_status = function (err) {
-    if(!err) {
-      pull(
-        many([
-          api.sbot_links2({query: [filter, map, reduce]}),
-          add_sigil(api.sbot_query({query: [filter2, map2, reduce]})),
-          add_sigil(api.sbot_query({query: queryNamedGitRepos}))
-        ]),
-        //reducing also ensures order by the lookup properties
-        //in this case: [name, id]
-        mfr.reduce(merge),
-        pull.collect(function (err, ary) {
-          if(!err) {
-            NAMES = names = ary
-            ready = true
-            while(waiting.length) waiting.shift()()
-          }
-        })
-      )
+  out.connection_status = function (err) {
+    if (err) return
 
-      pull(many([
-        api.sbot_links2({query: [filter, map], old: false}),
-        add_sigil(api.sbot_query({query: [filter2, map2], old: false})),
-        add_sigil(api.sbot_query({query: queryNamedGitRepos, old: false}))
-      ]),
-      pull.drain(update))
-    }
+    // Bulk-load historical about messages, then tail live ones
+    pull(
+      api.sbot_messagesByType({ type: 'about', old: true, live: false }),
+      pull.filter(isAboutWithName),
+      pull.map(toNameEntry),
+      pull.collect(function (collectErr, entries) {
+        if (!collectErr) {
+          entries.forEach(update)
+          ready = true
+          while (waiting.length) waiting.shift()()
+        }
+
+        // Tail live about messages regardless of bulk-load outcome
+        pull(
+          api.sbot_messagesByType({ type: 'about', old: false, live: true }),
+          pull.filter(isAboutWithName),
+          pull.map(toNameEntry),
+          pull.drain(update)
+        )
+      })
+    )
   }
 
-  function async(fn) {
+  function async (fn) {
     return function (value, cb) {
       function go () { cb(null, fn(value)) }
-      if(ready) go()
+      if (ready) go()
       else waiting.push(go)
     }
   }
 
-  function rank(ary) {
-    //sort by most used, or most recently used
+  function rank (ary) {
     return ary.sort(function (a, b) { return b.rank - a.rank || b.ts - a.ts })
   }
 
-  //we are just iterating over the entire array.
-  //if this becomes a problem, maintain two arrays
-  //one of each sort order, but do not duplicate the objects.
-  //that should mean the space required is just 2x object references,
-  //not 2x objects, and we can use binary search to find matches.
-
-  exports.signifier = async(function (id) {
-    return rank(names.filter(function (e) { return e.id == id}))
+  out.signifier = async(function (id) {
+    return rank(names.filter(function (e) { return e.id === id }))
   })
 
-  exports.signified = async(function (name) {
-    var rx = new RegExp('^'+name)
+  out.signified = async(function (name) {
+    const rx = new RegExp('^' + name)
     return rank(names.filter(function (e) { return rx.test(e.name) }))
   })
 
-  return exports
+  return out
 }
