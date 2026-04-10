@@ -5,7 +5,7 @@ const http = require('http')
 const path = require('path')
 
 const DEFAULT_PORT = 8888
-const DEFAULT_HOST = 'localhost'
+const DEFAULT_HOST = '127.0.0.1'
 const MIME_MAP = {
   '.html': 'text/html; charset=utf-8',
   '.css':  'text/css; charset=utf-8',
@@ -57,6 +57,12 @@ function getBaseHost(hostHeader) {
   return colon === -1 ? hostHeader : hostHeader.slice(0, colon)
 }
 
+function formatHostForUrl(host) {
+  if (!host || typeof host !== 'string') return host
+  if (host[0] === '[') return host
+  return host.indexOf(':') !== -1 ? '[' + host + ']' : host
+}
+
 exports.name = 'decent-ui'
 exports.version = '1.0.0'
 exports.manifest = {}
@@ -65,15 +71,12 @@ exports.init = function (sbot, config) {
   const decentDir = path.join(__dirname, '..', 'decent', 'build')
   const cfg    = (config && config.decent) || {}
   const port   = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
-  const host   = DEFAULT_HOST
+  const host   = typeof cfg.host === 'string' ? cfg.host : DEFAULT_HOST
   const wsCfg  = (config && config.ws) || {}
   const wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
   let wsHost   = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
   const wsRemote = typeof cfg.wsRemote === 'string' ? cfg.wsRemote : null
   let loggedRemote = false
-
-  if (!wsHost && typeof wsCfg.host === 'string')
-    wsHost = wsCfg.host
 
   console.log('decent-ui config:', JSON.stringify(cfg))
 
@@ -114,7 +117,7 @@ exports.init = function (sbot, config) {
 
     const wsTarget  = wsHost || baseHost
     const parsed    = splitHostPort(wsTarget)
-    const hostName  = parsed ? parsed.host : wsTarget
+    const hostName  = formatHostForUrl(parsed ? parsed.host : wsTarget)
     const hostPort  = (parsed && parsed.port) ? parsed.port : wsPort
     const remote    = wsProto + '://' + hostName + ':' + hostPort + '~shs:' + key
 
@@ -163,6 +166,11 @@ exports.init = function (sbot, config) {
 
     fs.stat(filePath, (err, stat) => {
       if (err || !stat || !stat.isFile()) {
+        if (relPath === 'favicon.ico') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
         if (relPath === 'style.css') {
           const fallbackPath = path.join(__dirname, '..', 'decent', 'style.css')
           return fs.stat(fallbackPath, (fallbackErr, fallbackStat) => {

@@ -1,7 +1,7 @@
 var h = require('hyperscript')
 var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 var mfr = require('map-filter-reduce')
 
 exports.needs = {
@@ -114,4 +114,3 @@ exports.create = function (api) {
     }
   }
 }
-

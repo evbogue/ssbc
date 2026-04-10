@@ -2,7 +2,7 @@
 var h = require('hyperscript')
 var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 var ref = require('ssb-ref')
 var keys = require('../keys')
 

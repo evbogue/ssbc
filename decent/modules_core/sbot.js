@@ -11,6 +11,7 @@ const keys         = require('../keys')
 const config = createConfig(process.env.ssb_appname)
 
 const CACHE = {}
+if (typeof window !== 'undefined') window.CACHE = CACHE
 
 module.exports = {
   needs: {
@@ -22,6 +23,8 @@ module.exports = {
     sbot_query:          true,
     sbot_messagesByType: true,
     sbot_get:            true,
+    sbot_add:            true,
+    sbot_getLatest:      true,
     sbot_log:            true,
     sbot_user_feed:      true,
     sbot_gossip_peers:   true,
@@ -64,9 +67,9 @@ module.exports = {
       sbot_links2: function () {
         return pull.empty()
       },
-      sbot_query: function () {
-        return pull.empty()
-      },
+      sbot_query: rec.source(function (opts) {
+        return sbot.query.read(opts)
+      }),
 
       // Direct messagesByType query against our SQLite store
       sbot_messagesByType: rec.source(function (opts) {
@@ -94,6 +97,14 @@ module.exports = {
           if (err) return cb(err)
           cb(null, CACHE[key] = value)
         })
+      }),
+
+      sbot_add: rec.async(function (msgValue, cb) {
+        sbot.add(msgValue, cb)
+      }),
+
+      sbot_getLatest: rec.async(function (feedId, cb) {
+        sbot.getLatest(feedId, cb)
       }),
 
       sbot_gossip_peers: rec.async(function (cb) {

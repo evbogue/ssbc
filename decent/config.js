@@ -12,9 +12,10 @@ function rewriteRemoteForLocation (remote) {
     const shsIndex = remote.indexOf('~shs:')
     if (shsIndex === -1) return remote
     const key   = remote.substring(shsIndex + 5)
+    const base  = new URL(remote.split('~')[0])
     const loc   = window.location
     const proto = loc.protocol === 'https:' ? 'wss' : 'ws'
-    const host  = loc.host || (loc.hostname + (loc.port ? ':' + loc.port : ''))
+    const host  = loc.hostname + (base.port ? ':' + base.port : '')
     return proto + '://' + host + '~shs:' + key
   } catch (e) {
     return remote

@@ -1,7 +1,7 @@
 var h = require('hyperscript')
-var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
+var keys = require('../keys')
 
 //var plugs = require('../plugs')
 //var message_render = plugs.first(exports.message_render = [])
@@ -11,7 +11,7 @@ var Scroller = require('pull-scroll')
 exports.needs = {
   message_render: 'first',
   message_compose: 'first',
-  sbot_query: 'first',
+  sbot_messagesByType: 'first'
 }
 
 exports.gives = {
@@ -19,30 +19,48 @@ exports.gives = {
 }
 
 exports.create = function (api) {
-
-  function publicFilter (opts) {
-    opts = opts || {}
-    var filter = {
-      $filter: {
-        rts: {}
-      }
-    }
-    if(opts.lt != null) filter.$filter.rts.$lt = opts.lt
-    if(opts.gt != null) filter.$filter.rts.$gt = opts.gt
-    if(!filter.$filter.rts.$lt && !filter.$filter.rts.$gt)
-      filter.$filter.rts.$gt = 0
-    return filter
+  function isFollowMessage (msg) {
+    var value = msg && msg.value
+    var content = value && value.content
+    return content &&
+      content.type === 'contact' &&
+      value.author === keys.id &&
+      typeof content.contact === 'string'
   }
 
-  function publicQuery (opts) {
-    opts = opts || {}
-    return api.sbot_query({
-      query: [publicFilter(opts)],
-      reverse: opts.reverse,
-      limit: opts.limit,
-      live: opts.live,
-      old: opts.old
-    })
+  function isVisiblePublicPost (msg, authors) {
+    var value = msg && msg.value
+    var content = value && value.content
+    if (!value || !content || typeof content !== 'object') return false
+    if (value.private || content.private || Array.isArray(content.recps)) return false
+    if (content.type !== 'post') return false
+    return !!authors[value.author]
+  }
+
+  function applyFollowState (authors, msg) {
+    if (!isFollowMessage(msg)) return
+
+    var content = msg.value.content
+    if (content.blocking || content.following === false) delete authors[content.contact]
+    else if (content.following === true) authors[content.contact] = true
+  }
+
+  function loadAuthors (cb) {
+    pull(
+      api.sbot_messagesByType({type: 'contact', old: true, live: false}),
+      pull.collect(function (err, contacts) {
+        if (err) return cb(err)
+
+        var authors = {}
+        authors[keys.id] = true
+
+        ;(contacts || []).forEach(function (msg) {
+          applyFollowState(authors, msg)
+        })
+
+        cb(null, authors)
+      })
+    )
   }
 
   return {
@@ -66,20 +84,54 @@ exports.create = function (api) {
         )
         div.setAttribute('data-icon', 'key')
 
-        pull(
-          publicQuery({old: false, live: true}),
-          Scroller(div, content, api.message_render, true, false)
-        )
+        loadAuthors(function (err, authors) {
+          if (err) {
+            content.appendChild(h('div.message.message-card',
+              h('div.column', h('strong', 'Unable to load public feed'))
+            ))
+            console.error(err)
+            return
+          }
 
-        pull(
-          u.next(publicQuery, {
-            reverse: true,
-            limit: 100,
-            live: false,
-            old: true
-          }, ['rts']),
-          Scroller(div, content, api.message_render, false, false)
-        )
+          pull(
+            api.sbot_messagesByType({
+              type: 'contact',
+              old: false,
+              live: true
+            }),
+            pull.drain(function (msg) {
+              applyFollowState(authors, msg)
+            }, function (streamErr) {
+              if (streamErr && streamErr !== true) console.error(streamErr)
+            })
+          )
+
+          pull(
+            api.sbot_messagesByType({
+              type: 'post',
+              reverse: true,
+              limit: 100,
+              live: false,
+              old: true
+            }),
+            pull.filter(function (msg) {
+              return isVisiblePublicPost(msg, authors)
+            }),
+            Scroller(div, content, api.message_render, false, false)
+          )
+
+          pull(
+            api.sbot_messagesByType({
+              type: 'post',
+              old: false,
+              live: true
+            }),
+            pull.filter(function (msg) {
+              return isVisiblePublicPost(msg, authors)
+            }),
+            Scroller(div, content, api.message_render, true, false)
+          )
+        })
 
         return div
       }

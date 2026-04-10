@@ -1,9 +1,10 @@
 var h = require('hyperscript')
 var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 var keys
 try { keys = require('../keys') } catch (_) {}
+var BROWSER_SECRET_KEY = 'decent/.ssb/secret'
 
 //var plugs = require('../plugs')
 // var message_render = plugs.first(exports.message_render = [])
@@ -24,12 +25,12 @@ exports.create = function (api) {
       if(path === 'key') {
         if(process.title === 'browser') {
           var storedSecret = null
-          try { storedSecret = localStorage['browser/.ssb/secret'] } catch (_) {}
+          try { storedSecret = localStorage[BROWSER_SECRET_KEY] } catch (_) {}
 
           if((!storedSecret || storedSecret === 'undefined') && keys && keys.id) {
             try {
               storedSecret = JSON.stringify(keys, null, 2)
-              localStorage['browser/.ssb/secret'] = storedSecret
+              localStorage[BROWSER_SECRET_KEY] = storedSecret
             } catch (_) {}
           }
 
@@ -44,7 +45,7 @@ exports.create = function (api) {
                   h('form',
                     importKey,
                     h('button.btn.btn-primary', {onclick: function (e){
-                      localStorage['browser/.ssb/secret'] = importKey.value.replace(/\s+/g, ' ')
+                      localStorage[BROWSER_SECRET_KEY] = importKey.value.replace(/\s+/g, ' ')
                       alert('Your public/private key has been updated')
                       e.preventDefault()
                     }}, 'Import')

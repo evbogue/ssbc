@@ -1,7 +1,7 @@
 var h = require('hyperscript')
 var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 
 var plugs = require('../plugs')
 //var message_render = plugs.first(exports.message_render = [])

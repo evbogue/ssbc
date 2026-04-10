@@ -2,7 +2,7 @@
 var h = require('hyperscript')
 var u = require('../util')
 var pull = require('pull-stream')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 var paramap = require('pull-paramap')
 var plugs = require('../plugs')
 var cont = require('cont')
@@ -128,7 +128,8 @@ exports.create = function (api) {
         var id = require('../keys').id
         ids[id] = true
         getFirstMessage(id, function (err, msg) {
-          if (err) return console.error(err)
+          if (err && err !== true) return console.error(err)
+          if (!msg || !msg.value) return
           if (!oldest || msg.value.timestamp < oldest) {
             oldest = msg.value.timestamp
           }

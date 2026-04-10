@@ -4,7 +4,7 @@ var sort = require('ssb-sort')
 var ref = require('ssb-ref')
 var h = require('hyperscript')
 var u = require('../util')
-var Scroller = require('pull-scroll')
+var Scroller = require('../scroller')
 var self_id = require('../keys').id
 
 function once (cont) {
