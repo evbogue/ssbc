@@ -50,17 +50,17 @@ exports.init = function (sbot, config) {
     })
   })
 
-  // use ssb-ebt for replication; ssb-replicate is no longer required
-  if (!sbot.ebt)
-    throw new Error('ssb-friends expects ssb-ebt to be available')
+  // replicate with everyone within max hops via ssb-ebt
+  // (ssb-ebt hooks sbot.replicate.request and forwards to ebt.request)
+  if (!sbot.replicate)
+    throw new Error('ssb-friends expects ssb-replicate (or stub) to be available')
 
-  // replicate with everyone within max hops
   pull(
     layered.hopStream({ live: true, old: true }),
     pull.drain((data) => {
       if (data.sync) return
       for (const k in data) {
-        sbot.ebt.request(k, data[k] >= 0)
+        sbot.replicate.request(k, data[k] >= 0)
       }
     })
   )

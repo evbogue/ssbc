@@ -176,6 +176,7 @@ if (argv[0] === 'start') {
     .use(require('ssb-plugins'))
     .use(require('./lib/vendor/ssb-master'))
     .use(require('ssb-gossip'))
+    .use(require('./lib/vendor/ssb-replicate-stub'))
     .use(require('ssb-ebt'))
     .use(require('./plugins/friends'))
     .use(require('ssb-blobs'))
