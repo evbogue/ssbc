@@ -187,7 +187,7 @@ if (argv[0] === 'start') {
     .use(require('ssb-query'))
     .use(require('ssb-links'))
     .use(require('ssb-ws'))
-    .use(require('ssb-ooo'))
+    .use(require('./lib/vendor/ssb-ooo-stub'))
 
   require('ssb-plugins').loadUserPlugins(createSsbServer, config)
 

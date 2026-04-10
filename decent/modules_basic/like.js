@@ -25,6 +25,9 @@ exports.gives = {
 
 exports.create = function (api) {
   var exports = {}
+  function getCache () {
+    return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
+  }
 
   exports.message_content =
   exports.message_content_mini = function (msg, sbot) {
@@ -38,14 +41,15 @@ exports.create = function (api) {
 
   exports.message_meta = function (msg, sbot) {
     var digs = h('a')
+    var cache = getCache()
 
     var votes = []
-    for(var k in CACHE) {
-      if(CACHE[k].content.type == 'vote' &&
-        (CACHE[k].content.vote == msg.key ||
-        CACHE[k].content.vote.link == msg.key
+    for(var k in cache) {
+      if(cache[k].content.type == 'vote' &&
+        (cache[k].content.vote == msg.key ||
+        cache[k].content.vote.link == msg.key
         ))
-        votes.push({source: CACHE[k].author, dest: k, rel: 'vote'})
+        votes.push({source: cache[k].author, dest: k, rel: 'vote'})
     }
 
     if(votes.length === 1)

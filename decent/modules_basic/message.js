@@ -34,7 +34,19 @@ function message_content_mini_fallback(msg)  {
   return h('code', msg.value.content.type)
 }
 
+function isRenderableMessage (msg) {
+  return !!(
+    msg &&
+    msg.value &&
+    msg.value.content &&
+    typeof msg.value.content === 'object'
+  )
+}
+
 exports.create = function (api) {
+  function getCache () {
+    return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
+  }
 
   function mini(msg, el) {
     var content = el
@@ -53,6 +65,8 @@ exports.create = function (api) {
   }
 
   return function (msg, sbot) {
+    if (!isRenderableMessage(msg)) return null
+
     var el = api.message_content_mini(msg)
     if(el) return mini(msg, el)
 
@@ -60,8 +74,9 @@ exports.create = function (api) {
     if(!el) return mini(msg, message_content_mini_fallback(msg))
 
     var links = []
-    for(var k in CACHE) {
-      var _msg = CACHE[k]
+    var cache = getCache()
+    for(var k in cache) {
+      var _msg = cache[k]
       if(Array.isArray(_msg.content.mentions)) {
         for(var i = 0; i < _msg.content.mentions.length; i++)
           if(_msg.content.mentions[i].link == msg.key)

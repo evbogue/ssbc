@@ -1,0 +1,38 @@
+- generic [ref=e1]:
+  - generic [ref=e4]:
+    - link "Decent" [ref=e5] [cursor=pointer]:
+      - /url: "#/"
+    - list [ref=e6]:
+      - listitem [ref=e7]:
+        - link "public Public" [ref=e8] [cursor=pointer]:
+          - /url: "#/"
+          - generic [ref=e9]: public
+          - text: Public
+      - listitem [ref=e10]:
+        - link "person Profile" [ref=e11] [cursor=pointer]:
+          - /url: "#@iKdcZigKmyYoUj9SKOHBnVMroQWlsQOvs5NMGhqRoZg=.ed25519"
+          - generic [ref=e12]: person
+          - text: Profile
+      - listitem [ref=e13]:
+        - link "lock Private" [ref=e14] [cursor=pointer]:
+          - /url: "#private"
+          - generic [ref=e15]: lock
+          - text: Private
+      - listitem [ref=e16]:
+        - link "notifications Notifications" [ref=e17] [cursor=pointer]:
+          - /url: "#notifications"
+          - generic [ref=e18]: notifications
+          - text: Notifications
+      - listitem [ref=e19]:
+        - link "key Key" [active] [ref=e20] [cursor=pointer]:
+          - /url: "#key"
+          - generic [ref=e21]: key
+          - text: Key
+    - generic "Connected" [ref=e24]
+  - generic [ref=e107]:
+    - paragraph [ref=e108]:
+      - text: "Your secret key is:"
+      - code [ref=e110]: "{ \"curve\": \"ed25519\", \"public\": \"iKdcZigKmyYoUj9SKOHBnVMroQWlsQOvs5NMGhqRoZg=.ed25519\", \"private\": \"N2ll7ofMXMHQxAejt4osZZFTcRCNfZo0+LxR/IJSM/SIp1xmKAqbJihSP1Io4cGdUyuhBaWxA6+zk0waGpGhmA==.ed25519\", \"id\": \"@iKdcZigKmyYoUj9SKOHBnVMroQWlsQOvs5NMGhqRoZg=.ed25519\" }"
+    - generic [ref=e111]:
+      - textbox "import an existing public/private key" [ref=e112]
+      - button "Import" [ref=e113] [cursor=pointer]

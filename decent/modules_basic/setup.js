@@ -52,13 +52,13 @@ exports.create = function (api) {
     )
   }
 
-  function invite_form () {
+  function invite_form (status) {
     var accept = h('button', 'enter code', {disabled: true, onclick: function () {
       api.invite_accept(input.value, function (msg) {
         status.textContent = msg
       }, function (err) {
         if(err) {
-          accept.textContent = 'error:'+(err.message || err.stack || error.type)
+          accept.textContent = 'error:' + (err.message || err.stack || err.type)
           console.error(err)
         }
         else {
@@ -73,7 +73,7 @@ exports.create = function (api) {
         accept.disabled = true
         accept.textContent = 'enter code'
       }
-      else if(!invite_parse(input.value)) {
+      else if(!api.invite_parse(input.value)) {
         accept.disabled = true
         accept.textContent = 'invalid code'
       }
@@ -146,7 +146,8 @@ exports.create = function (api) {
         api.avatar_edit(id)
       ),
       h('h2', 'join network'),
-      invite_form(),
+      invite_form(status),
+      status,
       //show avatars of anyone on the same local network.
       //show realtime changes in your followers, especially for local.
 

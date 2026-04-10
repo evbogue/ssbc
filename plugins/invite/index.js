@@ -6,8 +6,6 @@ const net     = require('net')
 const ssbKeys = require('ssb-keys')
 const fs      = require('fs')
 const ref     = require('../ref')
-const level   = require('level')
-const sublevel = require('level-sublevel/bytewise')
 const path    = require('path')
 const { promisify } = require('util')
 
@@ -20,6 +18,35 @@ const createClient = require('ssb-client/client')
 function isString(s) { return typeof s === 'string' }
 function isObject(o) { return o && typeof o === 'object' }
 function isNumber(n) { return typeof n === 'number' && !isNaN(n) }
+
+function createJsonStore(filename) {
+  fs.mkdirSync(path.dirname(filename), { recursive: true })
+
+  let state = {}
+  if (fs.existsSync(filename)) {
+    try {
+      state = JSON.parse(fs.readFileSync(filename, 'utf8'))
+    } catch (_) {
+      state = {}
+    }
+  }
+
+  function flush(cb) {
+    fs.writeFile(filename, JSON.stringify(state, null, 2), cb)
+  }
+
+  return {
+    get(key, cb) {
+      const value = state[key]
+      if (value === undefined) return cb(new Error('NotFound'))
+      cb(null, value)
+    },
+    put(key, value, cb) {
+      state[key] = value
+      flush(cb)
+    }
+  }
+}
 
 function isPrivateIP(host) {
   if (!isString(host)) return false
@@ -54,8 +81,7 @@ module.exports = {
     if (server.sublevel) {
       codesDB = server.sublevel('codes')
     } else {
-      const db = sublevel(level(path.join(config.path, 'db'), { valueEncoding: 'json' }))
-      codesDB = db.sublevel('codes')
+      codesDB = createJsonStore(path.join(config.path, 'invite-codes.json'))
     }
 
     // auth hook: allow invite codes to authenticate
