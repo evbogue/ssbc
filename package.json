@@ -12,7 +12,7 @@
     "ssb-server": "./bin.js"
   },
   "engines": {
-    "node": ">=18.3"
+    "node": ">=22.5"
   },
   "scripts": {
     "start": "node bin start",
@@ -27,7 +27,6 @@
     "debug": "^4.1.1",
     "git-ssb": "^2.3.6",
     "layered-graph": "^1.2.0",
-    "level-sublevel": "^6.6.5",
     "mdmanifest": "^1.0.8",
     "multiblob": "^1.13.0",
     "multiserver": "^3.3.1",
@@ -43,7 +42,6 @@
     "ssb-blobs": "1.2.2",
     "ssb-client": "^4.7.9",
     "ssb-config": "^3.2.5",
-    "ssb-db": "^20.0.1",
     "ssb-ebt": "^5.6.1",
     "ssb-git": "^0.5.0",
     "ssb-git-repo": "^2.8.3",
@@ -56,6 +54,7 @@
     "ssb-private1": "^1.0.1",
     "ssb-query": "^2.4.0",
     "ssb-ref": "^2.13.9",
+    "ssb-validate": "^4",
     "ssb-ws": "^6.2.1",
     "stream-to-pull-stream": "^1.6.10"
   },
@@ -74,7 +73,6 @@
     "semver": "^7.6.0",
     "ssb-feed": "^2.3.0",
     "ssb-generate": "^1.0.1",
-    "ssb-validate": "^4",
     "tap-spec": "^5.0.0",
     "tape": "^5.0.0",
     "typewiselite": "^1.0.0"

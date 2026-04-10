@@ -40,7 +40,7 @@ function createSsbServer() {
         ]
       }
     }
-  }).use(require('ssb-db'))
+  }).use(require('./lib/db'))
 }
 
 module.exports = createSsbServer()
