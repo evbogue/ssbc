@@ -196,6 +196,7 @@ if (argv[0] === 'start') {
     .use(require('./plugins/friends'))
     .use(require('ssb-blobs'))
     .use(require('./plugins/invite'))
+    .use(require('./plugins/git-server'))
     .use(require('./plugins/decent-ui'))
     .use(require('ssb-local'))
     .use(require('./lib/vendor/ssb-logging'))

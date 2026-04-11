@@ -1,8 +1,9 @@
 'use strict'
 
-const fs   = require('fs')
-const http = require('http')
-const path = require('path')
+const fs        = require('fs')
+const http      = require('http')
+const path      = require('path')
+const gitServer = require('./git-server')
 
 const DEFAULT_PORT = 8888
 const DEFAULT_HOST = '127.0.0.1'
@@ -185,7 +186,12 @@ exports.init = function (sbot, config) {
     })
   }
 
-  const server = http.createServer(serveStatic)
+  function handleRequest(req, res) {
+    if (gitServer.handleGitRequest(sbot, req, res)) return
+    serveStatic(req, res)
+  }
+
+  const server = http.createServer(handleRequest)
 
   server.on('error', (err) => {
     console.error('decent-ui server error:', err.message || err)
