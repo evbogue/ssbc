@@ -26,6 +26,12 @@ function pktLine(str) {
 }
 const FLUSH = Buffer.from('0000', 'ascii')
 
+// Wrap data in a sideband-64k packet (band 1 = data, 2 = progress, 3 = error).
+function sidebandPkt(band, data) {
+  const payload = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8')
+  return pktLine(Buffer.concat([Buffer.from([band]), payload]))
+}
+
 // Read the full HTTP request body as a single Buffer.
 function readBody(req, cb) {
   const chunks = []
@@ -56,8 +62,8 @@ function parsePktLines(buf) {
 // symrefs: [{name, ref}]  (e.g. {name:'HEAD', ref:'refs/heads/master'})
 function buildRefAdvert(service, refs, symrefs) {
   const caps = service === 'git-upload-pack'
-    ? ['multi_ack', 'thin-pack', 'side-band-64k', 'ofs-delta', 'no-progress', 'include-tag']
-    : ['delete-refs', 'no-thin', 'quiet']
+    ? ['multi_ack_detailed', 'no-done', 'side-band-64k', 'thin-pack', 'ofs-delta', 'no-progress', 'include-tag']
+    : ['report-status', 'delete-refs', 'no-thin', 'quiet', 'ofs-delta']
 
   // symref=HEAD:refs/heads/master style capabilities
   const validSymrefs = symrefs.filter(s => s.ref)
@@ -150,17 +156,18 @@ function handleUploadPack(sbot, repoId, req, res) {
   readBody(req, (err, body) => {
     if (err) { res.statusCode = 500; res.end(err.message); return }
 
-    // Parse wants/haves from pkt-lines.
-    const { lines } = parsePktLines(body)
+    // HTTP upload-pack request: two pkt-line sections.
+    // Section 1 (until first flush): want lines
+    // Section 2 (until second flush or done pkt-line): have lines
+    const { lines: wantLines, rest: rest1 } = parsePktLines(body)
+    const { lines: haveLines } = parsePktLines(rest1)
     const wants = {}
     const haves = {}
-    for (const line of lines) {
-      if (line.startsWith('want ')) {
-        // "want <sha1>[ <caps>]"
-        wants[line.slice(5, 45)] = true
-      } else if (line.startsWith('have ')) {
-        haves[line.slice(5, 45)] = true
-      }
+    for (const line of wantLines) {
+      if (line.startsWith('want ')) wants[line.slice(5, 45)] = true
+    }
+    for (const line of haveLines) {
+      if (line.startsWith('have ')) haves[line.slice(5, 45)] = true
     }
 
     gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
@@ -181,14 +188,20 @@ function handleUploadPack(sbot, repoId, req, res) {
       repo.getPack(wants, haves, {}, (err, packStream) => {
         if (err) {
           console.error('git-server: getPack error:', err)
-          res.end()
-          return
+          res.write(pktLine('NAK\n'))
+          res.write(FLUSH)
+          return res.end()
         }
         res.write(pktLine('NAK\n'))
+        // Pack data must be sideband-wrapped (we advertise side-band-64k).
         pull(packStream, pull.drain(
-          chunk => res.write(chunk),
+          chunk => res.write(sidebandPkt(0x01, chunk)),
           (err) => {
-            if (err && err !== true) console.error('git-server: pack stream error:', err)
+            if (err && err !== true) {
+              console.error('git-server: pack stream error:', err)
+              res.write(sidebandPkt(0x03, 'pack error: ' + err.message + '\n'))
+            }
+            res.write(FLUSH)
             res.end()
           }
         ))
