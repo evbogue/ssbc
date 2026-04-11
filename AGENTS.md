@@ -2,7 +2,9 @@
 
 ## Project Structure & Module Organization
 - Core entry: `index.js` exports the default `ssb-server` instance. CLI entry: `bin.js` (exposed as `ssb-server` / `sbot`).
-- Library helpers live in `lib/` (CLI aliases, progress, validation). Prefer adding new shared logic here rather than in `bin.js`.
+- Library helpers live in `lib/` (CLI aliases, progress, validation). Vendored SSB packages live in `lib/vendor/`.
+- Plugins live in `plugins/` — each is a secret-stack plugin with `{name, version, manifest, init}`.
+- The Decent browser UI lives in `decent/`; build output goes to `decent/build/`.
 - Tests live in `test/` and are plain Node scripts (mostly using `tape`). Use descriptive filenames like `caps.js`, `defaults.js`.
 - System integration artifacts live in `systemd/`. Keep them minimal and distro-agnostic.
 - Do not edit `node_modules/`; send fixes upstream and update dependencies instead.
@@ -17,7 +19,7 @@
 ## Coding Style & Naming Conventions
 - Language: Node.js, CommonJS (`require`, `module.exports`), callback-style APIs and pull-streams.
 - Indentation: 2 spaces, no hard tabs. Prefer single quotes and omit semicolons (match existing files).
-- Use `var` and classic function declarations in existing modules; introduce `const`/`let` only when touching newer code paths consistently.
+- Use `const`/`let` throughout; avoid `var`. Use arrow functions and template literals where they improve clarity.
 - File and symbol names: camelCase for functions/variables, kebab-case for CLI commands, lowerCamelCase JSON/config keys.
 
 ## Testing Guidelines

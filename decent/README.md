@@ -1,96 +1,74 @@
-# patchbay
+# Decent
 
-Prototype of a pluggable patchwork.
+Decent is a browser UI for Secure Scuttlebutt, served by `plugins/decent-ui.js` on port `8888`.
+It uses [depject](https://github.com/dominictarr/depject) for module wiring and connects to the running sbot via WebSocket.
 
-`patchbay` is an secure-scuttlebutt client interface
-that is fully compatible with [patchwork](https://github.com/ssbc/patchwork)
+## Building
 
-I started `patchbay` to experiment with a different internal architecture
-based on [depject](https://github.com/dominictarr/depject). The goal was
-to make it easier to develop new features, and enable or disable features.
-This has so far been quite successful!
+From the repo root:
 
-This makes in very easy to create say, a renderer for a new message type,
-or switch to a different method for choosing user names.
-
-## Installing dependencies without native builds
-
-In this repo, Patchbay is used only as a browser bundle (Patchbay Lite), so you can install its dependencies without compiling native modules by using:
-
-```
-npm install --ignore-scripts
+```bash
+npm --prefix decent install --ignore-scripts
+npm run build:web
+# or equivalently:
+npm --prefix decent run lite
 ```
 
-This is enough to run `npm run lite` and regenerate `build/index.html` without requiring a full native toolchain.
+Output files:
+
+- `decent/build/index.html`
+- `decent/build/bundle.js`
+- `decent/build/style.css`
 
 ## Running
 
-```
-npm install scuttlebot@latest -g
-# make sure you have secure-scuttlebutt@15.2.0
-npm ls secure-scuttlebutt -g
-sbot server
-# if you are already running patchwork, that also works.
-# (must have at least >= 2.8)
-
-# then in another tab (these must be 3 separate commands)
-sbot plugins.install ssb-links
-sbot plugins.install ssb-query
-sbot plugins.install ssb-ws
-# restart sbot server (go back to previous tab and kill it)
-```
-now clone and run patchbay.
-```
-git clone https://github.com/dominictarr/patchbay.git
-cd patchbay
-npm install
-npm run rebuild
-npm run bundle
-npm start
-```
-
-## Lite
-
-To run a lite client in the browser instead of using electron, use npm
-run lite from the prompt instead of run bundle. After that you need to
-generate a modern invite:
+Start the sbot server (`npm start` from repo root), then open:
 
 ```
-sbot invite.create --modern
+http://127.0.0.1:8888/
 ```
 
-Also set up sbot to allow these connections with:
+The server injects the WebSocket remote address into the page automatically.
 
+## Configuration
+
+Override host/port in `~/.ssb/config`:
+
+```json
+{
+  "decent": {
+    "host": "127.0.0.1",
+    "port": 8888
+  }
+}
 ```
-sbot server --allowPrivate
+
+If the Decent UI is behind a reverse proxy, set `wsRemote` to the public WebSocket address:
+
+```json
+{
+  "decent": {
+    "wsRemote": "wss://your.domain:443"
+  }
+}
 ```
 
-Lastly open build/index.html in a browser and append the invite
-created above using: index.html#ws://localhost:8989....
+## Module structure
 
-## how to add a feature
+Modules live in `decent/modules_basic/` and `decent/modules_core/` and are wired together via depject.
 
-To add a new message type, add add a js to `./modules/` that
-exports a function named `message_content` (it should return an html element)
-To add a new tab, export a function named `screen_view` (returns an html element)
+Key modules:
 
-To add a new detail, that appears above a message,
-export a function named `message_meta`.
-
-see the code for more examples.
-
-## module graph
-
-patchbay uses [depject](http://github.com/dominictarr/depject) to manage it's modules.
-here is a graph of the current connections between them. (round shows module,
-square shows api, arrow direction points from user to provider)
-
-[module graph](./graph.svg)
+| Module | Purpose |
+|---|---|
+| `modules_core/sbot.js` | WebSocket connection to sbot; exposes pull-stream sources |
+| `modules_core/keys.js` | Load/generate identity keys (localStorage in browser, disk in Node) |
+| `modules_core/crypto.js` | Sign messages client-side via `ssb-validate` |
+| `modules_basic/names.js` | Resolve feed IDs to display names from `about` messages |
+| `modules_basic/public.js` | Public timeline from followed feeds |
+| `modules_basic/profile.js` | Profile view |
+| `modules_basic/compose.js` | Compose and publish posts |
 
 ## License
 
 MIT
-
-
-
-
