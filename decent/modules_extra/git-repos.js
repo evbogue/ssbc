@@ -45,7 +45,7 @@ exports.create = function (api) {
 
     return h('div.repos-card',
       h('div.repos-card-header',
-        api.avatar_image(author, 20),
+        api.avatar_image(author, 'thumbnail'),
         h('span.repos-card-owner', api.avatar_name(author))
       ),
       h('h3.repos-card-name', h('a', {href: browse}, name)),
@@ -71,7 +71,7 @@ exports.create = function (api) {
       if (route !== 'repos') return
 
       var grid    = h('div.repos-grid')
-      var empty   = h('p.repos-empty', 'No repositories found. Create one with ', h('code', 'node bin git.create \'{"name":"my-project"}\''), '.')
+      var empty   = h('p.repos-empty', 'No repositories found. Create one with ', h('code', 'node bin git.create my-project'), '.')
       var count   = 0
       var wrapper = h('div.scroller__wrapper',
         h('h2.repos-heading', 'Repositories'),

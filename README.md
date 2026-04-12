@@ -126,7 +126,7 @@ The server exposes a git smart HTTP remote on the same port as the Decent UI (de
 ### Create a repo
 
 ```bash
-node bin git.create '{"name":"my-project"}'
+node bin git.create my-project
 # → "http://127.0.0.1:8888/git/%25<id>.sha256"
 ```
 

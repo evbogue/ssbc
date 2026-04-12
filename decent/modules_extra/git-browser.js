@@ -55,13 +55,15 @@ exports.create = function (api) {
   }
 
   function renderCommitRow(repoId, c) {
-    var date = c.author.date ? new Date(c.author.date) : null
+    var author = c && c.author ? c.author : {}
+    var sha1 = (c && c.sha1) || ''
+    var date = author.date ? new Date(author.date) : null
     return h('div.git-commit',
-      h('a', {href: gitBrowseRoute(repoId, 'commit', c.sha1)},
-        h('code.git-sha', c.sha1.substr(0, 7))),
+      h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
+        h('code.git-sha', sha1.substr(0, 7))),
       h('span.git-commit-title', ' ' + (c.title || '')),
       h('span.git-commit-meta',
-        ' — ', c.author.name || '',
+        ' — ', author.name || '',
         date ? [', ', human(date)] : ''))
   }
 
@@ -267,16 +269,16 @@ exports.create = function (api) {
     } else if (!file.hunks || !file.hunks.length) {
       body = h('div.git-diff-empty', 'No changes')
     } else {
-      var hunkEls = file.hunks.map(function (hunk) {
-        var lineEls = hunk.lines.map(function (line) {
-          var cls = 'git-diff-line git-diff-line-' + line.type
-          var oldLn = line.oldLn != null ? String(line.oldLn) : ''
-          var newLn = line.newLn != null ? String(line.newLn) : ''
-          var prefix = line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '
-          return h('tr.' + cls,
-            h('td.git-diff-ln', oldLn),
-            h('td.git-diff-ln', newLn),
-            h('td.git-diff-prefix', prefix),
+        var hunkEls = file.hunks.map(function (hunk) {
+          var lineEls = hunk.lines.map(function (line) {
+            var cls = 'git-diff-line git-diff-line-' + line.type
+            var oldLn = line.oldLn != null ? String(line.oldLn) : ''
+            var newLn = line.newLn != null ? String(line.newLn) : ''
+            var prefix = line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '
+            return h('tr', {className: cls},
+              h('td.git-diff-ln', oldLn),
+              h('td.git-diff-ln', newLn),
+              h('td.git-diff-prefix', prefix),
             h('td.git-diff-code', line.text))
         })
         var hunkHeader = '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@'

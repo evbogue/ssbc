@@ -46,21 +46,26 @@ module.exports = {
 
       var selfId = require('../keys').id
       var navItems = [
-        {route: 'public', label: 'Public', icon: 'public'},
-        {route: selfId, label: 'Profile', icon: 'person'},
-        {route: 'private', label: 'Private', icon: 'lock'},
-        {route: 'repos', label: 'Repos', icon: 'source'},
-        {route: 'code', label: 'Code', icon: 'code'},
-        {route: 'notifications', label: 'Notifications', icon: 'notifications'},
-        {route: 'key', label: 'Key', icon: 'key'}
+        {route: 'public', label: 'Public', icon: 'newspaper'},
+        {route: 'friends', label: 'Friends', icon: 'groups'},
+        {route: selfId, label: 'Profile', icon: 'account_circle'},
+        {route: 'private', label: 'Private', icon: 'mail_lock'},
+        {route: 'repos', label: 'Repos', icon: 'account_tree'},
+        {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
+        {route: 'key', label: 'Keys', icon: 'vpn_key'}
       ]
 
       var nav = h('ul.nav.pull-left', navItems.map(function (item) {
         var href = item.route === 'public' ? '#/' : '#' + item.route
         return h('li', {'data-route': item.route},
-          h('a', {href: href}, [
-            h('span.material-symbols-outlined.nav__icon', item.icon),
-            h('span', item.label)
+          h('a', {
+            href: href,
+            title: item.label,
+            'aria-label': item.label
+          }, [
+            h('span.material-symbols-outlined.nav__icon', {
+              'aria-hidden': 'true'
+            }, item.icon)
           ])
         )
       }))
@@ -93,9 +98,9 @@ module.exports = {
         var suffix = (view && view.title) || null
         if (!suffix) {
           if (route === 'public') suffix = 'Public'
+          else if (route === 'friends') suffix = 'Friends'
           else if (route === 'private') suffix = 'Private'
           else if (route === 'repos') suffix = 'Repositories'
-          else if (route === 'code') suffix = 'Code Activity'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
           else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)

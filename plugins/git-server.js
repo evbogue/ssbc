@@ -21,9 +21,13 @@
 const pull      = require('pull-stream')
 const paramap   = require('pull-paramap')
 const cat       = require('pull-cat')
+const fs        = require('fs')
+const os        = require('os')
+const path      = require('path')
+const cp        = require('child_process')
+const toPull    = require('stream-to-pull-stream')
 const gitRepo   = require('ssb-git-repo')
 const GitRepo   = require('pull-git-repo')
-const indexPack = require('pull-git-pack/lib/index-pack')
 
 // ── pkt-line helpers ─────────────────────────────────────────────────────────
 
@@ -132,6 +136,64 @@ function bufToPull(buf) {
     done = true
     cb(null, buf)
   }
+}
+
+function parseCreateOpts(opts) {
+  if (typeof opts === 'function' || opts == null) return {}
+
+  if (typeof opts === 'string') {
+    const trimmed = opts.trim()
+    if (trimmed[0] === '{' || trimmed[0] === '[') {
+      try {
+        opts = JSON.parse(trimmed)
+      } catch (_) {
+        opts = { name: opts }
+      }
+    } else {
+      opts = { name: opts }
+    }
+  }
+
+  if (!opts || typeof opts !== 'object' || Array.isArray(opts)) return {}
+  return opts
+}
+
+function indexPackFixThin(buf, cb) {
+  const name = Math.random().toString(36).slice(2)
+  const idxFilename = path.join(os.tmpdir(), name + '.idx')
+  const packFilename = path.join(os.tmpdir(), name + '.pack')
+  const child = cp.spawn('git', [
+    'index-pack',
+    '--stdin',
+    '--fix-thin',
+    '-o', idxFilename,
+    packFilename
+  ], {
+    stdio: ['pipe', 'pipe', 'pipe']
+  })
+
+  let stderr = ''
+  child.stderr.on('data', chunk => {
+    stderr += chunk.toString('utf8')
+  })
+
+  child.stdin.on('error', () => {})
+  child.stdin.end(buf)
+
+  child.on('close', code => {
+    if (code) {
+      return cb(new Error((stderr.trim() || ('git index-pack returned ' + code))))
+    }
+
+    function cleanup() {
+      fs.unlink(idxFilename, () => {})
+      fs.unlink(packFilename, () => {})
+    }
+
+    const idx = toPull(fs.createReadStream(idxFilename), cleanup)
+    const pack = toPull(fs.createReadStream(packFilename), cleanup)
+    cb(null, idx, pack)
+  })
 }
 
 // ── Raw blob endpoint ─────────────────────────────────────────────────────────
@@ -314,8 +376,8 @@ function handleReceivePack(sbot, repoId, req, res) {
         return
       }
 
-      // Index the packfile (requires git on PATH), then store it via uploadPack.
-      indexPack(bufToPull(rest), (err, idxStream, packfileFixed) => {
+      // Build an index and normalize thin packs before storing the result.
+      indexPackFixThin(rest, (err, idxStream, packfileFixed) => {
         if (err) return sendResult(new Error('index-pack failed: ' + err.message))
         repo.uploadPack(pull.values(updates), pull.once({
           pack: packfileFixed,
@@ -743,8 +805,7 @@ module.exports = {
     return {
       create(opts, cb) {
         if (typeof opts === 'function') { cb = opts; opts = {} }
-        if (typeof opts === 'string')   { opts = { name: opts } }
-        if (!opts) opts = {}
+        opts = parseCreateOpts(opts)
 
         sbot.publish({ type: 'git-repo', name: opts.name || undefined }, (err, msg) => {
           if (err) return cb(err)

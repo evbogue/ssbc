@@ -11,7 +11,8 @@ var keys = require('../keys')
 exports.needs = {
   message_render: 'first',
   message_compose: 'first',
-  sbot_messagesByType: 'first'
+  sbot_messagesByType: 'first',
+  sbot_log: 'first'
 }
 
 exports.gives = {
@@ -19,6 +20,14 @@ exports.gives = {
 }
 
 exports.create = function (api) {
+  function isPublicMessage (msg) {
+    var value = msg && msg.value
+    var content = value && value.content
+    if (!value || !content || typeof content !== 'object') return false
+    if (value.private || content.private || Array.isArray(content.recps)) return false
+    return true
+  }
+
   function isFollowMessage (msg) {
     var value = msg && msg.value
     var content = value && value.content
@@ -28,12 +37,9 @@ exports.create = function (api) {
       typeof content.contact === 'string'
   }
 
-  function isVisiblePublicPost (msg, authors) {
-    var value = msg && msg.value
-    var content = value && value.content
-    if (!value || !content || typeof content !== 'object') return false
-    if (value.private || content.private || Array.isArray(content.recps)) return false
-    if (content.type !== 'post') return false
+  function isVisiblePublicMessage (msg, authors) {
+    if (!isPublicMessage(msg)) return false
+    var value = msg.value
     return !!authors[value.author]
   }
 
@@ -65,11 +71,11 @@ exports.create = function (api) {
 
   return {
     builtin_tabs: function () {
-      return ['public']
+      return ['public', 'friends']
     },
 
     screen_view: function (path, sbot) {
-      if(path === 'public') {
+      if(path === 'public' || path === 'friends') {
 
         var content = h('div.column.scroller__content')
         var div = h('div.column.scroller',
@@ -83,11 +89,43 @@ exports.create = function (api) {
           )
         )
         div.setAttribute('data-icon', 'key')
+        div.title = path === 'friends' ? 'Friends' : 'Public'
+
+        function renderFeed(authors) {
+          var filter = path === 'friends'
+            ? function (msg) { return isVisiblePublicMessage(msg, authors) }
+            : isPublicMessage
+
+          pull(
+            api.sbot_log({
+              reverse: true,
+              limit: 100,
+              live: false,
+              old: true
+            }),
+            pull.filter(filter),
+            Scroller(div, content, api.message_render, false, false)
+          )
+
+          pull(
+            api.sbot_log({
+              old: false,
+              live: true
+            }),
+            pull.filter(filter),
+            Scroller(div, content, api.message_render, true, false)
+          )
+        }
+
+        if (path === 'public') {
+          renderFeed()
+          return div
+        }
 
         loadAuthors(function (err, authors) {
           if (err) {
             content.appendChild(h('div.message.message-card',
-              h('div.column', h('strong', 'Unable to load public feed'))
+              h('div.column', h('strong', 'Unable to load friends feed'))
             ))
             console.error(err)
             return
@@ -106,31 +144,7 @@ exports.create = function (api) {
             })
           )
 
-          pull(
-            api.sbot_messagesByType({
-              type: 'post',
-              reverse: true,
-              limit: 100,
-              live: false,
-              old: true
-            }),
-            pull.filter(function (msg) {
-              return isVisiblePublicPost(msg, authors)
-            }),
-            Scroller(div, content, api.message_render, false, false)
-          )
-
-          pull(
-            api.sbot_messagesByType({
-              type: 'post',
-              old: false,
-              live: true
-            }),
-            pull.filter(function (msg) {
-              return isVisiblePublicPost(msg, authors)
-            }),
-            Scroller(div, content, api.message_render, true, false)
-          )
+          renderFeed(authors)
         })
 
         return div

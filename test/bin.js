@@ -1,6 +1,7 @@
 'use strict'
 
 const fs     = require('fs')
+const os     = require('os')
 const test   = require('tape')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
@@ -22,11 +23,17 @@ function ssbServer(t, argv, opts) {
   count++
   exited = false
   opts = opts || {}
+  const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 
   const sh = spawn(
     process.execPath,
     [join(__dirname, '../bin.js')].concat(argv),
-    Object.assign({ env: Object.assign({}, process.env, { ssb_appname: 'test' }) }, opts)
+    Object.assign({
+      env: Object.assign({}, process.env, {
+        HOME: home,
+        ssb_appname: 'test'
+      })
+    }, opts)
   )
 
   sh.once('exit', (code, name) => {
