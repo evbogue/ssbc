@@ -730,3 +730,119 @@ textarea {
   font-size: 0.85em;
   color: #1e40af;
 }
+
+/* ── Repos discovery grid ───────────────────────────────────────────────── */
+
+.repos-heading {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 16px 0 12px 0;
+}
+
+.repos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.repos-empty {
+  color: #888;
+  font-size: 0.9em;
+  padding: 20px 0;
+}
+
+.repos-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+
+.repos-card:hover {
+  border-color: #1e40af;
+}
+
+.repos-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82em;
+  color: #666;
+}
+
+.repos-card-name {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+}
+
+.repos-card-name a {
+  color: #1e40af;
+  text-decoration: none;
+}
+
+.repos-card-name a:hover {
+  text-decoration: underline;
+}
+
+.repos-card-meta {
+  font-size: 0.8em;
+  color: #888;
+}
+
+.repos-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.repos-card-clone {
+  font-size: 0.72em;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Syntax highlighting ────────────────────────────────────────────────── */
+
+.git-highlighted {
+  background: #1e1e2e;
+  color: #cdd6f4;
+  border-color: #313244;
+}
+
+.git-highlighted .hl-keyword  { color: #cba6f7; font-weight: 600; }
+.git-highlighted .hl-string   { color: #a6e3a1; }
+.git-highlighted .hl-comment  { color: #6c7086; font-style: italic; }
+.git-highlighted .hl-number   { color: #fab387; }
+.git-highlighted .hl-punct    { color: #89dceb; }
+
+/* ── Image viewer ───────────────────────────────────────────────────────── */
+
+.git-image-view {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px;
+  background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 16px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  min-height: 100px;
+}
+
+.git-blob-image {
+  max-width: 100%;
+  max-height: 60vh;
+  display: block;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}

@@ -105,6 +105,16 @@ exports.create = function (api) {
         case 'issue-edit':
           return isAnyOurMessage(msg, [c.issue].concat(c.issues), cb)
 
+        case 'git-update':
+          return isOurMsg(c.repo, function (err, isOurs) {
+            cb(err, isOurs ? msg : null)
+          })
+
+        case 'git-comment':
+          return isOurMsg(c.repo, function (err, isOurs) {
+            cb(err, isOurs ? msg : null)
+          })
+
         default:
           cb()
       }

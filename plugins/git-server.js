@@ -134,6 +134,51 @@ function bufToPull(buf) {
   }
 }
 
+// ── Raw blob endpoint ─────────────────────────────────────────────────────────
+
+const MIME = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  svg: 'image/svg+xml', webp: 'image/webp', ico: 'image/x-icon', bmp: 'image/bmp',
+  pdf: 'application/pdf', wasm: 'application/wasm',
+  js: 'text/javascript', ts: 'text/javascript', mjs: 'text/javascript',
+  json: 'application/json', css: 'text/css',
+  html: 'text/html', xml: 'text/xml', svg: 'image/svg+xml',
+  txt: 'text/plain', md: 'text/plain',
+  sh: 'text/plain', py: 'text/plain', rb: 'text/plain', go: 'text/plain',
+  rs: 'text/plain', c: 'text/plain', h: 'text/plain', cpp: 'text/plain'
+}
+
+function mimeForPath(filePath) {
+  const ext = (filePath[filePath.length - 1] || '').match(/\.(\w+)$/)
+  return ext ? (MIME[ext[1].toLowerCase()] || 'application/octet-stream') : 'application/octet-stream'
+}
+
+function handleRawBlob(sbot, repoId, ref, filePath, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) { res.statusCode = 404; res.end('Repository not found'); return }
+    GitRepo(repo)
+    repo.resolveRef(ref, (err, hash) => {
+      if (err) { res.statusCode = 404; res.end('Ref not found'); return }
+      repo.getCommitParsed(hash, (err, commit) => {
+        if (err) { res.statusCode = 404; res.end('Commit not found'); return }
+        repo.getFile(commit.tree, filePath, (err, file) => {
+          if (err) { res.statusCode = 404; res.end('File not found'); return }
+          const ct = mimeForPath(filePath)
+          res.writeHead(200, {
+            'Content-Type': ct,
+            'Cache-Control': 'public, max-age=3600',
+            'Access-Control-Allow-Origin': '*'
+          })
+          pull(file.read, pull.drain(
+            chunk => res.write(chunk),
+            err2 => { if (err2 && err2 !== true) console.error('raw blob error:', err2); res.end() }
+          ))
+        })
+      })
+    })
+  })
+}
+
 // ── HTTP route handlers ───────────────────────────────────────────────────────
 
 function handleInfoRefs(sbot, repoId, service, res) {
@@ -510,6 +555,24 @@ function parseJsonRoute(req) {
   return null
 }
 
+// Returns null if not a raw blob route; otherwise { repoId, ref, path }.
+function parseRawRoute(req) {
+  const raw      = req.url || '/'
+  const qIdx     = raw.indexOf('?')
+  const pathname = qIdx === -1 ? raw : raw.slice(0, qIdx)
+
+  const m = pathname.match(/^\/git\/([^/]+)\/raw\/([^/]+)\/(.+)$/)
+  if (!m) return null
+
+  let repoId
+  try { repoId = decodeURIComponent(m[1]) } catch (_) { return null }
+
+  const ref  = decodeURIComponent(m[2])
+  const path = m[3].split('/').map(p => { try { return decodeURIComponent(p) } catch (_) { return p } })
+
+  return { repoId, ref, path }
+}
+
 // ── SSB plugin ────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -546,11 +609,18 @@ module.exports.handleGitRequest = function (sbot, req, res) {
     if (json) {
       if (req.method === 'HEAD') { res.writeHead(200); res.end(); return true }
       const { repoId, sub, ref, path, sha1 } = json
-      if (sub === 'refs')   handleJsonRefs(sbot, repoId, res)
+      if (sub === 'refs')        handleJsonRefs(sbot, repoId, res)
       else if (sub === 'log')    handleJsonLog(sbot, repoId, ref, res)
       else if (sub === 'commit') handleJsonCommit(sbot, repoId, sha1, res)
       else if (sub === 'tree')   handleJsonTree(sbot, repoId, ref, path || [], res)
       else if (sub === 'blob')   handleJsonBlob(sbot, repoId, ref, path || [], res)
+      return true
+    }
+
+    const raw = parseRawRoute(req)
+    if (raw) {
+      if (req.method === 'HEAD') { res.writeHead(200); res.end(); return true }
+      handleRawBlob(sbot, raw.repoId, raw.ref, raw.path, res)
       return true
     }
   }

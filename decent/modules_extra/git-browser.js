@@ -1,7 +1,8 @@
 'use strict'
-var h    = require('hyperscript')
-var pull = require('pull-stream')
-var human = require('human-time')
+var h         = require('hyperscript')
+var pull      = require('pull-stream')
+var human     = require('human-time')
+var highlight = require('../highlight')
 
 exports.needs = {
   markdown: 'first',
@@ -178,22 +179,52 @@ exports.create = function (api) {
     })
   }
 
+  var IMAGE_EXTS = /\.(png|jpg|jpeg|gif|svg|webp|ico|bmp)$/i
+
+  function rawBlobUrl(repoId, ref, pathParts) {
+    return window.location.origin + '/git/' + encodeURIComponent(repoId) +
+      '/raw/' + encodeURIComponent(ref) + '/' + pathParts.map(encodeURIComponent).join('/')
+  }
+
   function renderBlobScreen(repoId, ref, pathParts, container) {
+    var fileName = pathParts[pathParts.length - 1] || ''
+
+    // Images: serve via raw endpoint, no JSON fetch needed
+    if (IMAGE_EXTS.test(fileName)) {
+      container.innerHTML = ''
+      container.appendChild(h('div.git-browser',
+        breadcrumbs(repoId, ref, pathParts),
+        h('div.git-image-view',
+          h('img.git-blob-image', {
+            src: rawBlobUrl(repoId, ref, pathParts),
+            alt: fileName
+          })
+        )
+      ))
+      return
+    }
+
     container.textContent = 'Loading…'
     var apiPath = 'blob/' + encodeURIComponent(ref) + '/' + pathParts.join('/')
     fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
-      var fileName = pathParts[pathParts.length - 1] || ''
       var isMarkdown = /\.(md|markdown)$/i.test(fileName)
       var contentEl
+
       if (isMarkdown) {
         contentEl = h('div.git-readme')
         var md = null
         try { md = api.markdown({text: data.content}) } catch (_) {}
         contentEl.appendChild(md || h('pre.git-blob-content', data.content))
       } else {
-        contentEl = h('pre.git-blob-content', data.content || '')
+        // Syntax-highlighted code view
+        var pre = h('pre.git-blob-content.git-highlighted')
+        var code = h('code')
+        code.innerHTML = highlight(data.content || '', fileName)
+        pre.appendChild(code)
+        contentEl = pre
       }
+
       container.innerHTML = ''
       container.appendChild(h('div.git-browser',
         breadcrumbs(repoId, ref, pathParts),
