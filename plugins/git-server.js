@@ -8,13 +8,21 @@
 //   GET  /git/:repoId/info/refs?service=git-receive-pack  (push refs)
 //   POST /git/:repoId/git-receive-pack                    (push pack)
 //
+// JSON read-only API:
+//   GET  /git/:repoId/json/refs
+//   GET  /git/:repoId/json/log/:ref
+//   GET  /git/:repoId/json/commit/:sha1
+//   GET  /git/:repoId/json/tree/:ref[/:path...]
+//   GET  /git/:repoId/json/blob/:ref/:path...
+//
 // SSB RPC:
 //   git.create(name, cb) → HTTP URL for the new repo
 
-const pull    = require('pull-stream')
-const cat     = require('pull-cat')
-const gitRepo = require('ssb-git-repo')
-const GitRepo = require('pull-git-repo')
+const pull      = require('pull-stream')
+const paramap   = require('pull-paramap')
+const cat       = require('pull-cat')
+const gitRepo   = require('ssb-git-repo')
+const GitRepo   = require('pull-git-repo')
 const indexPack = require('pull-git-pack/lib/index-pack')
 
 // ── pkt-line helpers ─────────────────────────────────────────────────────────
@@ -273,6 +281,181 @@ function handleReceivePack(sbot, repoId, req, res) {
   })
 }
 
+// ── JSON API helpers ──────────────────────────────────────────────────────────
+
+function collectStream(read, cb) {
+  pull(read, pull.collect(function (err, bufs) {
+    if (err) return cb(err)
+    cb(null, Buffer.concat(bufs))
+  }))
+}
+
+function sendJson(res, obj) {
+  const json = JSON.stringify(obj)
+  res.writeHead(200, {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Access-Control-Allow-Origin': '*'
+  })
+  res.end(json)
+}
+
+function jsonErr(res, code, msg) {
+  res.writeHead(code, { 'Content-Type': 'application/json' })
+  res.end(JSON.stringify({ error: msg }))
+}
+
+// ── JSON route handlers ───────────────────────────────────────────────────────
+
+function handleJsonRefs(sbot, repoId, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+    collectRefs(repo, (err, refs, symrefs) => {
+      if (err) return jsonErr(res, 500, err.message)
+      sendJson(res, { refs, symrefs })
+    })
+  })
+}
+
+function handleJsonLog(sbot, repoId, ref, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+    repo.resolveRef(ref, (err, hash) => {
+      if (err) return sendJson(res, { commits: [] })
+      pull(
+        repo.readLog(hash),
+        pull.take(30),
+        paramap((sha1, cb) => {
+          repo.getCommitParsed(sha1, (err, commit) => {
+            if (err) return cb(null, null)
+            cb(null, {
+              sha1,
+              title: commit.title || '',
+              author: {
+                name:  commit.author.name  || '',
+                email: commit.author.email || '',
+                date:  commit.author.date ? commit.author.date.toISOString() : null
+              },
+              parents: commit.parents || []
+            })
+          })
+        }, 4),
+        pull.filter(Boolean),
+        pull.collect((err, commits) => {
+          if (err) return jsonErr(res, 500, err.message)
+          sendJson(res, { ref, commits })
+        })
+      )
+    })
+  })
+}
+
+function handleJsonCommit(sbot, repoId, sha1, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+    repo.getCommitParsed(sha1, (err, commit) => {
+      if (err) return jsonErr(res, 404, 'Commit not found')
+
+      // Try to get changed files vs first parent
+      const parentHash = commit.parents && commit.parents[0]
+      if (!parentHash || !commit.tree) {
+        return sendJson(res, {
+          sha1, title: commit.title || '', body: commit.body || '',
+          author:    { name: commit.author.name || '',    email: commit.author.email || '',    date: commit.author.date    ? commit.author.date.toISOString()    : null },
+          committer: { name: commit.committer.name || '', email: commit.committer.email || '', date: commit.committer.date ? commit.committer.date.toISOString() : null },
+          tree: commit.tree || '', parents: commit.parents || [], files: []
+        })
+      }
+
+      repo.getCommitParsed(parentHash, (err, parentCommit) => {
+        const parentTree = err ? null : parentCommit.tree
+        const treeIds = parentTree
+          ? [parentTree, commit.tree]
+          : [commit.tree, commit.tree]
+
+        pull(
+          repo.diffTrees(treeIds, true),
+          pull.collect((err, diffs) => {
+            const files = err ? [] : diffs.map(d => ({
+              path: (d.path || []).join('/'),
+              id:   d.id   || null,
+              mode: d.mode || null
+            }))
+            sendJson(res, {
+              sha1, title: commit.title || '', body: commit.body || '',
+              author:    { name: commit.author.name || '',    email: commit.author.email || '',    date: commit.author.date    ? commit.author.date.toISOString()    : null },
+              committer: { name: commit.committer.name || '', email: commit.committer.email || '', date: commit.committer.date ? commit.committer.date.toISOString() : null },
+              tree: commit.tree, parents: commit.parents || [], files
+            })
+          })
+        )
+      })
+    })
+  })
+}
+
+function handleJsonTree(sbot, repoId, ref, filePath, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+    repo.resolveRef(ref, (err, hash) => {
+      if (err) return jsonErr(res, 404, 'Ref not found: ' + ref)
+      repo.getCommitParsed(hash, (err, commit) => {
+        if (err) return jsonErr(res, 404, 'Commit not found')
+        const treeHash = commit.tree
+        if (!treeHash) return jsonErr(res, 404, 'No tree')
+        pull(
+          repo.readDir(treeHash, filePath.length ? filePath : []),
+          pull.collect((err, entries) => {
+            if (err) return jsonErr(res, 404, err.message)
+            const sorted = entries.slice().sort((a, b) => {
+              const aDir = (a.mode === 0o040000)
+              const bDir = (b.mode === 0o040000)
+              if (aDir && !bDir) return -1
+              if (!aDir && bDir) return 1
+              return a.name < b.name ? -1 : a.name > b.name ? 1 : 0
+            })
+            sendJson(res, {
+              ref, path: filePath.join('/'),
+              entries: sorted.map(e => ({
+                name: e.name, id: e.id, mode: e.mode,
+                isDir: (e.mode === 0o040000)
+              }))
+            })
+          })
+        )
+      })
+    })
+  })
+}
+
+function handleJsonBlob(sbot, repoId, ref, filePath, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+    repo.resolveRef(ref, (err, hash) => {
+      if (err) return jsonErr(res, 404, 'Ref not found: ' + ref)
+      repo.getCommitParsed(hash, (err, commit) => {
+        if (err) return jsonErr(res, 404, 'Commit not found')
+        repo.getFile(commit.tree, filePath, (err, file) => {
+          if (err) return jsonErr(res, 404, err.message)
+          collectStream(file.read, (err, buf) => {
+            if (err) return jsonErr(res, 500, err.message)
+            sendJson(res, {
+              ref, path: filePath.join('/'),
+              content: buf.toString('utf8'),
+              length: file.length, mode: file.mode
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
 // ── Route parser ──────────────────────────────────────────────────────────────
 
 // Returns null if not a git route; otherwise { repoId, endpoint, service }.
@@ -300,6 +483,31 @@ function parseGitRoute(req) {
   }
 
   return { repoId, endpoint, service }
+}
+
+// Returns null if not a JSON route; otherwise { repoId, sub, ref, path, sha1 }.
+function parseJsonRoute(req) {
+  const raw      = req.url || '/'
+  const qIdx     = raw.indexOf('?')
+  const pathname = qIdx === -1 ? raw : raw.slice(0, qIdx)
+
+  const m = pathname.match(/^\/git\/([^/]+)\/json\/(.*)$/)
+  if (!m) return null
+
+  let repoId
+  try { repoId = decodeURIComponent(m[1]) } catch (_) { return null }
+
+  const rest = m[2]
+
+  if (rest === 'refs') return { repoId, sub: 'refs' }
+
+  const parts = rest.split('/')
+  if (parts[0] === 'log'    && parts.length >= 2) return { repoId, sub: 'log',    ref:  parts.slice(1).join('/') }
+  if (parts[0] === 'commit' && parts.length === 2) return { repoId, sub: 'commit', sha1: parts[1] }
+  if (parts[0] === 'tree'   && parts.length >= 2) return { repoId, sub: 'tree',   ref:  parts[1], path: parts.slice(2) }
+  if (parts[0] === 'blob'   && parts.length >= 3) return { repoId, sub: 'blob',   ref:  parts[1], path: parts.slice(2) }
+
+  return null
 }
 
 // ── SSB plugin ────────────────────────────────────────────────────────────────
@@ -332,6 +540,22 @@ module.exports = {
 // Called from decent-ui.js to handle /git/* requests.
 // Returns true if the request was handled, false otherwise.
 module.exports.handleGitRequest = function (sbot, req, res) {
+  // Try JSON API routes first (GET only, no auth needed)
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    const json = parseJsonRoute(req)
+    if (json) {
+      if (req.method === 'HEAD') { res.writeHead(200); res.end(); return true }
+      const { repoId, sub, ref, path, sha1 } = json
+      if (sub === 'refs')   handleJsonRefs(sbot, repoId, res)
+      else if (sub === 'log')    handleJsonLog(sbot, repoId, ref, res)
+      else if (sub === 'commit') handleJsonCommit(sbot, repoId, sha1, res)
+      else if (sub === 'tree')   handleJsonTree(sbot, repoId, ref, path || [], res)
+      else if (sub === 'blob')   handleJsonBlob(sbot, repoId, ref, path || [], res)
+      return true
+    }
+  }
+
+  // Git smart HTTP protocol routes
   const match = parseGitRoute(req)
   if (!match) return false
 

@@ -299,12 +299,49 @@ exports.create = function (api) {
       var c = msg.value.content
 
       if(c.type === 'git-repo') {
+        var cloneUrl = window.location.origin + '/git/' + encodeURIComponent(msg.key)
+        var browseUrl = '#git/' + encodeURIComponent(msg.key)
         var branchesT, tagsT, openIssuesT, closedIssuesT, openPRsT, closedPRsT
         var forksT
+
+        // Async README preview - will be populated after render
+        var readmeEl = h('div')
+        ;(function fetchReadme() {
+          var candidates = ['README.md', 'readme.md', 'Readme.md', 'README']
+          var i = 0
+          function tryNext() {
+            if (i >= candidates.length) return
+            var name = candidates[i++]
+            var url = window.location.origin + '/git/' + encodeURIComponent(msg.key) +
+              '/json/blob/HEAD/' + name
+            var xhr = new XMLHttpRequest()
+            xhr.open('GET', url)
+            xhr.onload = function () {
+              if (xhr.status !== 200) return tryNext()
+              var data
+              try { data = JSON.parse(xhr.responseText) } catch (_) { return tryNext() }
+              if (!data || data.content == null) return tryNext()
+              // Truncate to first ~500 chars to avoid huge inline previews
+              var preview = data.content.length > 500
+                ? data.content.substr(0, 500) + '\n…'
+                : data.content
+              readmeEl.className = 'git-readme'
+              readmeEl.appendChild(h('pre', preview))
+            }
+            xhr.onerror = tryNext
+            xhr.send()
+          }
+          tryNext()
+        }())
+
         var div = h('div',
-          h('p', 'git repo ', repoName(msg.key)),
+          h('h3.git-repo-name',
+            h('a', {href: browseUrl}, c.name ? c.name : repoName(msg.key))),
           c.upstream ? h('p', 'fork of ', repoLink(c.upstream)) : '',
-          h('p', h('code', 'ssb://' + msg.key)),
+          h('p.git-clone-url',
+            h('span.git-label', 'Clone:'),
+            h('code.git-clone-input', cloneUrl)),
+          readmeEl,
           h('div.git-table-wrapper', {style: {'max-height': '12em'}},
             h('table',
               branchesT = tableRows(h('tr',
@@ -352,7 +389,7 @@ exports.create = function (api) {
                 h('br'),
                 h('a', {href: '#'+author}, api.avatar_name(author))
               ] : ''),
-            h('td', h('code', ref.hash)),
+            h('td', h('code.git-sha', ref.hash.substr(0, 7))),
             h('td', messageTimestampLink(ref.link))))
         }, function (err) {
           if(err) console.error(err)
@@ -409,33 +446,61 @@ exports.create = function (api) {
       }
 
       if(c.type === 'git-update') {
+        // Build commit rows with lazy-loaded file-change counts
+        function renderUpdateCommit(commit, repoId) {
+          if (typeof commit.sha1 !== 'string') return h('div.git-commit')
+          var browseHref = '#git/' + encodeURIComponent(repoId) +
+            '/commit/' + commit.sha1
+          var filesEl = h('span.git-commit-files-count')
+          // Lazy-load file count from JSON API
+          ;(function () {
+            var url = window.location.origin + '/git/' +
+              encodeURIComponent(repoId) + '/json/commit/' + commit.sha1
+            var xhr = new XMLHttpRequest()
+            xhr.open('GET', url)
+            xhr.onload = function () {
+              if (xhr.status !== 200) return
+              var data
+              try { data = JSON.parse(xhr.responseText) } catch (_) { return }
+              var n = (data && data.files && data.files.length) || 0
+              if (n > 0) {
+                filesEl.textContent = ' (' + n + ' file' + (n !== 1 ? 's' : '') + ')'
+              }
+            }
+            xhr.send()
+          }())
+          return h('div.git-commit',
+            h('a', {href: browseHref}, h('code.git-sha', commit.sha1.substr(0, 7))),
+            commit.title ? h('span.git-commit-title', ' ' + commit.title) : null,
+            filesEl)
+        }
+
+        var repoId = c.repo
         return [
-          h('p', 'pushed to ', repoLink(c.repo)),
-          c.refs ? h('ul', Object.keys(c.refs).map(function (ref) {
+          h('p', 'pushed to ', repoLink(repoId)),
+          c.refs ? h('div.git-refs', Object.keys(c.refs).map(function (ref) {
             var rev = c.refs[ref]
-            return h('li',
-              shortRefName(ref) + ': ',
-              rev ? h('code', rev) : h('em', 'deleted'))
+            return h('div.git-ref',
+              h('span.git-branch-badge', shortRefName(ref)),
+              rev
+                ? h('code.git-sha', rev.substr(0, 7))
+                : h('em.git-ref-deleted', 'deleted'))
           })) : null,
           Array.isArray(c.commits) ? [
-            h('ul',
+            h('div.git-commits',
               c.commits.map(function (commit) {
-                return h('li',
-                  typeof commit.sha1 === 'string' ?
-                    [h('code', commit.sha1.substr(0, 8)), ' '] : null,
-                  commit.title ?
-                    h('q', commit.title) : null)
+                return renderUpdateCommit(commit, repoId)
               }),
-              c.commits_more > 0 ?
-                h('li', '+ ', c.commits_more, ' more') : null)
+              c.commits_more > 0
+                ? h('div.git-commit.git-commits-more', '+ ', c.commits_more, ' more') : null)
           ] : null,
           Array.isArray(c.issues) ? c.issues.map(function (issue) {
             if (issue.merged === true)
               return h('p', 'Merged ', api.message_link(issue.link), ' in ',
-                h('code', issue.object), ' ', h('q', issue.label))
+                h('code.git-sha', issue.object), ' ', h('q', issue.label))
             if (issue.open === false)
               return h('p', 'Closed ', api.message_link(issue.link), ' in ',
-                h('code', issue.object), ' ', h('q', issue.label))
+                h('code.git-sha', issue.object), ' ', h('q', issue.label))
           }) : null,
           newPullRequestButton.call(this, msg)
         ]
@@ -465,16 +530,34 @@ exports.create = function (api) {
           api.markdown(c)
         )
       }
+
+      if(c.type === 'git-comment') {
+        var commitHref = c.repo && c.commit
+          ? '#git/' + encodeURIComponent(c.repo) + '/commit/' + c.commit
+          : null
+        return h('div',
+          h('p',
+            'commented on ',
+            commitHref
+              ? h('a', {href: commitHref}, h('code.git-sha', (c.commit || '').substr(0, 7)))
+              : (c.commit ? h('code.git-sha', c.commit.substr(0, 7)) : 'a commit'),
+            c.repo ? [' in ', repoLink(c.repo)] : ''
+          ),
+          c.path ? h('p', h('code.git-sha',
+            c.path + (c.line != null ? ':' + c.line : ''))) : null,
+          api.markdown(c)
+        )
+      }
     },
 
     message_meta: function (msg, sbot) {
       var type = msg.value.content.type
       if (type === 'issue' || type === 'pull-request') {
-        var el = h('em', '...')
-        // TODO: update if issue is changed
+        var el = h('em.git-state-badge', '...')
         getIssueState(msg.key, function (err, state) {
           if (err) return console.error(err)
           el.textContent = state
+          el.className = 'git-state-badge git-state-' + state
         })
         return el
       }
