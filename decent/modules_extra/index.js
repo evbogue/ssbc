@@ -5,6 +5,7 @@ module.exports = {
   "suggest-emoji.js":  require('./suggest-emoji.js'),
   "dns.js":  require('./dns.js'),
   "git.js":  require('./git.js'),
+  "git-activity.js": require('./git-activity.js'),
   "git-browser.js": require('./git-browser.js'),
   "git-repos.js": require('./git-repos.js'),
   "git-ssb.js":  require('./git-ssb.js'),

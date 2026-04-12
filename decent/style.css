@@ -846,3 +846,144 @@ textarea {
   display: block;
   box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
+
+/* ── Inline diff view ───────────────────────────────────────────────────── */
+
+.git-diff {
+  margin: 6px 0 16px 0;
+}
+
+.git-diff-stats {
+  font-size: 0.85em;
+  color: #555;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.git-diff-stat-files {
+  font-weight: 500;
+}
+
+.git-diff-stat-add {
+  color: #1a7f37;
+  font-weight: 600;
+}
+
+.git-diff-stat-del {
+  color: #cf222e;
+  font-weight: 600;
+}
+
+.git-diff-file {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  font-size: 0.85em;
+}
+
+.git-diff-file summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.git-diff-file summary::-webkit-details-marker {
+  display: none;
+}
+
+.git-diff-file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f6f8fa;
+  padding: 6px 10px;
+  border-bottom: 1px solid #e0e0e0;
+  font-family: monospace;
+}
+
+.git-diff-status {
+  font-weight: 700;
+  width: 1.4em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.git-diff-status-added    { color: #1a7f37; }
+.git-diff-status-deleted  { color: #cf222e; }
+.git-diff-status-modified { color: #9a6700; }
+.git-diff-status-renamed  { color: #1e40af; }
+
+.git-diff-path {
+  font-size: 0.95em;
+  word-break: break-all;
+}
+
+.git-diff-truncated {
+  font-size: 0.8em;
+  color: #888;
+  font-style: italic;
+}
+
+.git-diff-binary,
+.git-diff-empty {
+  padding: 8px 12px;
+  color: #888;
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.git-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.82em;
+  line-height: 1.5;
+}
+
+.git-diff-hunk-header td {
+  background: #dbedff;
+  color: #0550ae;
+  padding: 2px 8px;
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.git-diff-line td {
+  padding: 1px 4px;
+  vertical-align: top;
+  white-space: pre;
+}
+
+.git-diff-line-add { background: #e6ffec; }
+.git-diff-line-del { background: #ffebe9; }
+.git-diff-line-equal { background: #fff; }
+
+.git-diff-line-add .git-diff-code  { color: #1a7f37; }
+.git-diff-line-del .git-diff-code  { color: #82071e; }
+
+.git-diff-ln {
+  color: #8c959f;
+  text-align: right;
+  min-width: 2.5em;
+  padding-right: 8px !important;
+  user-select: none;
+  border-right: 1px solid #e0e0e0;
+}
+
+.git-diff-prefix {
+  color: #8c959f;
+  padding: 0 4px !important;
+  user-select: none;
+  width: 1em;
+}
+
+.git-diff-line-add .git-diff-prefix { color: #1a7f37; }
+.git-diff-line-del .git-diff-prefix { color: #cf222e; }
+
+/* ── Code activity feed ─────────────────────────────────────────────────── */
+
+.code-feed-title {
+  margin: 12px 16px 8px 16px;
+}

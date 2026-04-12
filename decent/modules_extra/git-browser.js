@@ -5,10 +5,12 @@ var human     = require('human-time')
 var highlight = require('../highlight')
 
 exports.needs = {
-  markdown: 'first',
-  message_compose: 'first',
-  sbot_links: 'first',
-  avatar_name: 'first'
+  markdown:            'first',
+  message_compose:     'first',
+  message_render:      'first',
+  sbot_links:          'first',
+  sbot_messagesByType: 'first',
+  avatar_name:         'first'
 }
 
 exports.gives = {
@@ -155,6 +157,27 @@ exports.create = function (api) {
     })
   }
 
+  function renderBranchBar(repoId, currentRef) {
+    var bar = h('div.git-branch-bar')
+    fetchJson(gitApiUrl(repoId, 'refs'), function (err, data) {
+      if (err) return
+      var refs = ((data && data.refs) || []).filter(function (r) {
+        return /^refs\/heads\//.test(r.name)
+      })
+      if (!refs.length) return
+      bar.appendChild(h('span.git-label', 'Branch: '))
+      refs.slice(0, 10).forEach(function (r) {
+        var branch = r.name.replace(/^refs\/heads\//, '')
+        var active = branch === currentRef
+        bar.appendChild(h('a' + (active ? '.git-branch-badge.git-branch-active' : '.git-branch-badge'), {
+          href: gitBrowseRoute(repoId, 'tree', branch, [])
+        }, branch))
+        bar.appendChild(document.createTextNode(' '))
+      })
+    })
+    return bar
+  }
+
   function renderTreeScreen(repoId, ref, pathParts, container) {
     container.textContent = 'Loading…'
     var apiPath = 'tree/' + encodeURIComponent(ref) +
@@ -173,6 +196,7 @@ exports.create = function (api) {
       })
       container.innerHTML = ''
       container.appendChild(h('div.git-browser',
+        renderBranchBar(repoId, ref),
         breadcrumbs(repoId, ref, pathParts),
         h('table.git-tree-table', h('tbody', rows))
       ))
@@ -233,29 +257,92 @@ exports.create = function (api) {
     })
   }
 
+  function renderDiffFile(file) {
+    var statusLabel = {added: '+', deleted: '−', modified: '~', renamed: '→'}[file.status] || '~'
+    var statusClass = 'git-diff-status-' + (file.status || 'modified')
+
+    var body
+    if (file.binary) {
+      body = h('div.git-diff-binary', 'Binary file')
+    } else if (!file.hunks || !file.hunks.length) {
+      body = h('div.git-diff-empty', 'No changes')
+    } else {
+      var hunkEls = file.hunks.map(function (hunk) {
+        var lineEls = hunk.lines.map(function (line) {
+          var cls = 'git-diff-line git-diff-line-' + line.type
+          var oldLn = line.oldLn != null ? String(line.oldLn) : ''
+          var newLn = line.newLn != null ? String(line.newLn) : ''
+          var prefix = line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '
+          return h('tr.' + cls,
+            h('td.git-diff-ln', oldLn),
+            h('td.git-diff-ln', newLn),
+            h('td.git-diff-prefix', prefix),
+            h('td.git-diff-code', line.text))
+        })
+        var hunkHeader = '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@'
+        return [
+          h('tr.git-diff-hunk-header', h('td', {colspan: '4'}, hunkHeader)),
+          lineEls
+        ]
+      })
+      body = h('table.git-diff-table', h('tbody', hunkEls))
+    }
+
+    var header = h('div.git-diff-file-header',
+      h('span.git-diff-status.' + statusClass, statusLabel),
+      h('code.git-diff-path', file.path),
+      file.truncated ? h('span.git-diff-truncated', ' (truncated)') : null
+    )
+
+    var details = h('details.git-diff-file', {open: true}, h('summary', header), body)
+    return details
+  }
+
   function renderCommitScreen(repoId, sha1, container) {
     container.textContent = 'Loading…'
-    fetchJson(gitApiUrl(repoId, 'commit/' + sha1), function (err, c) {
-      if (err) { container.textContent = 'Error: ' + err.message; return }
+
+    var commitData = null
+    var diffData   = null
+    var pending    = 2
+
+    function tryRender() {
+      if (--pending !== 0) return
+      if (!commitData) return  // error already shown
+
+      var c    = commitData
       var date = (c.author && c.author.date) ? new Date(c.author.date) : null
-      var files = c.files || []
-      var fileList = files.length
-        ? h('div.git-commit-files',
-            files.map(function (f) { return h('div', h('code.git-sha', f.path || '')) }))
-        : null
+
+      // Diff section
+      var diffEl = h('div.git-diff')
+      if (diffData && diffData.files && diffData.files.length) {
+        var stats = diffData.files.reduce(function (acc, f) {
+          if (f.hunks) f.hunks.forEach(function (hunk) {
+            hunk.lines.forEach(function (l) {
+              if (l.type === 'add') acc.add++
+              else if (l.type === 'del') acc.del++
+            })
+          })
+          return acc
+        }, {add: 0, del: 0})
+        diffEl.appendChild(h('div.git-diff-stats',
+          h('span.git-diff-stat-files', diffData.files.length + ' file' + (diffData.files.length !== 1 ? 's' : '') + ' changed'),
+          ' ',
+          stats.add ? h('span.git-diff-stat-add', '+' + stats.add) : null,
+          stats.del ? h('span.git-diff-stat-del', ' −' + stats.del) : null
+        ))
+        diffData.files.forEach(function (f) {
+          diffEl.appendChild(renderDiffFile(f))
+        })
+      } else {
+        diffEl.appendChild(h('em', 'Diff not available'))
+      }
 
       // Comment section
-      var commentsEl = h('div.git-review-comments')
+      var commentsEl   = h('div.git-review-comments')
       var commentFormEl = h('div.git-review-compose')
 
-      // Load existing git-comment messages linked to this repo for this commit
       pull(
-        api.sbot_links({
-          dest: repoId,
-          rel: 'repo',
-          values: true,
-          reverse: true
-        }),
+        api.sbot_links({dest: repoId, rel: 'repo', values: true, reverse: true}),
         pull.filter(function (link) {
           return link.value.content.type === 'git-comment' &&
                  link.value.content.commit === sha1
@@ -269,7 +356,7 @@ exports.create = function (api) {
           commentsEl.appendChild(h('div.git-review-comment',
             h('div.git-review-comment-header',
               h('strong', api.avatar_name(link.value.author)),
-              ' ', locLabel || '',
+              locLabel ? [' ', locLabel] : '',
               ' · ', human(commentDate)
             ),
             h('div.git-review-comment-body', lc.text || '')
@@ -279,7 +366,6 @@ exports.create = function (api) {
         })
       )
 
-      // Comment compose form
       commentFormEl.appendChild(h('div',
         h('a.git-review-add-comment', {
           href: '#',
@@ -288,11 +374,7 @@ exports.create = function (api) {
             var el = this
             el.style.display = 'none'
             commentFormEl.appendChild(api.message_compose(
-              {
-                type: 'git-comment',
-                repo:   repoId,
-                commit: sha1
-              },
+              {type: 'git-comment', repo: repoId, commit: sha1},
               function (value) { return value },
               function (err, msg) {
                 if (err) { alert(err); el.style.display = ''; return }
@@ -316,7 +398,7 @@ exports.create = function (api) {
       container.appendChild(h('div.git-browser',
         h('h4.git-section-title', c.title || ''),
         h('div.git-commit-meta',
-          h('code.git-sha', c.sha1.substr(0, 7)),
+          h('code.git-sha', sha1.substr(0, 7)),
           ' by ', (c.author && c.author.name) || '',
           date ? [' · ', human(date)] : '',
           c.parents && c.parents.length
@@ -326,11 +408,23 @@ exports.create = function (api) {
             : ''
         ),
         c.body ? h('pre.git-commit-body', c.body) : null,
-        fileList ? [h('h4.git-section-title', 'Changed files'), fileList] : null,
+        h('h4.git-section-title', 'Changes'),
+        diffEl,
         h('h4.git-section-title', 'Review comments'),
         commentsEl,
         commentFormEl
       ))
+    }
+
+    fetchJson(gitApiUrl(repoId, 'commit/' + sha1), function (err, data) {
+      if (err) { container.textContent = 'Error: ' + err.message; pending = 0; return }
+      commitData = data
+      tryRender()
+    })
+
+    fetchJson(gitApiUrl(repoId, 'diff/' + sha1), function (err, data) {
+      diffData = err ? null : data
+      tryRender()
     })
   }
 

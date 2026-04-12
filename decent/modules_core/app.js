@@ -50,6 +50,7 @@ module.exports = {
         {route: selfId, label: 'Profile', icon: 'person'},
         {route: 'private', label: 'Private', icon: 'lock'},
         {route: 'repos', label: 'Repos', icon: 'source'},
+        {route: 'code', label: 'Code', icon: 'code'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications'},
         {route: 'key', label: 'Key', icon: 'key'}
       ]
@@ -94,6 +95,7 @@ module.exports = {
           if (route === 'public') suffix = 'Public'
           else if (route === 'private') suffix = 'Private'
           else if (route === 'repos') suffix = 'Repositories'
+          else if (route === 'code') suffix = 'Code Activity'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
           else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)

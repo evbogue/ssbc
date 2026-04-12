@@ -501,6 +501,163 @@ function handleJsonBlob(sbot, repoId, ref, filePath, res) {
   })
 }
 
+// ── LCS diff engine ───────────────────────────────────────────────────────────
+
+// Myers-style O(N) space diff using dynamic programming.
+// Returns array of {type:'equal'|'del'|'add', text:string}.
+function lcsDiff(a, b) {
+  const m = a.length
+  const n = b.length
+  // Build LCS length table
+  const dp = new Array(m + 1)
+  for (let i = 0; i <= m; i++) { dp[i] = new Uint32Array(n + 1) }
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1] + 1
+        : Math.max(dp[i - 1][j], dp[i][j - 1])
+    }
+  }
+  // Backtrack
+  const result = []
+  let i = m, j = n
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+      result.push({ type: 'equal', text: a[i - 1] }); i--; j--
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      result.push({ type: 'add', text: b[j - 1] }); j--
+    } else {
+      result.push({ type: 'del', text: a[i - 1] }); i--
+    }
+  }
+  result.reverse()
+  return result
+}
+
+// Group flat line changes into hunks with `ctx` context lines on each side.
+function toHunks(changes, ctx) {
+  const hunks = []
+  let hunk = null
+  let oldLine = 1, newLine = 1
+
+  function flushHunk() {
+    if (!hunk) return
+    // Trim trailing context
+    while (hunk.lines.length > 0 && hunk.lines[hunk.lines.length - 1].type === 'equal')
+      hunk.lines.pop()
+    if (hunk.lines.some(l => l.type !== 'equal')) hunks.push(hunk)
+    hunk = null
+  }
+
+  let pending = [] // pending equal lines (potential context)
+
+  for (const ch of changes) {
+    if (ch.type === 'equal') {
+      if (hunk) {
+        // Part of existing hunk's trailing context
+        hunk.lines.push({ type: 'equal', text: ch.text, oldLn: oldLine, newLn: newLine })
+        if (hunk.lines.filter(l => l.type === 'equal').length > ctx * 2) {
+          flushHunk()
+          pending = hunk ? hunk.lines.slice(-ctx) : []
+        }
+      } else {
+        pending.push({ type: 'equal', text: ch.text, oldLn: oldLine, newLn: newLine })
+        if (pending.length > ctx) pending.shift()
+      }
+      oldLine++; newLine++
+    } else {
+      if (!hunk) {
+        hunk = { oldStart: oldLine - pending.length, newStart: newLine - pending.length, lines: pending.slice() }
+        pending = []
+      }
+      if (ch.type === 'del') {
+        hunk.lines.push({ type: 'del', text: ch.text, oldLn: oldLine })
+        oldLine++
+      } else {
+        hunk.lines.push({ type: 'add', text: ch.text, newLn: newLine })
+        newLine++
+      }
+    }
+  }
+  flushHunk()
+  return hunks
+}
+
+function getBlobContent(repo, blobId, cb) {
+  if (!blobId) return cb(null, '')
+  repo.getObjectFromAny(blobId, (err, obj) => {
+    if (err || !obj || obj.type !== 'blob') return cb(null, '')
+    collectStream(obj.read, (err, buf) => cb(err, err ? '' : buf.toString('utf8')))
+  })
+}
+
+function isBinary(str) {
+  // Heuristic: if >10% non-printable bytes, treat as binary
+  let nonPrint = 0
+  for (let i = 0; i < Math.min(str.length, 512); i++) {
+    const c = str.charCodeAt(i)
+    if (c === 0 || (c < 9) || (c > 13 && c < 32)) nonPrint++
+  }
+  return nonPrint / Math.min(str.length, 512) > 0.1
+}
+
+function handleJsonDiff(sbot, repoId, sha1, res) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not found')
+    GitRepo(repo)
+
+    repo.getCommitParsed(sha1, (err, commit) => {
+      if (err) return jsonErr(res, 404, 'Commit not found')
+
+      const parentHash = commit.parents && commit.parents[0]
+
+      function doDiff(parentTree) {
+        const treeIds = parentTree ? [parentTree, commit.tree] : [commit.tree, commit.tree]
+
+        pull(
+          repo.diffTrees(treeIds, true),
+          pull.filter(d => d.id),  // only files with id changes (not just mode)
+          pull.take(30),
+          paramap((diff, cb) => {
+            const path = (diff.path || []).join('/')
+            // id: {0: oldBlobId, 1: newBlobId}, undefined = not present in that tree
+            const oldId = diff.id && diff.id[0]
+            const newId = diff.id && diff.id[1]
+            const status = !oldId ? 'added' : !newId ? 'deleted' : 'modified'
+
+            // Fetch both blobs in parallel
+            let oldText = '', newText = '', pending = 2
+            function done() {
+              if (--pending) return
+              if (isBinary(oldText) || isBinary(newText)) {
+                return cb(null, { path, status, binary: true, hunks: [] })
+              }
+              const a = oldText ? oldText.split('\n') : []
+              const b = newText ? newText.split('\n') : []
+              // Limit diff size
+              const aT = a.slice(0, 400)
+              const bT = b.slice(0, 400)
+              const changes = lcsDiff(aT, bT)
+              const hunks = toHunks(changes, 3)
+              cb(null, { path, status, binary: false, truncated: a.length > 400 || b.length > 400, hunks })
+            }
+            getBlobContent(repo, oldId, (err, t) => { oldText = t || ''; done() })
+            getBlobContent(repo, newId, (err, t) => { newText = t || ''; done() })
+          }, 4),
+          pull.filter(Boolean),
+          pull.collect((err, files) => {
+            if (err) return jsonErr(res, 500, err.message)
+            sendJson(res, { sha1, title: commit.title, files })
+          })
+        )
+      }
+
+      if (!parentHash) return doDiff(null)
+      repo.getCommitParsed(parentHash, (err, p) => doDiff(err ? null : p.tree))
+    })
+  })
+}
+
 // ── Route parser ──────────────────────────────────────────────────────────────
 
 // Returns null if not a git route; otherwise { repoId, endpoint, service }.
@@ -549,6 +706,7 @@ function parseJsonRoute(req) {
   const parts = rest.split('/')
   if (parts[0] === 'log'    && parts.length >= 2) return { repoId, sub: 'log',    ref:  parts.slice(1).join('/') }
   if (parts[0] === 'commit' && parts.length === 2) return { repoId, sub: 'commit', sha1: parts[1] }
+  if (parts[0] === 'diff'   && parts.length === 2) return { repoId, sub: 'diff',   sha1: parts[1] }
   if (parts[0] === 'tree'   && parts.length >= 2) return { repoId, sub: 'tree',   ref:  parts[1], path: parts.slice(2) }
   if (parts[0] === 'blob'   && parts.length >= 3) return { repoId, sub: 'blob',   ref:  parts[1], path: parts.slice(2) }
 
@@ -612,6 +770,7 @@ module.exports.handleGitRequest = function (sbot, req, res) {
       if (sub === 'refs')        handleJsonRefs(sbot, repoId, res)
       else if (sub === 'log')    handleJsonLog(sbot, repoId, ref, res)
       else if (sub === 'commit') handleJsonCommit(sbot, repoId, sha1, res)
+      else if (sub === 'diff')   handleJsonDiff(sbot, repoId, sha1, res)
       else if (sub === 'tree')   handleJsonTree(sbot, repoId, ref, path || [], res)
       else if (sub === 'blob')   handleJsonBlob(sbot, repoId, ref, path || [], res)
       return true
