@@ -15,6 +15,7 @@ exports.needs = {
   follows:           'first',
   followers:         'first',
   sbot_links:        'first',
+  sbot_user_feed:    'first',
   message_confirm:   'first',
   blob_url:          'first',
   blobs_url:         'first'
@@ -74,11 +75,38 @@ exports.create = function (api) {
     // ── Name / handle / bio ────────────────────────────────────────
     var nameSpan = api.avatar_name(id)
     var nameEl   = h('div.profile-name', nameSpan)
+
+    var copyBtn = h('button.profile-copy-btn', {
+      type: 'button', title: 'Copy ID to clipboard',
+      onclick: function () {
+        var fullId = id
+        var btn = copyBtn
+        function flash () {
+          var orig = btn.querySelector('.material-symbols-outlined')
+          if (orig) orig.textContent = 'check'
+          setTimeout(function () { if (orig) orig.textContent = 'content_copy' }, 2000)
+        }
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(fullId).then(flash)
+        } else {
+          var ta = document.createElement('textarea')
+          ta.value = fullId
+          document.body.appendChild(ta)
+          ta.select()
+          document.execCommand('copy')
+          document.body.removeChild(ta)
+          flash()
+        }
+      }
+    }, h('span.material-symbols-outlined', {style: {fontSize: '13px'}}, 'content_copy'))
+
     var handleEl = h('div.profile-handle',
-      id.slice(0, 14) + '…' + id.slice(-6))
-    var bioEl    = h('div.profile-bio')
+      id.slice(0, 14) + '…' + id.slice(-6), ' ', copyBtn)
+
+    var bioEl = h('div.profile-bio' + (isSelf ? '.profile-bio--self' : ''))
 
     // ── Stats + expandable lists ───────────────────────────────────
+    var postCountEl      = h('strong', '—')
     var followingCountEl = h('strong', '—')
     var followersCountEl = h('strong', '—')
     var listExpandEl     = h('div.profile-list-expand', {style: {display: 'none'}})
@@ -104,6 +132,7 @@ exports.create = function (api) {
     }
 
     var statsEl = h('div.profile-stats',
+      h('span.profile-stat', postCountEl, ' Posts'),
       h('span.profile-stat', {onclick: function () { toggleList('following') }},
         followingCountEl, ' Following'),
       h('span.profile-stat', {onclick: function () { toggleList('followers') }},
@@ -111,34 +140,59 @@ exports.create = function (api) {
     )
 
     // ── Petname (others' profiles) ─────────────────────────────────
-    var petnameEl = h('div.profile-petname', {style: {display: 'none'}})
+    var petnameEl   = h('div.profile-petname', {style: {display: 'none'}})
+    var petnameFound = false
 
-    function renderPetname (name) {
-      petnameEl.innerHTML = ''
-      if (!name || isSelf) { petnameEl.style.display = 'none'; return }
-
-      var displayVal = h('strong.petname-value', name)
-      var pInput = h('input.petname-input', {type: 'text', value: name, placeholder: 'Your name for them'})
-
+    function makePetnameInput (initialValue) {
+      var pInput = h('input.petname-input', {
+        type: 'text', value: initialValue || '', placeholder: 'Your name for them'
+      })
       pInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && pInput.value.trim()) {
           api.message_confirm({type: 'about', about: id, name: pInput.value.trim()},
             function (err, msg) {
               if (err || !msg) return
+              petnameFound = true
               renderPetname(pInput.value.trim())
-              petnameEl.classList.remove('petname--editing')
             })
         }
-        if (e.key === 'Escape') petnameEl.classList.remove('petname--editing')
+        if (e.key === 'Escape') {
+          petnameEl.classList.remove('petname--editing')
+          petnameEl.classList.remove('petname--adding')
+        }
       })
+      return pInput
+    }
 
+    function renderPetname (name) {
+      petnameEl.innerHTML = ''
+      if (!name || isSelf) { petnameEl.style.display = 'none'; return }
+
+      var pInput = makePetnameInput(name)
       petnameEl.appendChild(h('span.petname-label', 'You call them: '))
-      petnameEl.appendChild(displayVal)
+      petnameEl.appendChild(h('strong.petname-value', name))
       petnameEl.appendChild(
         h('button.petname-edit-btn', {type: 'button', onclick: function () {
           petnameEl.classList.toggle('petname--editing')
           if (petnameEl.classList.contains('petname--editing')) { pInput.focus(); pInput.select() }
         }}, h('span.material-symbols-outlined', {style: {fontSize: '14px'}}, 'edit'))
+      )
+      petnameEl.appendChild(pInput)
+      petnameEl.style.display = ''
+    }
+
+    function showAddPetnamePrompt () {
+      if (isSelf || petnameFound) return
+      petnameEl.innerHTML = ''
+      var pInput = makePetnameInput('')
+      petnameEl.appendChild(
+        h('button.petname-add-btn', {type: 'button', onclick: function () {
+          petnameEl.classList.add('petname--adding')
+          pInput.focus()
+        }},
+          h('span.material-symbols-outlined', {style: {fontSize: '14px'}}, 'add'),
+          ' Add a name for them'
+        )
       )
       petnameEl.appendChild(pInput)
       petnameEl.style.display = ''
@@ -301,7 +355,13 @@ exports.create = function (api) {
           }
         }
 
-        if (!isSelf && bySelf && c.name) renderPetname(c.name)
+        if (!isSelf && bySelf && c.name) {
+          petnameFound = true
+          renderPetname(c.name)
+        }
+      }, function () {
+        // Stream ended — show add-name prompt if we never found one
+        if (!isSelf && !petnameFound) showAddPetnamePrompt()
       })
     )
 
@@ -314,6 +374,19 @@ exports.create = function (api) {
       followersData = ary || []
       followersCountEl.textContent = String(followersData.length)
     }))
+
+    // Post count — stream up to 500, filter to type:'post', count
+    var postCount = 0
+    pull(
+      api.sbot_user_feed({id: id, reverse: true, limit: 500}),
+      pull.drain(function (msg) {
+        if (msg && msg.value && msg.value.content &&
+            typeof msg.value.content === 'object' &&
+            msg.value.content.type === 'post') postCount++
+      }, function () {
+        postCountEl.textContent = postCount >= 500 ? '500+' : String(postCount)
+      })
+    )
 
     // ── Assemble card ──────────────────────────────────────────────
     return h('div.profile-card',

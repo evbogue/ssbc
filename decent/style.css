@@ -1491,3 +1491,84 @@ textarea {
 .petname--editing .petname-input  { display: inline-block; }
 .petname--editing .petname-value  { display: none; }
 .petname--editing .petname-label  { display: none; }
+
+/* Petname add-name prompt */
+
+.petname-add-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: #536471;
+  font-size: 0.9em;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 4px;
+  transition: color 0.12s;
+}
+
+.petname-add-btn:hover {
+  color: #1d9bf0;
+}
+
+.petname--adding .petname-add-btn  { display: none; }
+.petname--adding .petname-input    { display: inline-block; }
+
+/* Copy-ID button inline with handle */
+
+.profile-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1px 3px;
+  color: #536471;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  border-radius: 4px;
+  transition: background 0.1s, color 0.1s;
+  line-height: 1;
+}
+
+.profile-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #0f1419;
+}
+
+/* Bio empty-state placeholder (own profile only) */
+
+.profile-bio--self:empty::before {
+  content: 'Add a bio…';
+  color: #aab8c2;
+  font-style: italic;
+}
+
+/* Follow button from follow.js */
+
+.profile-card-actions br {
+  display: none;
+}
+
+.profile-card-actions a {
+  display: inline-block;
+  border: 1px solid #cfd9de;
+  background: #fff;
+  color: #0f1419;
+  font-weight: 700;
+  font-size: 0.88em;
+  border-radius: 20px;
+  padding: 5px 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.profile-card-actions a:hover {
+  background: #f7f9f9;
+}
+
+.profile-card-actions label {
+  font-size: 0.82em;
+  color: #536471;
+}
