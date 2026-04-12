@@ -185,14 +185,12 @@ transport. Message format is identical; signatures are cross-verified.
 
 ---
 
-## Open Questions
+## Non-Issues
 
-1. **Rate limiting** — the HTTP surface is more easily hammered than muxrpc.
-   Basic rate limiting by `keyId` is recommended from the start.
-
----
-
-## Non-Issues (Previously Listed as Open Questions)
+**Rate limiting** — FOAF gating is the rate limiter. Unauthenticated requests
+are rejected outright. Authenticated requests come from peers in your social
+graph; if someone abuses access, you unfollow them and they're out. Spam is a
+social problem with a social solution.
 
 **Peer discovery** — HTTP peers are just public servers with URLs. No different
 from how pubs work today. mDNS handles LAN discovery unchanged. For WAN, peers
