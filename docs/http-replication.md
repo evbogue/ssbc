@@ -187,18 +187,33 @@ transport. Message format is identical; signatures are cross-verified.
 
 ## Open Questions
 
-1. **Peer discovery over HTTP** — how do HTTP-only peers find each other?
-   mDNS still works on LAN. For WAN, a simple gossip endpoint
-   (`GET /ssb/v1/peers` returning known peer URLs) may be sufficient.
-
-2. **Invite codes** — current invite format encodes a multiserver address.
-   Need an HTTP-native invite format, e.g. `https://host:8990/invite/:token`.
-
-3. **Private messages** — encrypted content passes through unchanged.
-   No protocol changes needed; private messages are opaque blobs to the transport.
-
-4. **Conflict with ssb-ooo** — out-of-order message fetching may need adjustment
-   for the HTTP pull model. Worth reviewing.
-
-5. **Rate limiting** — the HTTP surface is more easily hammered than muxrpc.
+1. **Rate limiting** — the HTTP surface is more easily hammered than muxrpc.
    Basic rate limiting by `keyId` is recommended from the start.
+
+---
+
+## Non-Issues (Previously Listed as Open Questions)
+
+**Peer discovery** — HTTP peers are just public servers with URLs. No different
+from how pubs work today. mDNS handles LAN discovery unchanged. For WAN, peers
+share known server URLs the same way pub addresses are shared today — via invite
+codes, profile pages, or a simple `GET /ssb/v1/peers` gossip endpoint. This is
+strictly simpler than the current multiserver address format, not harder.
+
+**Invite codes** — the existing invite already contains everything needed: the
+server's host and its Ed25519 public key. Represented as a URL:
+
+```
+https://host:8990/invite/@pubkey.ed25519
+```
+
+The pubkey serves the same TOFU (trust on first use) role it does today — you
+verify you're talking to the right server and pin that identity. Redeeming the
+invite is a signed `POST /ssb/v1/messages` publishing a follow. No new format
+needed, just a URL encoding of what already exists.
+
+**Private messages** — encrypted content is opaque to the transport layer.
+No protocol changes needed.
+
+**ssb-ooo** — out-of-order message fetching is handled at the validation layer,
+not the transport layer. No changes needed.
