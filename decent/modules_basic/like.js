@@ -1,92 +1,106 @@
 
 var h = require('hyperscript')
-var u = require('../util')
 var pull = require('pull-stream')
-
-var plugs = require('../plugs')
-
-//var message_confirm = plugs.first(exports.message_confirm = [])
-//var message_link = plugs.first(exports.message_link = [])
-//var sbot_links = plugs.first(exports.sbot_links = [])
+var selfId = require('../keys').id
 
 exports.needs = {
-  avatar_name: 'first',
+  avatar_name:     'first',
   message_confirm: 'first',
-  message_link: 'first',
-  sbot_links: 'first'
+  message_link:    'first',
+  sbot_links:      'first'
 }
 
 exports.gives = {
-  message_content: true,
+  message_content:      true,
   message_content_mini: true,
-  message_meta: true,
-  message_action: true
+  message_meta:         true,
+  message_action:       true
 }
 
 exports.create = function (api) {
-  var exports = {}
+  var x = {}
+
   function getCache () {
     return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
   }
 
-  exports.message_content =
-  exports.message_content_mini = function (msg, sbot) {
-    if(msg.value.content.type !== 'vote') return
-    var link = msg.value.content.vote.link
+  x.message_content =
+  x.message_content_mini = function (msg) {
+    if (msg.value.content.type !== 'vote') return
+    var vote = msg.value.content.vote
     return [
-        msg.value.content.vote.value > 0 ? 'dug' : 'undug',
-        ' ', api.message_link(link)
-      ]
+      vote.value > 0 ? '♥ liked' : 'unliked',
+      ' ', api.message_link(vote.link)
+    ]
   }
 
-  exports.message_meta = function (msg, sbot) {
-    var digs = h('a')
+  x.message_meta = function (msg) {
+    var cache = getCache()
+    var votes = []
+    for (var k in cache) {
+      var c = cache[k].content
+      if (c && c.type === 'vote' &&
+          (c.vote === msg.key || (c.vote && c.vote.link === msg.key)))
+        votes.push({ source: cache[k].author })
+    }
+    if (!votes.length) return null
+
+    var el = h('span.action-liked-meta',
+      h('span.material-symbols-outlined.action-icon', 'favorite'),
+      h('span.action-count', String(votes.length))
+    )
+    pull(
+      pull.values(votes.map(function (v) { return api.avatar_name(v.source) })),
+      pull.collect(function (err, ary) {
+        el.title = ary.map(function (x) {
+          return x && x.textContent ? x.textContent : String(x)
+        }).join(', ')
+      })
+    )
+    return el
+  }
+
+  x.message_action = function (msg) {
+    if (msg.value.content.type === 'vote') return
     var cache = getCache()
 
-    var votes = []
-    for(var k in cache) {
-      if(cache[k].content.type == 'vote' &&
-        (cache[k].content.vote == msg.key ||
-        cache[k].content.vote.link == msg.key
-        ))
-        votes.push({source: cache[k].author, dest: k, rel: 'vote'})
+    var likeCount = 0
+    var alreadyLiked = false
+    for (var k in cache) {
+      var c = cache[k].content
+      if (c && c.type === 'vote' &&
+          (c.vote === msg.key || (c.vote && c.vote.link === msg.key))) {
+        likeCount++
+        if (cache[k].author === selfId && c.vote && c.vote.value > 0)
+          alreadyLiked = true
+      }
     }
 
-    if(votes.length === 1)
-      digs.textContent = ' 1 Dig'
-    else if(votes.length > 1)
-      digs.textContent = ' ' + votes.length + ' Digs'
-
-    pull(
-        pull.values(votes.map(vote => {
-            return api.avatar_name(vote.source)
-        })),
-        pull.collect(function (err, ary) {
-            digs.title = ary.map(x => x.innerHTML).join(" ")
-        })
-    )
-
-    return digs
-  }
-
-  exports.message_action = function (msg, sbot) {
-    if(msg.value.content.type !== 'vote')
-      return h('a.dig', {href: '#', onclick: function () {
-        var dig = {
+    var iconEl  = h('span.material-symbols-outlined.action-icon',
+      alreadyLiked ? 'favorite' : 'favorite_border')
+    var countEl = h('span.action-count', likeCount > 0 ? String(likeCount) : '')
+    var btn = h('button.action-btn.action-btn--like' + (alreadyLiked ? '.action-btn--liked' : ''), {
+      type: 'button',
+      title: alreadyLiked ? 'Unlike' : 'Like',
+      onclick: function (e) {
+        e.preventDefault()
+        var newVal = alreadyLiked ? 0 : 1
+        var vote = {
           type: 'vote',
-          vote: { link: msg.key, value: 1, expression: 'Dig' }
+          vote: { link: msg.key, value: newVal, expression: newVal ? 'Like' : 'Unlike' }
         }
-        if(msg.value.content.recps) {
-          dig.recps = msg.value.content.recps.map(function (e) {
-            return e && typeof e !== 'string' ? e.link : e
+        if (msg.value.content.recps) {
+          vote.recps = msg.value.content.recps.map(function (r) {
+            return r && typeof r !== 'string' ? r.link : r
           })
-          dig.private = true
+          vote.private = true
         }
-        //TODO: actually publish...
+        api.message_confirm(vote)
+      }
+    }, iconEl, countEl)
 
-        api.message_confirm(dig)
-      }}, 'Dig')
-
+    return btn
   }
-  return exports
+
+  return x
 }

@@ -15,12 +15,13 @@ var cont = require('cont')
 
 exports.needs = {
   suggest_mentions: 'map', //<-- THIS MUST BE REWRITTEN
-  publish: 'first',
+  publish:         'first',
   message_content: 'first',
   message_confirm: 'first',
-  file_input: 'first',
-  message_link: 'first',
-  avatar: 'first'
+  file_input:      'first',
+  message_link:    'first',
+  avatar:          'first',
+  avatar_name:     'first'
 }
 
 exports.gives = 'message_compose'
@@ -53,6 +54,7 @@ exports.create = function (api) {
     var lb = null
     var modalContent = null
     var replyHintEls = []
+    var quoteHintEls = []
     var modalTimer = null
     var onKeydown = null
     var trigger = null
@@ -60,6 +62,9 @@ exports.create = function (api) {
     var replyActive = false
     var lastReplyMsg = null
     var inlineReplyHint = null
+    var quoteActive = false
+    var lastQuoteMsg = null
+    var inlineQuoteHint = null
 
     function cloneMeta (src) {
       var out = {}
@@ -77,22 +82,43 @@ exports.create = function (api) {
     }
 
     function clearReply () {
-      if (replyActive && baseSnapshot) {
-        applyMeta(meta, baseSnapshot)
-      }
+      if (replyActive && baseSnapshot) applyMeta(meta, baseSnapshot)
       replyActive = false
       lastReplyMsg = null
       updateReplyHint(null)
     }
+
+    function clearQuote () {
+      if (quoteActive && baseSnapshot) {
+        var snap = cloneMeta(baseSnapshot)
+        delete snap.quote
+        applyMeta(meta, snap)
+      }
+      delete meta.quote
+      quoteActive = false
+      lastQuoteMsg = null
+      updateQuoteHint(null)
+    }
+
     function createReplyHintEl (className) {
       var selector = 'div' + (className ? '.' + className : '')
       var el = h(selector, {style: {display: 'none'}})
       replyHintEls.push(el)
       return el
     }
+
+    function createQuoteHintEl (className) {
+      var selector = 'div' + (className ? '.' + className : '')
+      var el = h(selector, {style: {display: 'none'}})
+      quoteHintEls.push(el)
+      return el
+    }
+
     if (!modal) {
       inlineReplyHint = h('div.compose-reply-hint', {style: {display: 'none'}})
       replyHintEls.push(inlineReplyHint)
+      inlineQuoteHint = h('div.compose-quote-hint', {style: {display: 'none'}})
+      quoteHintEls.push(inlineQuoteHint)
     }
     var ta = h('textarea', {
       placeholder: opts.placeholder || 'Write a message',
@@ -149,9 +175,11 @@ exports.create = function (api) {
             h('button.btn.compose-modal__close', 'Close', {onclick: closeModal})
           ),
           createReplyHintEl('compose-modal__hint'),
+          createQuoteHintEl('compose-modal__quote-hint'),
           composer
         )
         if (lastReplyMsg) updateReplyHint(lastReplyMsg)
+        if (lastQuoteMsg) updateQuoteHint(lastQuoteMsg)
       }
 
       lb.show(modalContent)
@@ -218,6 +246,7 @@ exports.create = function (api) {
         else if (msg) {
           ta.value = ''
           clearReply()
+          clearQuote()
         }
         else if (modal) showModal(trigger)
 
@@ -242,6 +271,7 @@ exports.create = function (api) {
         publishBtn)
     ]
     if (inlineReplyHint) composerChildren.unshift(inlineReplyHint)
+    if (inlineQuoteHint) composerChildren.unshift(inlineQuoteHint)
     var composer =
       h('div.message.message-card.compose', h('div.column', composerChildren))
 
@@ -297,6 +327,45 @@ exports.create = function (api) {
       })
     }
 
+    function updateQuoteHint (msg) {
+      if (!quoteHintEls.length) return
+      if (!msg || !msg.value || !msg.value.content) {
+        quoteHintEls.forEach(function (el) {
+          el.textContent = ''
+          el.style.display = 'none'
+        })
+        return
+      }
+      var nameEl = api.avatar_name(msg.value.author)
+      var snippet = (msg.value.content.text || '').slice(0, 80)
+      if (msg.value.content.text && msg.value.content.text.length > 80) snippet += '…'
+      quoteHintEls.forEach(function (el) {
+        while (el.firstChild) el.removeChild(el.firstChild)
+        el.appendChild(h('div.compose-quote-hint-inner',
+          h('span.material-symbols-outlined', {style: {fontSize: '13px', verticalAlign: 'middle'}}, 'format_quote'),
+          ' Quoting ',
+          h('strong', nameEl),
+          snippet ? [': ', h('em', snippet)] : ''
+        ))
+        el.style.display = ''
+      })
+    }
+
+    function applyQuote (msg) {
+      if (!msg || !msg.key) return
+      clearReply()
+      if (!quoteActive) captureBaseMeta()
+      var nextMeta = cloneMeta(baseSnapshot || meta)
+      nextMeta.type = meta.type || 'post'
+      nextMeta.quote = msg.key
+      delete nextMeta.root
+      delete nextMeta.branch
+      applyMeta(meta, nextMeta)
+      quoteActive = true
+      lastQuoteMsg = msg
+      updateQuoteHint(msg)
+    }
+
     function handleReplyEvent (ev) {
       if (!trigger || !document.body.contains(trigger)) return
       var detail = ev && ev.detail
@@ -305,8 +374,17 @@ exports.create = function (api) {
       showModal(trigger)
     }
 
+    function handleQuoteEvent (ev) {
+      if (!trigger || !document.body.contains(trigger)) return
+      var detail = ev && ev.detail
+      var quoteMsg = detail && detail.msg
+      applyQuote(quoteMsg)
+      showModal(trigger)
+    }
+
     if (modal && opts.listenReplyEvents) {
       window.addEventListener('decent:reply', handleReplyEvent)
+      window.addEventListener('decent:quote', handleQuoteEvent)
     }
 
     if (modal) {

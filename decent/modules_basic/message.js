@@ -111,7 +111,8 @@ exports.create = function (api) {
     else
       content = h('div.message_content', el)
 
-    var replyLink = h('button.btn', {type: 'button'}, 'Reply')
+    var replyLink = h('button.action-btn.action-btn--reply', {type: 'button', title: 'Reply'})
+    replyLink.appendChild(h('span.material-symbols-outlined.action-icon', 'chat_bubble'))
     replyLink.addEventListener('click', function () {
       var event
       try {
@@ -130,9 +131,7 @@ exports.create = function (api) {
       ),
       content,
       h('div.message_actions.row',
-        h('div.actions', api.message_action(msg),
-          replyLink
-        )
+        h('div.actions', replyLink, api.message_action(msg))
       ),
       backlinks,
       {onkeydown: function (ev) {
