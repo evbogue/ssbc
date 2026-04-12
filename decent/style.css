@@ -1421,19 +1421,51 @@ textarea {
   gap: 8px;
 }
 
-/* Avatar crop modal */
+/* Crop modals (avatar + banner) */
 
 .profile-crop-modal {
   background: #fff;
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 20px;
   max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.profile-banner-crop-modal {
+  max-width: 660px;
+}
+
+.profile-crop-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1em;
+  font-weight: 700;
+  color: #0f1419;
+  margin-bottom: 14px;
+}
+
+.banner-crop-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  background: #0f1419;
+  /* touch-action prevents page scroll while panning on mobile */
+  touch-action: none;
+}
+
+.profile-crop-hint {
+  font-size: 0.78em;
+  color: #536471;
+  text-align: center;
+  margin: 8px 0 0;
+  letter-spacing: 0.01em;
 }
 
 .profile-crop-buttons {
   display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 14px;
   justify-content: flex-end;
 }
 

@@ -65,6 +65,166 @@ exports.create = function (api) {
       return lb
     }
 
+    // ── Banner cropper ──────────────────────────────────────────────
+    // Renders a drag-to-pan crop modal and exports 1600×534 JPEG (3:1, retina-ready)
+    function showBannerCropper (dataURL, onConfirm) {
+      var OUT_W  = 1600, OUT_H  = 534   // output dimensions (~3:1 @ 2× retina)
+      var DISP_W = 600,  DISP_H = 200   // canvas pixel dimensions inside modal
+
+      var img = new Image()
+      img.onload = function () {
+        var imgRatio = img.width / img.height
+        var outRatio = OUT_W / OUT_H
+
+        // Scale to cover: fit whichever axis is "short" relative to the banner ratio
+        var scaledW, scaledH
+        if (imgRatio >= outRatio) {
+          // Image wider than banner — fit height, allow horizontal pan
+          scaledH = OUT_H
+          scaledW = Math.round(img.width * (OUT_H / img.height))
+        } else {
+          // Image taller than banner — fit width, allow vertical pan
+          scaledW = OUT_W
+          scaledH = Math.round(img.height * (OUT_W / img.width))
+        }
+
+        // Start centered
+        var panX = (OUT_W - scaledW) / 2
+        var panY = (OUT_H - scaledH) / 2
+
+        function clampPan () {
+          panX = Math.min(0, Math.max(OUT_W - scaledW, panX))
+          panY = Math.min(0, Math.max(OUT_H - scaledH, panY))
+        }
+
+        // Display canvas (rendered at DISP_W×DISP_H pixels, CSS stretches to 100%)
+        var dc   = h('canvas.banner-crop-canvas', {width: DISP_W, height: DISP_H})
+        var dctx = dc.getContext('2d')
+
+        function draw () {
+          dctx.clearRect(0, 0, DISP_W, DISP_H)
+          dctx.drawImage(img,
+            panX    * DISP_W / OUT_W,
+            panY    * DISP_H / OUT_H,
+            scaledW * DISP_W / OUT_W,
+            scaledH * DISP_H / OUT_H
+          )
+        }
+
+        draw()
+
+        var canPanH = scaledW > OUT_W
+        var canPanV = scaledH > OUT_H
+        var canPan  = canPanH || canPanV
+
+        var hintText = canPanH && canPanV ? 'Drag to reposition'
+          : canPanH ? 'Drag left or right to reposition'
+          : canPanV ? 'Drag up or down to reposition'
+          : ''
+
+        // ── Mouse drag ─────────────────────────────────────────────
+        var dragging    = false
+        var anchorX     = 0, anchorY     = 0
+        var panAtDragX  = 0, panAtDragY  = 0
+
+        function onMouseDown (e) {
+          if (!canPan) return
+          e.preventDefault()
+          dragging   = true
+          anchorX    = e.clientX
+          anchorY    = e.clientY
+          panAtDragX = panX
+          panAtDragY = panY
+          dc.style.cursor = 'grabbing'
+        }
+
+        function onMouseMove (e) {
+          if (!dragging) return
+          var rect   = dc.getBoundingClientRect()
+          // Map CSS-pixel delta → output-pixel delta (map-pan convention: drag right = see right)
+          var scaleX = OUT_W / rect.width
+          var scaleY = OUT_H / rect.height
+          panX = panAtDragX - (e.clientX - anchorX) * scaleX
+          panY = panAtDragY - (e.clientY - anchorY) * scaleY
+          clampPan()
+          draw()
+        }
+
+        function onMouseUp () {
+          if (!dragging) return
+          dragging = false
+          dc.style.cursor = canPan ? 'grab' : 'default'
+        }
+
+        function cleanup () {
+          document.removeEventListener('mousemove', onMouseMove)
+          document.removeEventListener('mouseup',   onMouseUp)
+        }
+
+        dc.addEventListener('mousedown', onMouseDown)
+        document.addEventListener('mousemove', onMouseMove)
+        document.addEventListener('mouseup',   onMouseUp)
+
+        // ── Touch drag ─────────────────────────────────────────────
+        dc.addEventListener('touchstart', function (e) {
+          if (!canPan || !e.touches[0]) return
+          e.preventDefault()
+          dragging   = true
+          anchorX    = e.touches[0].clientX
+          anchorY    = e.touches[0].clientY
+          panAtDragX = panX
+          panAtDragY = panY
+        }, {passive: false})
+
+        dc.addEventListener('touchmove', function (e) {
+          if (!dragging || !e.touches[0]) return
+          e.preventDefault()
+          var rect   = dc.getBoundingClientRect()
+          var scaleX = OUT_W / rect.width
+          var scaleY = OUT_H / rect.height
+          panX = panAtDragX - (e.touches[0].clientX - anchorX) * scaleX
+          panY = panAtDragY - (e.touches[0].clientY - anchorY) * scaleY
+          clampPan()
+          draw()
+        }, {passive: false})
+
+        dc.addEventListener('touchend', function () { dragging = false })
+
+        // ── Confirm / Cancel ───────────────────────────────────────
+        function doConfirm () {
+          cleanup()
+          var out = document.createElement('canvas')
+          out.width  = OUT_W
+          out.height = OUT_H
+          out.getContext('2d').drawImage(img, panX, panY, scaledW, scaledH)
+          getLightbox().close()
+          onConfirm(out.toDataURL('image/jpeg', 0.85))
+        }
+
+        function doCancel () {
+          cleanup()
+          getLightbox().close()
+        }
+
+        dc.style.cursor = canPan ? 'grab' : 'default'
+
+        var modal = h('div.profile-crop-modal.profile-banner-crop-modal',
+          h('div.profile-crop-title',
+            h('span.material-symbols-outlined', {style: {fontSize: '18px'}}, 'wallpaper'),
+            ' Banner photo'
+          ),
+          dc,
+          hintText ? h('p.profile-crop-hint', hintText) : null,
+          h('div.profile-crop-buttons',
+            h('button.btn',             {type: 'button', onclick: doCancel},  'Cancel'),
+            h('button.btn.btn-primary', {type: 'button', onclick: doConfirm}, 'Use this banner')
+          )
+        )
+        getLightbox().show(modal)
+      }
+      img.src = dataURL
+    }
+
     // ── Banner ──────────────────────────────────────────────────────
     var bannerEl = h('div.profile-banner')
 
@@ -237,39 +397,51 @@ exports.create = function (api) {
         h('button.btn.btn-primary.btn-sm', {type: 'button', onclick: saveEdit}, 'Save')
       ))
 
-      // Banner: click to upload (no crop — CSS object-fit handles display)
+      // Banner: click to open crop modal, then upload 1600×534 JPEG
       bannerEl.classList.add('profile-banner--editable')
       var bannerOverlay = h('div.profile-banner-edit-overlay',
         h('span.material-symbols-outlined', 'add_a_photo'), ' Change banner')
       bannerEl.appendChild(bannerOverlay)
       bannerEl.onclick = function () {
         hyperfile.asDataURL(function (data) {
-          bannerEl.style.backgroundImage = 'url(' + data + ')'
-          uploadBlob(data, function (err, file) { if (!err) pendingBanner = file })
+          showBannerCropper(data, function (croppedData) {
+            bannerEl.style.backgroundImage = 'url(' + croppedData + ')'
+            uploadBlob(croppedData, function (err, file) { if (!err) pendingBanner = file })
+          })
         })
       }
 
-      // Avatar: click to crop then upload
+      // Avatar: click to crop then upload (exports 400×400 JPEG for retina clarity)
       avatarWrap.classList.add('profile-avatar--editable')
       avatarWrap.title = 'Click to change photo'
       avatarWrap.onclick = function () {
         hyperfile.asDataURL(function (data) {
-          var canvas
-          var cropModal = h('div.profile-crop-modal')
+          var cropCanvas
+          var cropModal = h('div.profile-crop-modal',
+            h('div.profile-crop-title',
+              h('span.material-symbols-outlined', {style: {fontSize: '18px'}}, 'face'),
+              ' Profile photo'
+            )
+          )
           var btnRow = h('div.profile-crop-buttons',
+            h('button.btn', {type: 'button', onclick: function () { getLightbox().close() }}, 'Cancel'),
             h('button.btn.btn-primary', {type: 'button', onclick: function () {
-              if (!canvas || !canvas.selection) return
-              var cropped = canvas.selection.toDataURL()
+              if (!cropCanvas || !cropCanvas.selection) return
+              // Draw selection onto a 400×400 canvas and export as JPEG 85%
+              var out = document.createElement('canvas')
+              out.width = 400
+              out.height = 400
+              out.getContext('2d').drawImage(cropCanvas.selection, 0, 0, 400, 400)
+              var cropped = out.toDataURL('image/jpeg', 0.85)
               avatarImg.src = cropped
               uploadBlob(cropped, function (err, file) { if (!err) pendingAvatar = file })
               getLightbox().close()
-            }}, 'Use this photo'),
-            h('button.btn', {type: 'button', onclick: function () { getLightbox().close() }}, 'Cancel')
+            }}, 'Use this photo')
           )
           var img = new Image()
           img.onload = function () {
-            canvas = hypercrop(img)
-            cropModal.appendChild(canvas)
+            cropCanvas = hypercrop(img)
+            cropModal.appendChild(cropCanvas)
             cropModal.appendChild(btnRow)
           }
           img.src = data
