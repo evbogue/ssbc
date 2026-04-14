@@ -52,6 +52,13 @@ exports.create = function (api) {
     var type = msg.value.content.type
     if (type === 'vote' || type === 'repost') return
 
+    // Don't offer Repost or Quote on private messages — Repost would create a
+    // public message referencing a private key, and Quote would route to the
+    // public composer, both of which could expose private content.
+    var isPrivate = msg.value.private ||
+      (Array.isArray(msg.value.content.recps) && msg.value.content.recps.length > 0)
+    if (isPrivate) return
+
     var repostBtn = h('button.action-btn.action-btn--repost', {
       type: 'button',
       title: 'Repost',

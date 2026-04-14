@@ -68,13 +68,14 @@ exports.create = function (api) {
 
   return function (id) {
     if(ref.isMsg(id)) {
-      function normalizeId (value) {
-        try { return decodeURIComponent(value) } catch (err) { return value }
-      }
-      var normalizedId = normalizeId(id)
+      // Compare the raw id directly against the sessionStorage value. Using
+      // decodeURIComponent on SSB keys is wrong: base64 characters after the
+      // leading % sigil frequently form valid percent-encoded sequences, so
+      // decodeURIComponent silently transforms ~12% of real keys and the
+      // comparison fails, preventing the composer from auto-opening.
       var autoOpen = false
       try {
-        autoOpen = window.sessionStorage.getItem('decent_reply_intent') === normalizedId
+        autoOpen = window.sessionStorage.getItem('decent_reply_intent') === id
         if (autoOpen) window.sessionStorage.removeItem('decent_reply_intent')
       } catch (err) {}
 
