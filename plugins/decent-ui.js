@@ -73,6 +73,19 @@ exports.init = function (sbot, config) {
   const cfg    = (config && config.decent) || {}
   const port   = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
   const host   = typeof cfg.host === 'string' ? cfg.host : DEFAULT_HOST
+  let styleHref = '/style.css'
+
+  try {
+    const builtStylePath = path.join(decentDir, 'style.css')
+    const builtStat = fs.statSync(builtStylePath)
+    styleHref = '/style.css?v=' + builtStat.mtimeMs
+  } catch (_) {
+    try {
+      const fallbackStylePath = path.join(__dirname, '..', 'decent', 'style.css')
+      const fallbackStat = fs.statSync(fallbackStylePath)
+      styleHref = '/style.css?v=' + fallbackStat.mtimeMs
+    } catch (_) {}
+  }
   const wsCfg  = (config && config.ws) || {}
   const wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
   let wsHost   = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
@@ -145,8 +158,8 @@ exports.init = function (sbot, config) {
           let headInsert = ''
           if (!html.includes('rel="stylesheet" href="/style.css"') &&
               !html.includes('rel="stylesheet" href="style.css"')) {
-            headInsert += '<link rel="preload" as="style" href="/style.css">' +
-                          '<link rel="stylesheet" href="/style.css">'
+            headInsert += '<link rel="preload" as="style" href="' + styleHref + '">' +
+                          '<link rel="stylesheet" href="' + styleHref + '">'
           }
 
           const remote = getRemoteForRequest(req)

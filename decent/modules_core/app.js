@@ -6,7 +6,7 @@ module.exports = {
   gives: 'app',
   create: function (api) {
     return function () {
-      var hasStylesheet = document.querySelector('link[rel="stylesheet"][href$="style.css"]')
+      var hasStylesheet = document.querySelector('link[rel="stylesheet"][href*="style.css"]')
       if (!hasStylesheet) {
         document.head.appendChild(
           h('style', {'data-decent-style': 'true'}, require('../style.css.json'))
