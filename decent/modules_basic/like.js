@@ -38,10 +38,11 @@ exports.create = function (api) {
     var cache = getCache()
     var votes = []
     for (var k in cache) {
-      var c = cache[k].content
+      var cached = cache[k]
+      var c = cached && cached.content
       if (c && c.type === 'vote' &&
           (c.vote === msg.key || (c.vote && c.vote.link === msg.key)))
-        votes.push({ source: cache[k].author })
+        votes.push({ source: cached.author })
     }
     if (!votes.length) return null
 
@@ -67,11 +68,12 @@ exports.create = function (api) {
     var likeCount = 0
     var alreadyLiked = false
     for (var k in cache) {
-      var c = cache[k].content
+      var cached = cache[k]
+      var c = cached && cached.content
       if (c && c.type === 'vote' &&
           (c.vote === msg.key || (c.vote && c.vote.link === msg.key))) {
         likeCount++
-        if (cache[k].author === selfId && c.vote && c.vote.value > 0)
+        if (cached.author === selfId && c.vote && c.vote.value > 0)
           alreadyLiked = true
       }
     }

@@ -21,7 +21,8 @@ exports.needs = {
   file_input:      'first',
   message_link:    'first',
   avatar:          'first',
-  avatar_name:     'first'
+  avatar_name:     'first',
+  sbot_get:        'first'
 }
 
 exports.gives = 'message_compose'
@@ -368,6 +369,7 @@ exports.create = function (api) {
 
     function handleReplyEvent (ev) {
       if (!trigger || !document.body.contains(trigger)) return
+      if (ev && typeof ev.preventDefault === 'function') ev.preventDefault()
       var detail = ev && ev.detail
       var replyMsg = detail && detail.msg
       applyReply(replyMsg)
@@ -376,6 +378,7 @@ exports.create = function (api) {
 
     function handleQuoteEvent (ev) {
       if (!trigger || !document.body.contains(trigger)) return
+      if (ev && typeof ev.preventDefault === 'function') ev.preventDefault()
       var detail = ev && ev.detail
       var quoteMsg = detail && detail.msg
       applyQuote(quoteMsg)
@@ -399,6 +402,14 @@ exports.create = function (api) {
       }, h('span.compose-trigger__icon.material-symbols-outlined', {
         'aria-hidden': 'true'
       }, 'edit'))
+
+      if (opts.initialQuote) {
+        api.sbot_get(opts.initialQuote, function (err, value) {
+          if (err || !value || !value.content || typeof value.content !== 'object') return
+          applyQuote({key: opts.initialQuote, value: value})
+        })
+      }
+
       if (opts.autoOpen) {
         var attempts = 0
         var tryOpen = function () {

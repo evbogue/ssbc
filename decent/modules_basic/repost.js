@@ -72,12 +72,17 @@ exports.create = function (api) {
         e.preventDefault()
         var ev
         try {
-          ev = new CustomEvent('decent:quote', {detail: {msg: msg}})
+          ev = new CustomEvent('decent:quote', {detail: {msg: msg}, cancelable: true})
         } catch (_) {
           ev = document.createEvent('CustomEvent')
-          ev.initCustomEvent('decent:quote', false, false, {msg: msg})
+          ev.initCustomEvent('decent:quote', false, true, {msg: msg})
         }
-        window.dispatchEvent(ev)
+        if (window.dispatchEvent(ev)) {
+          try {
+            window.sessionStorage.setItem('decent_quote_intent', msg.key)
+          } catch (err) {}
+          window.location.hash = '#/'
+        }
       }
     }, h('span.material-symbols-outlined.action-icon', 'format_quote'))
 

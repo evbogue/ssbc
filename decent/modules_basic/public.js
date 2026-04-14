@@ -76,6 +76,15 @@ exports.create = function (api) {
 
     screen_view: function (path, sbot) {
       if(path === 'public' || path === 'friends') {
+        var autoOpen = false
+        var initialQuote = null
+        if (path === 'public') {
+          try {
+            initialQuote = window.sessionStorage.getItem('decent_quote_intent')
+            autoOpen = !!initialQuote
+            if (initialQuote) window.sessionStorage.removeItem('decent_quote_intent')
+          } catch (err) {}
+        }
 
         var content = h('div.column.scroller__content')
         var div = h('div.column.scroller',
@@ -83,7 +92,14 @@ exports.create = function (api) {
           h('div.scroller__wrapper',
             api.message_compose(
               {type: 'post'},
-              {placeholder: 'Write a public message', modal: true, triggerLabel: 'Compose', listenReplyEvents: true}
+              {
+                placeholder: 'Write a public message',
+                modal: true,
+                triggerLabel: 'Compose',
+                listenReplyEvents: true,
+                autoOpen: autoOpen,
+                initialQuote: initialQuote
+              }
             ),
             content
           )

@@ -77,9 +77,10 @@ exports.create = function (api) {
     var cache = getCache()
     for(var k in cache) {
       var _msg = cache[k]
-      if(Array.isArray(_msg.content.mentions)) {
-        for(var i = 0; i < _msg.content.mentions.length; i++)
-          if(_msg.content.mentions[i].link == msg.key)
+      var mentions = _msg && _msg.content && _msg.content.mentions
+      if(Array.isArray(mentions)) {
+        for(var i = 0; i < mentions.length; i++)
+          if(mentions[i].link == msg.key)
           links.push(k)
       }
     }
@@ -116,12 +117,17 @@ exports.create = function (api) {
     replyLink.addEventListener('click', function () {
       var event
       try {
-        event = new CustomEvent('decent:reply', {detail: {msg: msg}})
+        event = new CustomEvent('decent:reply', {detail: {msg: msg}, cancelable: true})
       } catch (err) {
         event = document.createEvent('CustomEvent')
-        event.initCustomEvent('decent:reply', false, false, {msg: msg})
+        event.initCustomEvent('decent:reply', false, true, {msg: msg})
       }
-      window.dispatchEvent(event)
+      if (window.dispatchEvent(event)) {
+        try {
+          window.sessionStorage.setItem('decent_reply_intent', msg.key)
+        } catch (err) {}
+        window.location.hash = '#' + msg.key
+      }
     })
 
     var msgEl = h('div.message.message-card',
