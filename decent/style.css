@@ -344,9 +344,11 @@ textarea {
   background: rgba(29, 155, 240, 0.1);
 }
 
-/* ── Reaction group (❤️ / ✌️ / + tray) ─────────────────────────────────── */
+/* ── Reaction buttons (quick row) ───────────────────────────────────────── */
 
+/* needs position:relative so the tray can be absolutely anchored */
 .reaction-group {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -374,21 +376,49 @@ textarea {
   letter-spacing: -0.5px;
 }
 
-.action-btn--react-more:hover,
-.action-btn--tray-open {
+.action-btn--react-more:hover {
   color: #f91880;
   background: rgba(249, 24, 128, 0.1);
 }
 
-/* Expandable tray — display toggled by JS (none ↔ flex) */
+/* ── Reaction tray (Phase 5: floating pill, spring animation) ───────────── */
+
 .reaction-tray {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
   align-items: center;
   gap: 2px;
+  padding: 6px 8px;
   background: #fff;
   border: 1px solid #e1e8ed;
-  border-radius: 20px;
-  padding: 2px 4px;
-  margin-left: 2px;
+  border-radius: 999px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  z-index: 200;
+  /* hidden by default — JS adds .reaction-tray--open */
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.82) translateY(6px);
+  transform-origin: left bottom;
+  transition: opacity 0.14s ease,
+              transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reaction-tray--open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+/* Tray emoji buttons are slightly larger than the quick-row ones */
+.reaction-tray .action-btn {
+  padding: 4px 5px;
+}
+
+.reaction-tray .reaction-emoji {
+  font-size: 18px;
 }
 
 .action-liked-meta {

@@ -17,6 +17,12 @@ exports.gives = {
   message_action:       true
 }
 
+// Quick reactions always visible in the action row
+var QUICK_REACTIONS = ['❤️', '✌️']
+
+// Full curated row inside the floating tray
+var TRAY_EMOJIS = ['❤️', '✌️', '😂', '🔥', '😮', '😭', '👍', '👎']
+
 exports.create = function (api) {
   var x = {}
 
@@ -24,12 +30,7 @@ exports.create = function (api) {
     return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
   }
 
-  // Quick reactions always visible on each post
-  var QUICK_REACTIONS = ['❤️', '✌️']
-  // Additional reactions behind the + button (Phase 5 will upgrade this into an animated tray)
-  var TRAY_REACTIONS  = ['😂', '🔥', '😮', '👍', '👎']
-
-  // Render a vote/reaction message in the feed (e.g. "❤️ reacted to <link>")
+  // Render a vote/reaction message in the feed
   x.message_content =
   x.message_content_mini = function (msg) {
     if (msg.value.content.type !== 'vote') return
@@ -46,7 +47,7 @@ exports.create = function (api) {
     ]
   }
 
-  // Aggregate reaction count shown in the post header
+  // Aggregate reaction count in the post header
   x.message_meta = function (msg) {
     var cache = getCache()
     var votes = []
@@ -80,8 +81,8 @@ exports.create = function (api) {
     if (msg.value.content.type === 'vote') return
 
     var cache = getCache()
-    var myVote = null   // {emoji, value, timestamp} — current user's most-recent vote
-    var counts = {}     // emoji → positive vote count (not deduped per user; Phase 8 fixes this)
+    var myVote = null
+    var counts = {}
 
     for (var k in cache) {
       var cached = cache[k]
@@ -90,43 +91,39 @@ exports.create = function (api) {
 
       var voteLink, voteValue, voteEmoji
       if (typeof c.vote === 'string') {
-        // Legacy vote format: c.vote is the message key directly
-        voteLink  = c.vote
-        voteValue = 1
-        voteEmoji = '❤️'
+        voteLink = c.vote; voteValue = 1; voteEmoji = '❤️'
       } else if (c.vote && typeof c.vote === 'object') {
         voteLink  = c.vote.link
         voteValue = c.vote.value || 0
         voteEmoji = (c.vote.expression && c.vote.expression.length <= 8)
           ? c.vote.expression : '❤️'
-      } else {
-        continue
-      }
+      } else { continue }
 
       if (voteLink !== msg.key) continue
 
-      // Track current user's most-recent vote by timestamp
       if (cached.author === selfId) {
         var ts = cached.timestamp || 0
         if (!myVote || ts > myVote.timestamp)
           myVote = { emoji: voteEmoji, value: voteValue, timestamp: ts }
       }
-
-      // Count positive votes per emoji across all users
       if (voteValue > 0)
         counts[voteEmoji] = (counts[voteEmoji] || 0) + 1
     }
 
-    // The emoji the current user has active, or null if none
     var myReaction = (myVote && myVote.value > 0) ? myVote.emoji : null
 
+    // ── State ───────────────────────────────────────────────────────────────
+    var trayOpen      = false
+    var closeTimer    = null
+    var hoverTimer    = null
+    var longPressTimer= null
+    var outsideClickFn= null
+    var escKeyFn      = null
+
+    // ── Core send ───────────────────────────────────────────────────────────
     function sendReaction (emoji) {
-      // Same emoji → toggle off (remove); different emoji → apply (replaces current)
       var newVal = myReaction === emoji ? 0 : 1
-      var vote = {
-        type: 'vote',
-        vote: { link: msg.key, value: newVal, expression: emoji }
-      }
+      var vote = { type: 'vote', vote: { link: msg.key, value: newVal, expression: emoji } }
       if (msg.value.content.recps) {
         vote.recps = msg.value.content.recps.map(function (r) {
           return r && typeof r !== 'string' ? r.link : r
@@ -136,7 +133,52 @@ exports.create = function (api) {
       api.message_confirm(vote)
     }
 
-    function makeReactBtn (emoji) {
+    function reactAndClose (emoji) {
+      sendReaction(emoji)
+      closeTray(true)
+    }
+
+    // ── Tray open / close ───────────────────────────────────────────────────
+    function openTray () {
+      clearTimeout(closeTimer)
+      clearTimeout(hoverTimer)
+      if (trayOpen) return
+      trayOpen = true
+      trayEl.classList.add('reaction-tray--open')
+
+      // Close on any outside click
+      outsideClickFn = function (e) {
+        if (!reactionGroup.contains(e.target)) closeTray(true)
+      }
+      escKeyFn = function (e) {
+        if (e.key === 'Escape') closeTray(true)
+      }
+      document.addEventListener('click', outsideClickFn, true)
+      document.addEventListener('keydown', escKeyFn)
+    }
+
+    function closeTray (immediate) {
+      clearTimeout(closeTimer)
+      clearTimeout(hoverTimer)
+      if (immediate) {
+        if (!trayOpen) return
+        trayOpen = false
+        trayEl.classList.remove('reaction-tray--open')
+        if (outsideClickFn) {
+          document.removeEventListener('click', outsideClickFn, true)
+          outsideClickFn = null
+        }
+        if (escKeyFn) {
+          document.removeEventListener('keydown', escKeyFn)
+          escKeyFn = null
+        }
+      } else {
+        closeTimer = setTimeout(function () { closeTray(true) }, 180)
+      }
+    }
+
+    // ── Button factories ────────────────────────────────────────────────────
+    function makeBtn (emoji, inTray) {
       var isActive = myReaction === emoji
       var count    = counts[emoji] || 0
       return h(
@@ -144,38 +186,76 @@ exports.create = function (api) {
         {
           type:    'button',
           title:   (isActive ? 'Remove ' : 'React ') + emoji,
-          onclick: function (e) { e.preventDefault(); sendReaction(emoji) }
+          onclick: function (e) {
+            e.preventDefault()
+            if (inTray) e.stopPropagation()
+            reactAndClose(emoji)
+          }
         },
         h('span.reaction-emoji', emoji),
         count > 0 ? h('span.action-count', String(count)) : null
       )
     }
 
-    var trayOpen = false
-
+    // ── Tray (floating pill, Phase 5) ───────────────────────────────────────
     var trayEl = h('div.reaction-tray',
-      { style: { display: 'none' } },
-      TRAY_REACTIONS.map(makeReactBtn)
+      TRAY_EMOJIS.map(function (e) { return makeBtn(e, true) })
     )
 
+    // Keep tray open while mouse is over it
+    trayEl.addEventListener('mouseenter', function () {
+      clearTimeout(closeTimer)
+      clearTimeout(hoverTimer)
+    })
+    trayEl.addEventListener('mouseleave', function () { closeTray() })
+
+    // ── More button (+ toggle) ──────────────────────────────────────────────
     var moreBtn = h('button.action-btn.action-btn--react-more',
       {
         type:    'button',
         title:   'More reactions',
         onclick: function (e) {
           e.preventDefault()
-          trayOpen = !trayOpen
-          trayEl.style.display = trayOpen ? 'flex' : 'none'
-          moreBtn.classList.toggle('action-btn--tray-open', trayOpen)
+          e.stopPropagation()
+          if (trayOpen) closeTray(true)
+          else openTray()
         }
       },
       h('span', '+')
     )
 
-    return h('div.reaction-group',
-      QUICK_REACTIONS.map(makeReactBtn).concat([moreBtn]),
+    // ── Reaction group container ────────────────────────────────────────────
+    var reactionGroup = h('div.reaction-group',
+      QUICK_REACTIONS.map(function (e) { return makeBtn(e, false) }),
+      moreBtn,
       trayEl
     )
+
+    // Desktop hover — open after 300 ms hover-intent delay, close on leave
+    var hasFineMouse = typeof window !== 'undefined' &&
+      window.matchMedia && window.matchMedia('(pointer: fine)').matches
+    if (hasFineMouse) {
+      reactionGroup.addEventListener('mouseenter', function () {
+        hoverTimer = setTimeout(openTray, 300)
+      })
+      reactionGroup.addEventListener('mouseleave', function () {
+        clearTimeout(hoverTimer)
+        closeTray()
+      })
+    }
+
+    // Mobile long-press (400 ms) to open tray
+    reactionGroup.addEventListener('touchstart', function () {
+      longPressTimer = setTimeout(openTray, 400)
+    }, { passive: true })
+    reactionGroup.addEventListener('touchend', function () {
+      clearTimeout(longPressTimer)
+    }, { passive: true })
+    reactionGroup.addEventListener('touchmove', function () {
+      clearTimeout(longPressTimer)
+    }, { passive: true })
+
+    return reactionGroup
   }
 
   return x

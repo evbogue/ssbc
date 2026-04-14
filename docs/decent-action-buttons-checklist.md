@@ -100,27 +100,25 @@ Files likely involved:
 - [decent/modules_basic/message.js](/Users/evbogue/Code/ssbc/decent/modules_basic/message.js)
 - [decent/style.css](/Users/evbogue/Code/ssbc/decent/style.css)
 
-## Phase 5: Reaction Tray UX
+## Phase 5: Reaction Tray UX ✅
 
-- [ ] Build a compact anchored reaction tray instead of opening a giant emoji wall first.
-- [ ] Start with a curated quick row:
-  - `❤️`
-  - `✌️`
-  - `😂`
-  - `🔥`
-  - `😮`
-  - `😭`
-  - `👍`
-  - `👎`
-  - `+` for full picker
-- [ ] Make the tray feel gesture-based, not form-based.
-- [ ] If feasible, support drag-across and release-to-select.
-- [ ] Keep the tray anchored near the post action row.
-- [ ] Ensure mobile and desktop both feel intentional:
-  - mobile tap = default
-  - mobile long-press = tray
-  - desktop click = default
-  - desktop hover/hold/expand = tray
+- [x] Build a compact anchored reaction tray instead of opening a giant emoji wall first.
+- [x] Start with a curated quick row:
+  - `❤️` `✌️` `😂` `🔥` `😮` `😭` `👍` `👎`
+  - `+` in the tray is reserved for Phase 6 full picker
+- [x] Make the tray feel gesture-based, not form-based.
+- [ ] Drag-across and release-to-select — deferred; requires pointer-capture API work.
+- [x] Keep the tray anchored near the post action row.
+  - `position: absolute; bottom: calc(100% + 8px)` anchored to `.reaction-group`
+- [x] Ensure mobile and desktop both feel intentional:
+  - mobile tap = default (❤️ or ✌️ in quick row)
+  - mobile long-press (400 ms) = opens tray
+  - desktop click = default (❤️ or ✌️ in quick row); `+` click also opens tray
+  - desktop hover (300 ms hover-intent delay) = opens tray
+
+**Animation:** spring cubic-bezier (0.34, 1.56, 0.64, 1) scale + opacity.
+Tray is pointer-events:none when closed so it never blocks clicks beneath it.
+Outside-click and Escape close the tray, listeners are added/removed per open cycle.
 
 Files likely involved:
 
