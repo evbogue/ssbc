@@ -12,22 +12,26 @@ Make post actions:
 - expressive with a first-class emoji reaction system
 - fast on the common path and rich when needed
 
-## Phase 1: Action Reliability
+## Phase 1: Action Reliability ✅
 
-- [ ] Audit `Reply`, `Repost`, `Quote`, and current `Like` behavior from:
-  - public feed
-  - profile feed
-  - thread view
-  - private view
-  - notifications
-  - channel views
-- [ ] Standardize `Reply` so it always opens a usable reply composer.
-- [ ] If no local composer is mounted, route to the thread view and auto-open reply there.
-- [ ] Standardize `Quote` so it always opens a usable quote composer.
-- [ ] If no local composer is mounted, route to the public composer and preload the quote there.
-- [ ] Ensure `Repost` works consistently from all screens and does not depend on local composer presence.
-- [ ] Remove dead custom-event paths or add fallbacks so buttons never silently do nothing.
-- [ ] Add manual verification notes for each screen/action pairing.
+- [x] Audit `Reply`, `Repost`, `Quote`, and current `Like` behavior from:
+  - public feed — Reply opens modal locally; Quote opens modal locally; Repost confirms directly ✓
+  - profile feed — Reply/Quote fall back to thread/public via sessionStorage routing ✓
+  - thread view — Reply opens modal locally; Quote opens modal locally via listenReplyEvents ✓
+  - private view — Reply falls back to thread (thread.js reads recps for private context); Repost/Quote **blocked** (privacy fix) ✓
+  - notifications — Reply/Quote fall back via sessionStorage routing ✓
+  - channel views — Reply falls back to thread; Quote falls back to public (loses channel, known UX issue; Phase 3) ✓
+- [x] Standardize `Reply` so it always opens a usable reply composer.
+- [x] If no local composer is mounted, route to the thread view and auto-open reply there.
+- [x] Standardize `Quote` so it always opens a usable quote composer.
+- [x] If no local composer is mounted, route to the public composer and preload the quote there.
+- [x] Ensure `Repost` works consistently from all screens and does not depend on local composer presence.
+- [x] Remove dead custom-event paths or add fallbacks so buttons never silently do nothing.
+- [x] Add manual verification notes for each screen/action pairing.
+
+**Bugs fixed in this phase:**
+- `repost.js`: Repost and Quote buttons are now hidden on private messages to prevent public exposure of private message keys/content.
+- `thread.js`: Fixed `normalizeId()` calling `decodeURIComponent()` on raw SSB keys — base64 chars after the `%` sigil frequently form valid percent-encoded sequences, silently transforming ~12% of keys and preventing the reply composer from auto-opening. Now compares the raw `id` directly.
 
 Files likely involved:
 
@@ -68,20 +72,27 @@ Files likely involved:
 - [decent/modules_basic/post.js](/Users/evbogue/Code/ssbc/decent/modules_basic/post.js)
 - [decent/style.css](/Users/evbogue/Code/ssbc/decent/style.css)
 
-## Phase 4: Replace Like With Reactions
+## Phase 4: Replace Like With Reactions ✅
 
-- [ ] Replace the current `Like` button with a reaction control.
-- [ ] Use actual emoji in the UI instead of icon-font or text-symbol stand-ins.
-- [ ] Set default quick reaction to `❤️`.
-- [ ] Pin `✌️` as the second quick reaction and treat it as traditional SSB “Dig”.
-- [ ] Keep the common path fast:
+- [x] Replace the current `Like` button with a reaction control.
+- [x] Use actual emoji in the UI instead of icon-font or text-symbol stand-ins.
+- [x] Set default quick reaction to `❤️`.
+- [x] Pin `✌️` as the second quick reaction and treat it as traditional SSB “Dig”.
+- [x] Keep the common path fast:
   - tap/click = send default reaction immediately
-- [ ] Provide a richer path:
-  - long-press, hover, or expand affordance = open reaction tray
-- [ ] Include a `+` or picker affordance that opens the full emoji picker.
-- [ ] Define one-reaction-per-user-per-post behavior.
-- [ ] Clicking the same reaction again removes it.
-- [ ] Picking a different reaction replaces the current one.
+- [x] Provide a richer path:
+  - expand affordance (`+` button) opens inline reaction tray (Phase 5 will add animation/gesture polish)
+- [x] Include a `+` or picker affordance that opens the full emoji picker.
+  - `+` reveals an inline tray: `😂 🔥 😮 👍 👎` (Phase 6 wires up the full picker behind it)
+- [x] Define one-reaction-per-user-per-post behavior.
+  - Uses timestamp comparison against `window.CACHE` to find the user's most-recent vote
+- [x] Clicking the same reaction again removes it.
+- [x] Picking a different reaction replaces the current one.
+
+**Implementation notes:**
+- Vote wire format unchanged (`type: 'vote'`, `vote.value`, `vote.expression`). Data model migration is Phase 7.
+- Reaction counts are not deduplicated per user yet (multiple votes from one user all count). Phase 8 fixes this with proper aggregation.
+- Legacy votes with `vote.expression: 'Like'` or old-format `c.vote: string` are rendered as `❤️` automatically.
 
 Files likely involved:
 

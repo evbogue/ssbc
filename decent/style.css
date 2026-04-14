@@ -344,13 +344,51 @@ textarea {
   background: rgba(29, 155, 240, 0.1);
 }
 
-.action-btn--like:hover {
+/* ── Reaction group (❤️ / ✌️ / + tray) ─────────────────────────────────── */
+
+.reaction-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.action-btn--react:hover {
+  background: rgba(249, 24, 128, 0.1);
+}
+
+.action-btn--reacted {
+  background: rgba(249, 24, 128, 0.08);
+}
+
+.action-btn--reacted:hover {
+  background: rgba(249, 24, 128, 0.18);
+}
+
+.reaction-emoji {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.action-btn--react-more {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.action-btn--react-more:hover,
+.action-btn--tray-open {
   color: #f91880;
   background: rgba(249, 24, 128, 0.1);
 }
 
-.action-btn--liked {
-  color: #f91880;
+/* Expandable tray — display toggled by JS (none ↔ flex) */
+.reaction-tray {
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid #e1e8ed;
+  border-radius: 20px;
+  padding: 2px 4px;
+  margin-left: 2px;
 }
 
 .action-liked-meta {
@@ -361,8 +399,9 @@ textarea {
   font-size: 0.82em;
 }
 
-.action-liked-meta .action-icon {
+.reaction-emoji-meta {
   font-size: 14px;
+  line-height: 1;
 }
 
 /* ── Quoted post card ───────────────────────────────────────────────────── */
