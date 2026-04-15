@@ -559,6 +559,59 @@ textarea {
   background: rgba(249, 24, 128, 0.18);
 }
 
+/* ── Reaction chips (Phase 8: aggregated emoji chips on each post) ──────── */
+
+.reaction-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  /* push chips visually away from the timestamp link on the left */
+  margin-left: 4px;
+}
+
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px 1px 4px;
+  border: 1px solid #e1e8ed;
+  border-radius: 999px;
+  background: #f7f9fa;
+  cursor: pointer;
+  font-size: 0.8em;
+  color: #536471;
+  line-height: 1;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.reaction-chip:hover {
+  border-color: #f91880;
+  background: rgba(249, 24, 128, 0.07);
+  color: #f91880;
+}
+
+.reaction-chip--active {
+  border-color: #f91880;
+  background: rgba(249, 24, 128, 0.1);
+  color: #f91880;
+}
+
+.reaction-chip--active:hover {
+  background: rgba(249, 24, 128, 0.18);
+}
+
+.reaction-chip__emoji {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.reaction-chip__count {
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+/* Legacy — kept for any cached renders still using this class */
 .action-liked-meta {
   display: inline-flex;
   align-items: center;

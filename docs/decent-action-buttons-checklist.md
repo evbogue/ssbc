@@ -167,21 +167,29 @@ Files likely involved:
 - [ ] Preserve backward-compatible rendering for existing vote messages if needed.
 - [ ] Normalize rendering so hearts and emoji reactions appear in one coherent reaction bar.
 
-## Phase 8: Post-Level Reaction Rendering
+## Phase 8: Post-Level Reaction Rendering ✅
 
-- [ ] Render aggregated emoji chips directly on posts.
-- [ ] Example display:
+- [x] Render aggregated emoji chips directly on posts.
+- [x] Example display:
   - `❤️ 3`
   - `✌️ 2`
   - `😂 1`
-- [ ] Highlight the current user’s active reaction.
-- [ ] Clicking a visible chip should apply or swap to that reaction.
-- [ ] Clicking your own active chip again should remove it.
+- [x] Highlight the current user’s active reaction.
+- [x] Clicking a visible chip should apply or swap to that reaction.
+- [x] Clicking your own active chip again should remove it.
 - [ ] Consider a later hover/tap affordance to show who reacted with each emoji.
+
+**Implementation notes:**
+- Chips render in the post header row (`.message_meta`) alongside the timestamp — the existing plugin integration point.
+- Per-author deduplication: only each user’s most-recent vote (by timestamp) counts, fixing the double-count bug noted in Phase 4.
+- Chips are sorted by count descending (most popular emoji first).
+- Current user’s active chip is styled with a pink border/background (`reaction-chip--active`).
+- Clicking any chip sends a toggle vote (`value: 1` or `value: 0`). Private-message recps are preserved.
+- Legacy `.action-liked-meta` class retained for any cached renders; no migration needed.
 
 Files likely involved:
 
-- [decent/modules_basic/like.js](/Users/evbogue/Code/ssbc/decent/modules_basic/message.js)
+- [decent/modules_basic/like.js](/Users/evbogue/Code/ssbc/decent/modules_basic/like.js)
 - [decent/style.css](/Users/evbogue/Code/ssbc/decent/style.css)
 
 ## Phase 9: Motion and Polish

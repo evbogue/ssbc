@@ -159,34 +159,76 @@ exports.create = function (api) {
     ]
   }
 
-  // Aggregate reaction count in the post header
+  // Aggregated emoji chips rendered directly on posts (Phase 8)
   x.message_meta = function (msg) {
     var cache = getCache()
-    var votes = []
+
+    // Per-author deduplication: keep only each author's most-recent vote
+    var userVotes = {}
     for (var k in cache) {
       var cached = cache[k]
       var c = cached && cached.content
       if (!c || c.type !== 'vote') continue
-      var voteLink = c.vote && (typeof c.vote === 'string' ? c.vote : c.vote.link)
-      if (voteLink !== msg.key) continue
-      if (typeof c.vote !== 'string' && !(c.vote && c.vote.value > 0)) continue
-      votes.push({ source: cached.author })
-    }
-    if (!votes.length) return null
 
-    var el = h('span.action-liked-meta',
-      h('span.reaction-emoji-meta', '❤️'),
-      h('span.action-count', String(votes.length))
-    )
-    pull(
-      pull.values(votes.map(function (v) { return api.avatar_name(v.source) })),
-      pull.collect(function (err, ary) {
-        el.title = ary.map(function (x) {
-          return x && x.textContent ? x.textContent : String(x)
-        }).join(', ')
+      var voteLink, voteValue, voteEmoji
+      if (typeof c.vote === 'string') {
+        voteLink = c.vote; voteValue = 1; voteEmoji = '❤️'
+      } else if (c.vote && typeof c.vote === 'object') {
+        voteLink  = c.vote.link
+        voteValue = c.vote.value || 0
+        voteEmoji = (c.vote.expression && c.vote.expression.length <= 8)
+          ? c.vote.expression : '❤️'
+      } else { continue }
+
+      if (voteLink !== msg.key) continue
+
+      var aut = cached.author
+      var ts  = cached.timestamp || 0
+      if (!userVotes[aut] || ts > userVotes[aut].ts)
+        userVotes[aut] = { emoji: voteEmoji, value: voteValue, ts: ts }
+    }
+
+    // Aggregate counts; track what the current user voted for
+    var counts = {}
+    var myReaction = null
+    for (var uid in userVotes) {
+      var uv = userVotes[uid]
+      if (uv.value > 0) {
+        counts[uv.emoji] = (counts[uv.emoji] || 0) + 1
+        if (uid === selfId) myReaction = uv.emoji
+      }
+    }
+
+    var emojis = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] })
+    if (!emojis.length) return null
+
+    return h('span.reaction-chips',
+      emojis.map(function (emoji) {
+        var isActive = myReaction === emoji
+        return h(
+          'button.reaction-chip' + (isActive ? '.reaction-chip--active' : ''),
+          {
+            type:    'button',
+            title:   (isActive ? 'Remove ' : 'React ') + emoji,
+            onclick: function (e) {
+              e.preventDefault()
+              e.stopPropagation()
+              var newVal = isActive ? 0 : 1
+              var vote = { type: 'vote', vote: { link: msg.key, value: newVal, expression: emoji } }
+              if (msg.value.content.recps) {
+                vote.recps = msg.value.content.recps.map(function (r) {
+                  return r && typeof r !== 'string' ? r.link : r
+                })
+                vote.private = true
+              }
+              api.message_confirm(vote)
+            }
+          },
+          h('span.reaction-chip__emoji', emoji),
+          h('span.reaction-chip__count', String(counts[emoji]))
+        )
       })
     )
-    return el
   }
 
   x.message_action = function (msg) {
