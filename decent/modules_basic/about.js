@@ -26,22 +26,27 @@ exports.create = function (api) {
   exports.message_content = function (msg) {
     if(msg.value.content.type !== 'about') return
 
-    if(!msg.value.content.image && !msg.value.content.name)
+    if(!msg.value.content.image && !msg.value.content.name && !msg.value.content.description)
       return
 
     var about = msg.value.content
     var id = msg.value.content.about
-    return h('p', 
-      about.about === msg.value.author
-        ? h('span', 'self-identifies ')
-        : h('span', 'identifies ', idLink(id)),
-      ' as ',
-      h('a', {href:"#"+about.about},
-        about.name || null,
-        about.image
-        ? h('img.avatar--thumbnail', {src: api.blob_url(asLink(about.image))})
+    return h('div',
+      h('p',
+        about.about === msg.value.author
+          ? h('span', 'self-identifies ')
+          : h('span', 'identifies ', idLink(id)),
+        ' as ',
+        h('a', {href:"#"+about.about},
+          about.name || null,
+          about.image
+          ? h('img.avatar--thumbnail', {src: api.blob_url(asLink(about.image))})
+          : null
+        )
+      ),
+      about.description
+        ? h('p', h('em', '"' + about.description + '"'))
         : null
-      )
     )
   }
 
