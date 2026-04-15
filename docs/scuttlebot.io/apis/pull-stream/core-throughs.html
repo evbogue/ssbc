@@ -1,0 +1,134 @@
+<html>
+    <head>
+    <title>Through Functions - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div ><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div class="current"><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/pull-stream/pull-stream.html" title="Pull-Stream">Pull-Stream</a></li>
+  <li ><a href="/apis/pull-stream/core-sources.html" title="Source Functions">Source Functions</a></li>
+  <li class="current"><a href="/apis/pull-stream/core-throughs.html" title="Through Functions">Through Functions</a></li>
+  <li ><a href="/apis/pull-stream/core-sinks.html" title="Sink Functions">Sink Functions</a></li>
+  <li ><a href="/apis/pull-stream/pull-stream-to-stream.html" title="Pull-Stream-to-Stream">Pull-Stream-to-Stream</a></li>
+  <li ><a href="/apis/pull-stream/stream-to-pull-stream.html" title="Stream-to-Pull-Stream">Stream-to-Pull-Stream</a></li>
+  <li ><a href="/apis/pull-stream/pull-paramap.html" title="Pull-Paramap">Pull-Paramap</a></li>
+  <li ><a href="/apis/pull-stream/pull-cat.html" title="Pull-Cat">Pull-Cat</a></li>
+  <li ><a href="/apis/pull-stream/pull-pushable.html" title="Pull-Pushable">Pull-Pushable</a></li>
+  <li ><a href="/apis/pull-stream/pull-notify.html" title="Pull-Notify">Pull-Notify</a></li>
+  <li ><a href="/apis/pull-stream/pull-pause.html" title="Pull-Pause">Pull-Pause</a></li>
+  <li ><a href="/apis/pull-stream/pull-timeout.html" title="Pull-Timeout">Pull-Timeout</a></li>
+  <li ><a href="/apis/pull-stream/pull-window.html" title="Pull-Window">Pull-Window</a></li>
+  <li ><a href="/apis/pull-stream/pull-otherwise.html" title="Pull-Otherwise">Pull-Otherwise</a></li>
+  <li ><a href="/apis/pull-stream/pull-ws-server.html" title="Pull-WS-Server">Pull-WS-Server</a></li>
+</ul>
+        <div class="content">
+          <div class="table-of-contents">
+    <a href="#">Jump to section</a>
+    <ul>
+      <li><a href="#map-fun">map (fun)</a></li><li><a href="#asyncmap-fun">asyncMap (fun)</a></li><li><a href="#filter-test">filter (test)</a></li><li><a href="#filternot-test">filterNot (test)</a></li><li><a href="#unique-prop">unique (prop)</a></li><li><a href="#nonunique-prop">nonUnique (prop)</a></li><li><a href="#take-test--opts">take (test </a></li><li><a href="#flatten-">flatten ()</a></li>
+    </ul>
+  </div>
+<h1 id="throughs"><a href="#throughs" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Throughs</h1>
+<p>A Through is a stream that both reads and is read by
+another stream.</p>
+<p>Through streams are optional.</p>
+<p>Put through streams in-between <a href="https://github.com/dominictarr/pull-stream/blob/master/docs/sources.md">sources</a> and <a href="https://github.com/dominictarr/pull-stream/blob/master/docs/sinks.md">sinks</a>,
+like this:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">pull(source, through, sink)</code></pre>
+    </div>
+  </div>
+<p>Also, if you don&#x27;t have the source/sink yet,
+you can pipe multiple through streams together
+to get one through stream!</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var throughABC = function () {
+ return throughA()
+    .pipe(throughB())
+    .pipe(throughC())
+}</code></pre>
+    </div>
+  </div>
+<p>Which can then be treated like a normal through stream!</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">source().pipe(throughABC()).pipe(sink())</code></pre>
+    </div>
+  </div>
+<p>See also:</p>
+<ul>
+<li><a href="./core-sources.html">Sources</a></li>
+<li><a href="./core-sinks.html">Sinks</a></li>
+</ul>
+<h2 id="map-fun"><a href="#map-fun" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>map (fun)</h2>
+<p>Like <code>[].map(function (data) {return data})</code></p>
+<h2 id="asyncmap-fun"><a href="#asyncmap-fun" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>asyncMap (fun)</h2>
+<p>Like <code>map</code> but the signature of <code>fun</code> must be
+<code>function (data, cb) { cb(null, data) }</code></p>
+<h2 id="filter-test"><a href="#filter-test" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>filter (test)</h2>
+<p>Like <code>[].filter(function (data) {return true || false})</code>
+only <code>data</code> where <code>test(data) == true</code> are let through
+to the next stream.</p>
+<h2 id="filternot-test"><a href="#filternot-test" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>filterNot (test)</h2>
+<p>Like filter, but remove items where the filter returns true.</p>
+<h2 id="unique-prop"><a href="#unique-prop" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>unique (prop)</h2>
+<p>Filter items that have a repeated value for <code>prop()</code>,
+by default, <code>prop = function (it) {return it }</code>, if prop is a string,
+it will filter nodes which have repeated values for that property.</p>
+<h2 id="nonunique-prop"><a href="#nonunique-prop" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>nonUnique (prop)</h2>
+<p>Filter unique items -- get the duplicates.
+The inverse of <code>unique</code></p>
+<h2 id="take-test--opts"><a href="#take-test--opts" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>take (test [, opts])</h2>
+<p>If test is a function, read data from the source stream and forward it downstream until test(data) returns false.</p>
+<p>If <code>opts.last</code> is set to true, the data for which the test failed will be included in what is forwarded.</p>
+<p>If test is an integer, take n item from the source.</p>
+<h2 id="flatten-"><a href="#flatten-" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>flatten ()</h2>
+<p>Turn a stream of arrays into a stream of their items, (undoes group).</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

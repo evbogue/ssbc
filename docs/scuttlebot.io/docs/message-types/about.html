@@ -1,0 +1,85 @@
+<html>
+    <head>
+    <title>About messages - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div class="current"><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/message-types/post.html" title="Post">Post</a></li>
+  <li class="current"><a href="/docs/message-types/about.html" title="About">About</a></li>
+  <li ><a href="/docs/message-types/contact.html" title="Contact">Contact</a></li>
+  <li ><a href="/docs/message-types/vote.html" title="Vote">Vote</a></li>
+  <li ><a href="/docs/message-types/pub.html" title="Pub">Pub</a></li>
+  <li ><a href="/docs/message-types/custom-types.html" title="Custom Types">Custom Types</a></li>
+</ul>
+        <div class="content">
+          <h2 id="about"><a href="#about" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>About</h2>
+<p>About-messages set attributes about someone or something.
+They can be used to set a name or picture for users, files, or messages.
+However, they&#x27;re most commonly published about users.</p>
+<p>About messages do not have to have both <code>name</code> and <code>image</code>, and, in fact, it&#x27;s recommended that they only have one or the other.
+Why?
+Because then a <code>vote</code> on the message can be more specific.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">{ type: 'about', about: Link, name: String, image: BlobLink }</code></pre>
+    </div>
+  </div>
+<h3 id="names"><a href="#names" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Names</h3>
+<p>There&#x27;s no global registry of names.
+Each user can choose a name for themselves and for others, and conflicts are allowed.</p>
+<p>Its up to your application to decide which names to use.
+Generally speaking, names by followed users are trusted, and the local user gets to override all decisions.</p>
+<p>A common rule for names is to allow <code>A-z0-9._-</code>, and not allow a trailing <code>.</code>.</p>
+<h3 id="images"><a href="#images" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Images</h3>
+<p>For images, a common size is 512x512.
+Square images are recommended but not required.</p>
+<p>Some recommended (but not required) attributes on the <code>image</code> link:</p>
+<ul>
+<li><code>width</code> in pixels</li>
+<li><code>height</code> in pixels</li>
+<li><code>name</code> a string filename</li>
+<li><code>size</code> in bytes</li>
+<li><code>type</code> a mimetype</li>
+</ul>
+
+          <ul class="see-also"><li><a href="/docs/social/update-your-profile.html">Update your profile</a></li><li><a href="/docs/message-types/custom-types.html">Message schemas</a></li><li><a href="/docs/advanced/links.html">Linking messages</a></li><li><a href="/apis/modules/ssb-msg-schemas.html">SSB-Msg-Schemas API</a></li></ul>
+          <p class="next"><a href="./contact.html">Contact</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,135 @@
+<html>
+    <head>
+    <title>View a profile - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div class="current"><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/social/update-your-profile.html" title="Update your profile">Update your profile</a></li>
+  <li class="current"><a href="/docs/social/view-a-profile.html" title="View a profile">View a profile</a></li>
+  <li ><a href="/docs/social/follow-users.html" title="Follow users">Follow users</a></li>
+  <li ><a href="/docs/social/query-the-social-graph.html" title="Query the social graph">Query the social graph</a></li>
+  <li ><a href="/docs/social/join-a-pub.html" title="Join a Pub">Join a Pub</a></li>
+</ul>
+        <div class="content">
+          <h2 id="view-a-profile"><a href="#view-a-profile" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>View a profile</h2>
+<p>To see somebody&#x27;s profile, you fetch all of their &#x27;about&#x27; messages.
+You can then accept the last <code>name</code> and <code>image</code> value they published.</p>
+<p>This is how you get the self-published about messages:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot links \
+  --source {userId} \
+  --dest {userId} \
+  --rel about \
+  --values</code></pre><pre><code class="language-js">var pull = require('pull-stream')
+pull(
+  sbot.links({
+    source: userId,
+    dest: userId,
+    rel: 'about',
+    values: true
+  }),
+  pull.collect(function (err, msgs) { ... })
+)</code></pre>
+    </div>
+  </div>
+<p>This query will get all of the &#x27;about&#x27; messages that the user has published about themselves.
+If you want to get &#x27;about&#x27; messages published by everyone, remove the <code>source</code> parameter.</p>
+<p>Here&#x27;s an example usage (don&#x27;t copy this directly):</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot links \
+  --source "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519" \
+  --dest "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519" \
+  --rel about \
+  --values</code></pre><pre><code class="language-js">var pull = require('pull-stream')
+pull(
+  sbot.links({
+    source: '@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519',
+    dest: '@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519',
+    rel: 'about',
+    values: true
+  }),
+  pull.collect(function (err, msgs) { ... })
+)</code></pre>
+    </div>
+  </div>
+<p>And some of the output:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">json</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-json">{
+  "source": "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519",
+  "rel": "about",
+  "dest": "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519",
+  "key": "%NatgQ6Y0iHIGogGgUN5wHlYH9afOWFJY8hW4SRlsGaE=.sha256",
+  "value": {
+    "previous": "%hDNjq+IeXWuP4Qeju38q2CgF+oTqRG5k16FqVGaYg3s=.sha256",
+    "author": "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519",
+    "sequence": 257,
+    "timestamp": 1443544832442,
+    "hash": "sha256",
+    "content": {
+      "type": "about",
+      "about": "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519",
+      "name": "bob",
+      "image": {
+        "link": "&NfP4H4NZCfiPQ6AZ6fEmilbFL8Hz3wTQVeaxbCnNEt4=.sha256",
+        "size": 347856,
+        "type": "image/png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    "signature": "Rp8E4H8fz4hALwN6PuiRURJZVWMHxe0fAlV+M3kW0JMV049+Ga72BpYQgQcNOAEZqhtvmXaSS9uHuGl6/RyZBQ==.sig.ed25519"
+  }
+}</code></pre>
+    </div>
+  </div>
+
+          <ul class="see-also"><li><a href="/docs/message-types/about.html">About messages</a></li><li><a href="/apis/scuttlebot/ssb.html#links-source">links API</a></li></ul>
+          <p class="next"><a href="/docs/social/follow-users.html">Follow users</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

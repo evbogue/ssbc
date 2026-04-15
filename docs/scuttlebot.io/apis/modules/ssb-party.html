@@ -1,0 +1,101 @@
+<html>
+    <head>
+    <title>SSB-Party - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div class="current"><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/modules/ssb-client.html" title="SSB-Client">SSB-Client</a></li>
+  <li ><a href="/apis/modules/ssb-feed.html" title="SSB-Feed">SSB-Feed</a></li>
+  <li ><a href="/apis/modules/ssb-keys.html" title="SSB-Keys">SSB-Keys</a></li>
+  <li ><a href="/apis/modules/ssb-ref.html" title="SSB-Ref">SSB-Ref</a></li>
+  <li ><a href="/apis/modules/ssb-msgs.html" title="SSB-Msgs">SSB-Msgs</a></li>
+  <li ><a href="/apis/modules/ssb-msg-schemas.html" title="SSB-Msg-Schemas">SSB-Msg-Schemas</a></li>
+  <li ><a href="/apis/modules/ssb-markdown.html" title="SSB-Markdown">SSB-Markdown</a></li>
+  <li ><a href="/apis/modules/ssb-config.html" title="SSB-Config">SSB-Config</a></li>
+  <li class="current"><a href="/apis/modules/ssb-party.html" title="SSB-Party">SSB-Party</a></li>
+  <li ><a href="/apis/modules/secret-stack.html" title="Secret-Stack">Secret-Stack</a></li>
+  <li ><a href="/apis/modules/muxrpc.html" title="MuxRPC">MuxRPC</a></li>
+  <li ><a href="/apis/modules/muxrpcli.html" title="MuxRPCCli">MuxRPCCli</a></li>
+  <li ><a href="/apis/modules/mdmanifest.html" title="MDManifest">MDManifest</a></li>
+  <li ><a href="/apis/modules/graphmitter.html" title="Graphmitter">Graphmitter</a></li>
+</ul>
+        <div class="content">
+          <h1 id="ssb-party"><a href="#ssb-party" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>ssb-party</h1>
+<p>Get a <a href="https://github.com/ssbc/ssb-server">scuttlebot</a> client instance. If scuttlebot isn&#x27;t running, start it in the background, and keep it running until all the clients have disconnected.</p>
+<h2 id="usage"><a href="#usage" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Usage</h2>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var createSsbParty = require('ssb-party')</code></pre>
+    </div>
+  </div>
+<h3 id="createssbpartyopts-cb"><a href="#createssbpartyopts-cb" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a><code>createSsbParty([opts, ]cb)</code></h3>
+<ul>
+<li><code>opts.keys</code>: an <a href="https://github.com/ssbc/ssb-keys">ssb-keys</a> instance. default loads from <code>~/.ssb/secret</code></li>
+<li><code>opts.host</code>: host to connect to or start the server on. default <code>&quot;localhost&quot;</code></li>
+<li><code>opts.port</code>: port to connect to or start the server on. default 8008</li>
+<li><code>opts.appKey</code>: secret-stack capability key (Buffer). default sbot&#x27;s appKey</li>
+</ul>
+<p>Other properties of the <code>opts</code> object will be used as <a href="https://github.com/ssbc/ssb-config">ssb-config</a>
+overrides, but if the server is already running, these will not affect the existing server&#x27;s config.</p>
+<h3 id="example"><a href="#example" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Example</h3>
+<p>simplest case: connect to or start a local ssb-server:</p>
+<pre><code>var party = require(&#x27;ssb-party&#x27;)
+
+party(function (err, sbot) {
+  // ...
+})
+</code></pre>
+<h3 id="config"><a href="#config" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Config</h3>
+<ul>
+<li><code>config.timers.keepalive</code>: minimum time (ms) to keep the server online after the last client disconnects. default: 30s</li>
+<li><code>config.party.out</code>: where to put standard output of sbot. may be a path (absolute, or relative to ssb&#x27;s directory), or <code>false</code> to discard, or <code>true</code> to pass through to the controlling terminal. default: <code>&quot;debug.log&quot;</code></li>
+<li><code>config.party.err</code>: where to put standard error of sbot. default: same as <code>config.party.out</code></li>
+</ul>
+<h2 id="license"><a href="#license" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>License</h2>
+<p>Copyright (c) 2017 <a href="https://git.scuttlebot.io/@f/6sQ6d2CMxRUhLpspgGIulDxDCwYD7DzFzPNr7u5AU=.ed25519">@cel</a></p>
+<p>Usage of the works is permitted provided that this instrument
+is retained with the works, so that any entity that uses the
+works is notified of this instrument.</p>
+<p>DISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.</p>
+<p><a href="http://git.scuttlebot.io/%25bS%252FWGqQrhQfH8eoyWieK%252B9M56DjJ8Q4ulkvb6sXZwPo%253D.sha256">Repository</a></p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

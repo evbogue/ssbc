@@ -1,0 +1,108 @@
+<html>
+    <head>
+    <title>Publish a file - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div class="current"><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/advanced/links.html" title="Links">Links</a></li>
+  <li class="current"><a href="/docs/advanced/publish-a-file.html" title="Publish a file">Publish a file</a></li>
+  <li ><a href="/docs/advanced/read-a-file.html" title="Read a file">Read a file</a></li>
+  <li ><a href="/docs/advanced/feed-send-time-sort.html" title="Feed (send time sort)">Feed (send time sort)</a></li>
+  <li ><a href="/docs/advanced/feed-receive-time-sort.html" title="Feed (receive time sort)">Feed (receive time sort)</a></li>
+  <li ><a href="/docs/advanced/messages-by-type.html" title="Messages by type">Messages by type</a></li>
+  <li ><a href="/docs/advanced/messages-by-user.html" title="Messages by user">Messages by user</a></li>
+  <li ><a href="/docs/advanced/watch-for-messages.html" title="Watch for messages">Watch for messages</a></li>
+  <li ><a href="/docs/advanced/votes-on-a-message.html" title="Votes on a message">Votes on a message</a></li>
+  <li ><a href="/docs/advanced/user-files.html" title="User files">User files</a></li>
+  <li ><a href="/docs/advanced/links-between-users.html" title="Links between users">Links between users</a></li>
+  <li ><a href="/docs/advanced/post-threads.html" title="Post threads">Post threads</a></li>
+</ul>
+        <div class="content">
+          <p>To publish a file, you must first add it to Scuttlebot&#x27;s blob-store.
+Then, you announce the file by publishing its hash-ID in a message.</p>
+<h2 id="add-a-file-to-the-blobstore"><a href="#add-a-file-to-the-blobstore" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Add a file to the blobstore</h2>
+<p>Scuttlebot maintains a &quot;blobstore,&quot; which is a space of files that are named by their content-hash.
+Add a file by streaming its content in the <code>blobs.add</code> method.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">$ cat ./hello.txt | sbot blobs.add
+&hT/5N2Kgbdv3IsTr6d3WbY9j3a6pf1IcPswg2nyXYCA=.sha256</code></pre><pre><code class="language-js">var fs = require('fs')
+var pull = require('pull-stream')
+var toPull = require('stream-to-pull-stream')
+pull(
+  toPull.source(fs.createReadStream('./hello.txt')),
+  sbot.blobs.add(function (err, hash) {
+    // 'hash' is the hash-id of the blob
+  })
+)</code></pre>
+    </div>
+  </div>
+<h2 id="publish-the-file-to-the-network"><a href="#publish-the-file-to-the-network" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Publish the file to the network</h2>
+<p>Adding a file will only affect the local blobstore.
+To distribute the file, you must also link to it in an unencrypted message.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">$ sbot publish --type post --text "checkout this file!" \
+  --mentions.link "&hT/5N2Kgbdv3IsT...swg2nyXYCA=.sha256" \
+  --mentions.name "hello.txt" \
+  --mentions.size 12 \
+  --mentions.type "text/plain"</code></pre><pre><code class="language-js">sbot.publish({
+  type: 'post',
+  text: 'checkout [this file!]('+hash+')',
+  mentions: [{
+    link: hash,        // the hash given by blobs.add
+    name: 'hello.txt', // optional, but recommended
+    size: 12,          // optional, but recommended
+    type: 'text/plain' // optional, but recommended
+  }]
+}, function (err, msg) {
+  // ...
+})</code></pre>
+    </div>
+  </div>
+<p>When peers see the hash-ID in your message, they&#x27;ll request the blob from your device, and then reshare it to other peers.</p>
+
+          <ul class="see-also"><li><a href="/apis/scuttlebot/blobs.html">Scuttlebot.Blobs API</a></li><li><a href="/docs/advanced/links.html">Linking messages</a></li><li><a href="/apis/pull-stream/pull-stream.html">Pull streams</a></li></ul>
+          <p class="next"><a href="/docs/advanced/read-a-file.html">Read a file</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

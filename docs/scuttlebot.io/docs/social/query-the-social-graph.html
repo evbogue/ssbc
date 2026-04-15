@@ -1,0 +1,129 @@
+<html>
+    <head>
+    <title>Query the social graph - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div class="current"><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/social/update-your-profile.html" title="Update your profile">Update your profile</a></li>
+  <li ><a href="/docs/social/view-a-profile.html" title="View a profile">View a profile</a></li>
+  <li ><a href="/docs/social/follow-users.html" title="Follow users">Follow users</a></li>
+  <li class="current"><a href="/docs/social/query-the-social-graph.html" title="Query the social graph">Query the social graph</a></li>
+  <li ><a href="/docs/social/join-a-pub.html" title="Join a Pub">Join a Pub</a></li>
+</ul>
+        <div class="content">
+          <h2 id="fetch-the-social-graph"><a href="#fetch-the-social-graph" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Fetch the social graph</h2>
+<p>You can see who follows whom by calling the <code>friends.all</code> method.
+It will provide an object of <code>{ userId =&gt; [followedIds] }</code>.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot friends.all</code></pre><pre><code class="language-js">sbot.friends.all(function (err, graph) {
+  // ...
+})</code></pre>
+    </div>
+  </div>
+<p>Example output:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">json</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-json">{
+  "@ptAi6iWwMtqkbpO6YEsLXhucEZkqDgmffCCE0HZYXmk=.ed25519": {
+    "@8HsIHUvTaWg8IXHpsb8dmDtKH8qLOrSNwNm298OkGoY=.ed25519": true,
+    "@uRECWB4KIeKoNMis2UYWyB2aQPvWmS3OePQvBj2zClg=.ed25519": true,
+    "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519": true,
+    "@ye+QM09iPcDJD6YvQYjoQc7sLF/IFhmNbEqgdzQo3lQ=.ed25519": true
+  },
+  "@N8xBJlwMzP/eKNz50i0Eq81qtg/S70YkifNA0mBzbKE=.ed25519": {
+    "@D0GsAaMyt96Ze3q1YiiuzWhPkyou2fVTUgw8Xr+G7Jo=.ed25519": true
+  },
+  "@QgHY6P7NGW9qFJVjAMl36EkapanG3iyjCBo+8/ZwXTY=.ed25519": {
+    "@uRECWB4KIeKoNMis2UYWyB2aQPvWmS3OePQvBj2zClg=.ed25519": true
+  }
+}</code></pre>
+    </div>
+  </div>
+<h2 id="list-degrees-of-connection-between-users"><a href="#list-degrees-of-connection-between-users" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>List degrees-of-connection between users</h2>
+<p>If you want to find out how connected you (or somebody else) is, you can use the <code>friends.hops</code> method.
+This will list all known user-ids, and how many social-connections away they are.</p>
+<p>For instance:</p>
+<ul>
+<li>Somebody you follow will be 1 hop away.</li>
+<li>Somebody followed by someone you follow will be 2 hops away.<br><small>(a &quot;friend of a friend&quot;)</small></li>
+<li>etc</li>
+</ul>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot friends.hops {userId}</code></pre><pre><code class="language-js">sbot.friends.hops(userId, function (err, list) {
+  // ...
+})</code></pre>
+    </div>
+  </div>
+<p>Example output:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">json</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-json">{
+  "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519": 0,
+  "@jpq43ybzjW+u2lABZCPD8OVVvp85CKeY4qSlXTA31j4=.ed25519": 1,
+  "@V/0ZcEFyPagUhs6Cqc9Su98rpzna4zBRXXbAZOtF6p4=.ed25519": 1,
+  "@Tc/1cgullpQYaQk/JKNwDAsfniVADcU9lulwYXrGsos=.ed25519": 1,
+  "@GLH9VPzvvU2KcnnUu2n5oxOqaTUtzw+Rk6fd/Kb9Si0=.ed25519": 1,
+  "@6ilZq3kN0F+dXFHAPjAwMm87JEb/VdB+LC9eIMW3sa0=.ed25519": 1,
+  "@9sCXwCJZJ9doPcx7oZ1gm7HNZapO2Z9iZ0FJHJdROio=.ed25519": 2,
+  "@GslEFXx7Oz3ooO6z4+6JRzdtKpzeNqb4aYv8M9wGqoU=.ed25519": 2,
+  "@yARQ14OOZXgI8OU8UsgQhZSSmzPbuwCgC5gXxmRAhkE=.ed25519": 2,
+  "@bCbTcYMmSwYbbiDBUnSbhobzYnayKesq0LNmTDSvR6Y=.ed25519": 2,
+  "@v4pOKqdvSpv/Rm/Eb+g5gCfsBXVVzKbmMT/F6IW7lds=.ed25519": 2,
+  "@+gpZcBi1p1E2omC9L3bXUWduYWfrUZqwWcednMxy+Rw=.ed25519": 3,
+  "@OweKXqiKl49z9pzp764z0xvzOfHqTacYxuLubLzrCgQ=.ed25519": 3
+}</code></pre>
+    </div>
+  </div>
+
+          <ul class="see-also"><li><a href="/apis/scuttlebot/friends.html">Scuttlebot.Friends API</a></li><li><a href="/docs/social/follow-users.html">Follow users</a></li></ul>
+          <p class="next"><a href="/docs/social/join-a-pub.html">Join a Pub</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,93 @@
+<html>
+    <head>
+    <title>SSB-Config - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div class="current"><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/modules/ssb-client.html" title="SSB-Client">SSB-Client</a></li>
+  <li ><a href="/apis/modules/ssb-feed.html" title="SSB-Feed">SSB-Feed</a></li>
+  <li ><a href="/apis/modules/ssb-keys.html" title="SSB-Keys">SSB-Keys</a></li>
+  <li ><a href="/apis/modules/ssb-ref.html" title="SSB-Ref">SSB-Ref</a></li>
+  <li ><a href="/apis/modules/ssb-msgs.html" title="SSB-Msgs">SSB-Msgs</a></li>
+  <li ><a href="/apis/modules/ssb-msg-schemas.html" title="SSB-Msg-Schemas">SSB-Msg-Schemas</a></li>
+  <li ><a href="/apis/modules/ssb-markdown.html" title="SSB-Markdown">SSB-Markdown</a></li>
+  <li class="current"><a href="/apis/modules/ssb-config.html" title="SSB-Config">SSB-Config</a></li>
+  <li ><a href="/apis/modules/ssb-party.html" title="SSB-Party">SSB-Party</a></li>
+  <li ><a href="/apis/modules/secret-stack.html" title="Secret-Stack">Secret-Stack</a></li>
+  <li ><a href="/apis/modules/muxrpc.html" title="MuxRPC">MuxRPC</a></li>
+  <li ><a href="/apis/modules/muxrpcli.html" title="MuxRPCCli">MuxRPCCli</a></li>
+  <li ><a href="/apis/modules/mdmanifest.html" title="MDManifest">MDManifest</a></li>
+  <li ><a href="/apis/modules/graphmitter.html" title="Graphmitter">Graphmitter</a></li>
+</ul>
+        <div class="content">
+          <h1 id="ssb-config"><a href="#ssb-config" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>ssb-config</h1>
+<p>Configuration module used by <a href="https://github.com/ssbc/ssb-server"><code>ssb-server</code></a>.</p>
+<h2 id="example"><a href="#example" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>example</h2>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var config = require('ssb-config')
+
+//if you want to set up a test network, that
+//doesn't collide with main ssb pass the name of that network in.
+
+var test_config = require('ssb-config/inject')('testnet', {port: 9999})
+//you can also pass a second argument, which overrides the default defaults.</code></pre>
+    </div>
+  </div>
+<h2 id="configuration"><a href="#configuration" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Configuration</h2>
+<ul>
+<li><code>host</code> <em>(string)</em> The domain or ip address for <code>sbot</code>. Defaults to your public ip address.</li>
+<li><code>port</code> <em>(string|number)</em> The port for <code>sbot</code>. Defaults to <code>8008</code>.</li>
+<li><code>timeout</code>: <em>(number)</em> Number of milliseconds a replication stream can idle before it&#x27;s automatically disconnected. Defaults to <code>30000</code>.</li>
+<li><code>pub</code> <em>(boolean)</em> Replicate with pub servers. Defaults to <code>true</code>.</li>
+<li><code>local</code> <em>(boolean)</em> Replicate with local servers found on the same network via <code>udp</code>. Defaults to <code>true</code>.</li>
+<li><code>friends.dunbar</code> <em>(number)</em> <a href="https://en.wikipedia.org/wiki/Dunbar&#x27;s_number"><code>Dunbar&#x27;s number</code></a>. Number of nodes your instance will replicate. Defaults to <code>150</code>.</li>
+<li><code>friends.hops</code> <em>(number)</em> How many friend of friend hops to replicate. Defaults to <code>3</code>.</li>
+<li><code>gossip.connections</code> <em>(number)</em> How many other nodes to connect with at one time. Defaults to <code>2</code>.</li>
+<li><code>path</code> <em>(string)</em> Path to the application data folder, which contains the private key, message attachment data (blobs) and the leveldb backend. Defaults to <code>$HOME/.ssb</code>.</li>
+<li><code>master</code> <em>(array)</em> Pubkeys of users who, if they connect to the server instance, are allowed to command the primary user with full rights. Useful for remotely operating a pub. Defaults to <code>[]</code>.</li>
+<li><code>logging.level</code> <em>(string)</em> How verbose should the logging be. Possible values are error, warning, notice, and info. Defaults to <code>notice</code>.</li>
+</ul>
+<p>There are some configuration options for the sysadmins out there. All configuration is loaded via <a href="https://github.com/dominictarr/rc"><code>rc</code></a>. You can pass any configuration value in as cli arg, env var, or in a file.</p>
+<p><a href="https://github.com/ssbc/ssb-config">View on Github</a></p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

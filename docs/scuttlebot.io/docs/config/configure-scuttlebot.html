@@ -1,0 +1,98 @@
+<html>
+    <head>
+    <title>Configure Scuttlebot - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div class="current"><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li class="current"><a href="/docs/config/configure-scuttlebot.html" title="Configure Scuttlebot">Configure Scuttlebot</a></li>
+  <li ><a href="/docs/config/get-current-version.html" title="Get current version">Get current version</a></li>
+  <li ><a href="/docs/config/get-active-config.html" title="Get active config">Get active config</a></li>
+  <li ><a href="/docs/config/create-a-pub.html" title="Create a Pub">Create a Pub</a></li>
+  <li ><a href="/docs/config/creating-test-databases.html" title="Creating test databases">Creating test databases</a></li>
+  <li ><a href="/docs/config/creating-test-users.html" title="Creating test users">Creating test users</a></li>
+</ul>
+        <div class="content">
+          <h2 id="configure-scuttlebot"><a href="#configure-scuttlebot" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Configure Scuttlebot</h2>
+<p>Scuttlebot keeps all data and configuration in the <code>~/.ssb</code> directory.</p>
+<p>Configuration is stored in <code>~/.ssb/config</code>, which is a JSON file:</p>
+<pre><code>{
+  &quot;host&quot;: &quot;&quot;,
+  &quot;port&quot;: 8008,
+  &quot;timeout&quot;: 30000,
+  &quot;pub&quot;: true,
+  &quot;local&quot;: true,
+  &quot;friends&quot;: {
+    &quot;dunbar&quot;: 150,
+    &quot;hops&quot;: 3
+  },
+  &quot;gossip&quot;: {
+    &quot;connections&quot;: 2
+  },
+  &quot;master&quot;: [],
+  &quot;logging&quot;: {
+    &quot;level&quot;: &quot;notice&quot;
+  }
+}
+</code></pre>
+<p>You can also specify config flags in the <code>ssb-server start</code> call.
+For example:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">ssb-server start --port 1234 --timeout 500</code></pre>
+    </div>
+  </div>
+<p>The options:</p>
+<ul>
+<li><code>host</code> <em>(string)</em> The domain or ip address for <code>sbot</code>. Defaults to your public ip address.</li>
+<li><code>port</code> <em>(string|number)</em> The port for <code>sbot</code>. Defaults to <code>8008</code>.</li>
+<li><code>timeout</code>: <em>(number)</em> Number of milliseconds a replication stream can idle before it&#x27;s automatically disconnected. Defaults to <code>30000</code>.</li>
+<li><code>pub</code> <em>(boolean)</em> Replicate with pub servers. Defaults to <code>true</code>.</li>
+<li><code>local</code> <em>(boolean)</em> Replicate with local servers found on the same network via <code>udp</code>. Defaults to <code>true</code>.</li>
+<li><code>friends.dunbar</code> <em>(number)</em> <a href="https://en.wikipedia.org/wiki/Dunbar&#x27;s_number"><code>Dunbar&#x27;s number</code></a>. Number of nodes your instance will replicate. Defaults to <code>150</code>.</li>
+<li><code>friends.hops</code> <em>(number)</em> How many friend of friend hops to replicate. Defaults to <code>3</code>.</li>
+<li><code>gossip.connections</code> <em>(number)</em> How many other nodes to connect with at one time. Defaults to <code>2</code>.</li>
+<li><code>master</code> <em>(array)</em> Pubkeys of users who, if they connect to the Scuttlebot instance, are allowed to command the primary user with full rights. Useful for remotely operating a pub. Defaults to <code>[]</code>.</li>
+<li><code>logging.level</code> <em>(string)</em> How verbose should the logging be. Possible values are error, warning, notice, and info. Defaults to <code>notice</code>.</li>
+</ul>
+
+          
+          <p class="next"><a href="/docs/config/get-current-version.html">Get current version</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,143 @@
+<html>
+    <head>
+    <title>Encryption - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/basics/install-the-database.html" title="Install the database">Install the database</a></li>
+  <li ><a href="/docs/basics/open-a-client.html" title="Open a client (js only)">Open a client (js only)</a></li>
+  <li ><a href="/docs/basics/publish-a-message.html" title="Publish a message">Publish a message</a></li>
+  <li ><a href="/docs/basics/read-your-log.html" title="Read your log">Read your log</a></li>
+  <li ><a href="/docs/basics/create-secondary-users.html" title="Create secondary users">Create secondary users</a></li>
+  <li class="current"><a href="/docs/basics/encryption.html" title="Encrypt messages">Encrypt messages</a></li>
+  <li ><a href="/docs/basics/sync-via-wifi.html" title="Sync via Wifi">Sync via Wifi</a></li>
+</ul>
+        <div class="content">
+          <p>Scuttlebot uses a <a href="https://en.wikipedia.org/wiki/Gossip_protocol">gossip protocol</a>, which means that users download and reshare messages on each other&#x27; behalf.
+As a result, standard connection-based encryption (like HTTPS) is not enough to hide information from non-recipients.</p>
+<p>Instead, Scuttlebot uses <a href="https://en.wikipedia.org/wiki/End-to-end_encryption">end-to-end encryption</a>.
+This is exposed in the JS-only <a href="/apis/scuttlebot/private.html">Scuttlebot.Private API</a>.</p>
+<blockquote>
+<p>You can <a href="/more/protocols/private-box.html">read the details of the encryption protocol here</a>.</p>
+</blockquote>
+<h2 id="publish-an-encrypted-message"><a href="#publish-an-encrypted-message" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Publish an Encrypted Message</h2>
+<p>Private publishing works just like the usual publish method, except that you specify a list of recipient IDs after the message content.
+Be sure to include your own ID, so that you&#x27;ll be able to read the message back.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">sbot.private.publish(
+  // message:
+  {
+    type: 'post',
+    text: 'Hello, friend!'
+  },
+  // recipient PKs:
+  [
+    '@hxGxqPrplLjRG2vtj...wQpS730nNwE=.ed25519',
+    '@EMovhfIrFk4NihAKn...8pTxJNgvCCY=.ed25519'
+  ],
+  // cb:
+  function (err, privateMsg) {
+    // privateMsg.value.content is
+    // an encrypted string
+  }
+)</code></pre>
+    </div>
+  </div>
+<p>The message will be encrypted and then published on your log, like any other message.
+However, only the recipients will be able to decrypt it.</p>
+<p>Here&#x27;s an example of what it will look like:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">json</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-json">{
+  "key": "%elZpRx8X4LJfc06p4lEpagtC0pZ6JGMYnSchrqro+1o=.sha256",
+  "value": {
+    "previous": "%KaDR/KnV/pssiekn8wE5Qh/Lqfuecx6lnCJbWaCE3h8=.sha256",
+    "author": "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519",
+    "sequence": 3290,
+    "timestamp": 1458405498947,
+    "hash": "sha256",
+    "content": "/TDSbpL+OXU0sbHBIZDaXdDe6ATeyv0krt9H47GD6pV41X++tGsaQwbFLvsnCsuInBfE4IToVJ73upO55ObK2trGF6tY+/8MQtDg1sHN3xYDz/GEV56qZKdEV1fEKcyxqhvW/phHEmXBWRkUQnDoUBlIW...Mmj0rRwj.box",
+    "signature": "g3S2BPJSX+uiIEawcEDBhgNEMtjkrHDVHamxBeOVrow1rfsJEmX2CZFRyshwjaQecr8EjBDCL2T8Lxllc+gbAA==.sig.ed25519"
+  }
+}</code></pre>
+    </div>
+  </div>
+<h2 id="decrypt-a-message"><a href="#decrypt-a-message" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Decrypt a Message</h2>
+<p>To decrypt a message, you just send its content-string through the <code>unbox</code> method.
+If you were a recipient, you&#x27;ll get the content-object back:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">sbot.private.unbox(
+  privateMsg.value.content,
+  function (err, content) {
+    // 'content' is now an object
+    // (if you were a recipient)
+  }
+)</code></pre>
+    </div>
+  </div>
+<h2 id="is-a-message-encrypted"><a href="#is-a-message-encrypted" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Is a message encrypted?</h2>
+<p>You may have noticed, the encrypted message had a string for its <code>content</code> attribute, whereas other messages will usually have an object.
+This gives a simple heuristic for checking if a message is encrypted or not -- just check the <code>.content</code> value type:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">function isPlaintext (msg) {
+  return (typeof msg.value.content == 'object')
+}
+function isEncrypted (msg) {
+  return (typeof msg.value.content == 'string')
+}</code></pre>
+    </div>
+  </div>
+
+          <ul class="see-also"><li><a href="/more/protocols/private-box.html">Private Box Protocol</a></li><li><a href="/apis/scuttlebot/private.html">Scuttlebot.Private API</a></li></ul>
+          <p class="next"><a href="/docs/basics/sync-via-wifi.html">Sync via Wifi</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

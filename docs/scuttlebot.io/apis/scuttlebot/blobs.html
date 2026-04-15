@@ -1,0 +1,152 @@
+<html>
+    <head>
+    <title>Blobs API - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div ><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/scuttlebot/ssb.html" title="SSB">SSB</a></li>
+  <li class="current"><a href="/apis/scuttlebot/blobs.html" title="Blobs">Blobs</a></li>
+  <li ><a href="/apis/scuttlebot/block.html" title="Block">Block</a></li>
+  <li ><a href="/apis/scuttlebot/friends.html" title="Friends">Friends</a></li>
+  <li ><a href="/apis/scuttlebot/gossip.html" title="Gossip">Gossip</a></li>
+  <li ><a href="/apis/scuttlebot/invite.html" title="Invite">Invite</a></li>
+  <li ><a href="/apis/scuttlebot/private.html" title="Private">Private</a></li>
+  <li ><a href="/apis/scuttlebot/replicate.html" title="Replicate">Replicate</a></li>
+</ul>
+        <div class="content">
+          <div class="table-of-contents">
+    <a href="#">Jump to section</a>
+    <ul>
+      <li><a href="#get-source">get: source</a></li><li><a href="#has-async">has: async</a></li><li><a href="#add-sink">add: sink</a></li><li><a href="#rm-async">rm: async</a></li><li><a href="#ls-source">ls: source</a></li><li><a href="#want-async">want: async</a></li><li><a href="#wants-sync">wants: sync</a></li><li><a href="#changes-source">changes: source</a></li>
+    </ul>
+  </div>
+<h1 id="scuttlebot-blobs-plugin"><a href="#scuttlebot-blobs-plugin" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>scuttlebot blobs plugin</h1>
+<p>Send/receive files by content-hashes.</p>
+<h2 id="get-source"><a href="#get-source" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>get: source</h2>
+<p>Get a blob by its ID.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">get {blobid}</code></pre><pre><code class="language-js">get(blobid)</code></pre>
+    </div>
+  </div>
+<h2 id="has-async"><a href="#has-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>has: async</h2>
+<p>Check if the blob of the given ID is stored in the DB.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">has {blobid}</code></pre><pre><code class="language-js">has(blobid, cb)</code></pre>
+    </div>
+  </div>
+<h2 id="add-sink"><a href="#add-sink" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>add: sink</h2>
+<p>Add a new blob to the DB.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">cat ./file | add [hash]</code></pre><pre><code class="language-js">pull(source, add(hash, cb))</code></pre>
+    </div>
+  </div>
+<ul>
+<li>hash (base64 string): Optional, expected hash of the file. If the file does not match the hash, it is not stored, and an error is emitted.</li>
+</ul>
+<h2 id="rm-async"><a href="#rm-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>rm: async</h2>
+<p>Remove a blob from the store.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">rm hash</code></pre><pre><code class="language-js">rm(hash, cb)</code></pre>
+    </div>
+  </div>
+<ul>
+<li>hash (base64 string): hash of the file.</li>
+</ul>
+<h2 id="ls-source"><a href="#ls-source" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>ls: source</h2>
+<p>List the hashes of the blobs in the DB.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">ls</code></pre><pre><code class="language-js">ls()</code></pre>
+    </div>
+  </div>
+<h2 id="want-async"><a href="#want-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>want: async</h2>
+<p>Begin searching the network for the blob of the given hash.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">want {hash} [--nowait]</code></pre><pre><code class="language-js">want(hash, { nowait: }, cb)</code></pre>
+    </div>
+  </div>
+<p>By default, <code>want</code> will not call the <code>cb</code> until the blob has been downloaded.
+If you want the <code>cb</code> to be called immediately, specify <code>nowait: true</code>.
+The <code>cb</code> will be called with true/false as the value, telling you if the blob was already present.</p>
+<h2 id="wants-sync"><a href="#wants-sync" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>wants: sync</h2>
+<p>List the currently-wanted blobs&#x27; data-structures.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">wants</code></pre><pre><code class="language-js">wants()</code></pre>
+    </div>
+  </div>
+<h2 id="changes-source"><a href="#changes-source" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>changes: source</h2>
+<p>Listen for any newly-downloaded blobs.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">changes</code></pre><pre><code class="language-js">changes()</code></pre>
+    </div>
+  </div>
+<p>When a blob is downloaded, this stream will emit the hash of the blob.</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,91 @@
+<html>
+    <head>
+    <title>SSB-Feed - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div class="current"><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/modules/ssb-client.html" title="SSB-Client">SSB-Client</a></li>
+  <li class="current"><a href="/apis/modules/ssb-feed.html" title="SSB-Feed">SSB-Feed</a></li>
+  <li ><a href="/apis/modules/ssb-keys.html" title="SSB-Keys">SSB-Keys</a></li>
+  <li ><a href="/apis/modules/ssb-ref.html" title="SSB-Ref">SSB-Ref</a></li>
+  <li ><a href="/apis/modules/ssb-msgs.html" title="SSB-Msgs">SSB-Msgs</a></li>
+  <li ><a href="/apis/modules/ssb-msg-schemas.html" title="SSB-Msg-Schemas">SSB-Msg-Schemas</a></li>
+  <li ><a href="/apis/modules/ssb-markdown.html" title="SSB-Markdown">SSB-Markdown</a></li>
+  <li ><a href="/apis/modules/ssb-config.html" title="SSB-Config">SSB-Config</a></li>
+  <li ><a href="/apis/modules/ssb-party.html" title="SSB-Party">SSB-Party</a></li>
+  <li ><a href="/apis/modules/secret-stack.html" title="Secret-Stack">Secret-Stack</a></li>
+  <li ><a href="/apis/modules/muxrpc.html" title="MuxRPC">MuxRPC</a></li>
+  <li ><a href="/apis/modules/muxrpcli.html" title="MuxRPCCli">MuxRPCCli</a></li>
+  <li ><a href="/apis/modules/mdmanifest.html" title="MDManifest">MDManifest</a></li>
+  <li ><a href="/apis/modules/graphmitter.html" title="Graphmitter">Graphmitter</a></li>
+</ul>
+        <div class="content">
+          <h1 id="ssb-feed"><a href="#ssb-feed" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>ssb-feed</h1>
+<p>A publishing interface for scuttlebutt feeds.</p>
+<p>By default, Scuttlebot uses a &quot;master&quot; identity/feed, which <code>sbot.publish()</code> will append new messages to. If you want to manipulate additional feeds, you can load the keypair and then use this library to do so.</p>
+<h2 id="example"><a href="#example" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Example</h2>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var ssbFeed = require('ssb-feed')
+var ssbClient = require('ssb-client')
+var ssbKeys = require('ssb-keys')
+
+var alice = ssbKeys.generate()
+ssbClient(function (err, sbot) {
+  var feed = ssbFeed(sbot, alice)
+
+  // Post to alice's feed
+  feed.publish({
+    type: 'post',
+    text: 'hello world, I am alice.'
+  }, function (err) { ... })
+
+  // Also available:
+  console.log(feed.id)
+  console.log(feed.keys)
+})</code></pre>
+    </div>
+  </div>
+<p>This example uses <code>ssb-client</code>, but, if you&#x27;re embedding <code>ssb-server</code> or the <code>secure-scuttlebutt</code> library into your process, you can use them locally.</p>
+<p><a href="https://github.com/ssbc/ssb-feed">View on Github</a></p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

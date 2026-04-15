@@ -1,0 +1,103 @@
+<html>
+    <head>
+    <title>Invite API - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div ><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/scuttlebot/ssb.html" title="SSB">SSB</a></li>
+  <li ><a href="/apis/scuttlebot/blobs.html" title="Blobs">Blobs</a></li>
+  <li ><a href="/apis/scuttlebot/block.html" title="Block">Block</a></li>
+  <li ><a href="/apis/scuttlebot/friends.html" title="Friends">Friends</a></li>
+  <li ><a href="/apis/scuttlebot/gossip.html" title="Gossip">Gossip</a></li>
+  <li class="current"><a href="/apis/scuttlebot/invite.html" title="Invite">Invite</a></li>
+  <li ><a href="/apis/scuttlebot/private.html" title="Private">Private</a></li>
+  <li ><a href="/apis/scuttlebot/replicate.html" title="Replicate">Replicate</a></li>
+</ul>
+        <div class="content">
+          <h1 id="scuttlebot-invite-plugin"><a href="#scuttlebot-invite-plugin" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>scuttlebot invite plugin</h1>
+<p>Invite-token system, mainly used for pubs.</p>
+<h2 id="create-async"><a href="#create-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>create: async</h2>
+<p>Create a new invite code.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot create {n}</code></pre><pre><code class="language-js">sbot.create(n, cb)</code></pre>
+    </div>
+  </div>
+<p>This produces an invite-code which encodes the sbot server&#x27;s address, and a keypair seed.
+The keypair seed is used to generate a keypair, which is then used to authenticate a connection with the sbot server.
+The sbot server will then grant access to the <code>use</code> call.</p>
+<ul>
+<li><code>n</code> (number): How many times the invite can be used before it expires.</li>
+</ul>
+<h2 id="accept-async"><a href="#accept-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>accept: async</h2>
+<p>Use an invite code.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot accept {invitecode}</code></pre><pre><code class="language-js">sbot.accept(invitecode, cb)</code></pre>
+    </div>
+  </div>
+<p>This connects to the server address encoded in the invite-code, then calls <code>use()</code> on the server.
+It will cause the server to follow the local user.</p>
+<ul>
+<li>invitecode (string)</li>
+</ul>
+<h2 id="use-async"><a href="#use-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>use: async</h2>
+<p>Use an invite code created by this sbot instance (advanced function).</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot use --feed {feedid}</code></pre><pre><code class="language-js">sbot.use({ feed: }, cb)</code></pre>
+    </div>
+  </div>
+<p>This commands the receiving server to follow the given feed.</p>
+<p>An invite-code encodes the sbot server&#x27;s address, and a keypair seed.
+The keypair seed must be used to generate a keypair, then authenticate a connection with the sbot server, in order to use this function.</p>
+<ul>
+<li><code>feed</code> (feedid): The feed the server should follow.</li>
+</ul>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

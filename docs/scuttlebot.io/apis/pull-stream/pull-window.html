@@ -1,0 +1,214 @@
+<html>
+    <head>
+    <title>Pull-Window - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div ><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div class="current"><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/pull-stream/pull-stream.html" title="Pull-Stream">Pull-Stream</a></li>
+  <li ><a href="/apis/pull-stream/core-sources.html" title="Source Functions">Source Functions</a></li>
+  <li ><a href="/apis/pull-stream/core-throughs.html" title="Through Functions">Through Functions</a></li>
+  <li ><a href="/apis/pull-stream/core-sinks.html" title="Sink Functions">Sink Functions</a></li>
+  <li ><a href="/apis/pull-stream/pull-stream-to-stream.html" title="Pull-Stream-to-Stream">Pull-Stream-to-Stream</a></li>
+  <li ><a href="/apis/pull-stream/stream-to-pull-stream.html" title="Stream-to-Pull-Stream">Stream-to-Pull-Stream</a></li>
+  <li ><a href="/apis/pull-stream/pull-paramap.html" title="Pull-Paramap">Pull-Paramap</a></li>
+  <li ><a href="/apis/pull-stream/pull-cat.html" title="Pull-Cat">Pull-Cat</a></li>
+  <li ><a href="/apis/pull-stream/pull-pushable.html" title="Pull-Pushable">Pull-Pushable</a></li>
+  <li ><a href="/apis/pull-stream/pull-notify.html" title="Pull-Notify">Pull-Notify</a></li>
+  <li ><a href="/apis/pull-stream/pull-pause.html" title="Pull-Pause">Pull-Pause</a></li>
+  <li ><a href="/apis/pull-stream/pull-timeout.html" title="Pull-Timeout">Pull-Timeout</a></li>
+  <li class="current"><a href="/apis/pull-stream/pull-window.html" title="Pull-Window">Pull-Window</a></li>
+  <li ><a href="/apis/pull-stream/pull-otherwise.html" title="Pull-Otherwise">Pull-Otherwise</a></li>
+  <li ><a href="/apis/pull-stream/pull-ws-server.html" title="Pull-WS-Server">Pull-WS-Server</a></li>
+</ul>
+        <div class="content">
+          <div class="table-of-contents">
+    <a href="#">Jump to section</a>
+    <ul>
+      <li><a href="#example-tumbling-window">Example: "tumbling" window</a></li><li><a href="#example-variable-sized-window">Example: variable sized window</a></li><li><a href="#example-sliding-window">Example: sliding window</a></li><li><a href="#api">API</a></li><li><a href="#license">License</a></li>
+    </ul>
+  </div>
+<h1 id="pull-window"><a href="#pull-window" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>pull-window</h1>
+<p>Aggregate a pull-stream into windows.</p>
+<p>Several helpers are provided for particular types of windows,
+sliding, tumbling, etc.</p>
+<p>And also, a low level</p>
+<h2 id="example-tumbling-window"><a href="#example-tumbling-window" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Example: &quot;tumbling&quot; window</h2>
+<p>sum every 10 items.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var pull   = require('pull-stream')
+var window = require('pull-window')
+
+function everyTen () {
+  var i = 0
+  //window calls init with each data item,
+  //and a callback to close that window.
+  return window(function (data, cb) {
+    //if you don't want to start a window here,
+    //return undefined
+    if(i != 0) return
+    var sum = 0
+
+    //else return a function.
+    //this will be called all data
+    //until you callback.
+    return function (end, data) {
+      if(end) return cb(null, sum)
+      sum += data
+      if(++i >= 10) {
+        i = 0
+        cb(null, sum)
+      }
+    }
+  }
+}
+
+pull(
+  pull.count(1000),
+  everyTen(),
+  pull.log()
+)</code></pre>
+    </div>
+  </div>
+<h2 id="example-variable-sized-window"><a href="#example-variable-sized-window" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Example: variable sized window</h2>
+<p>Each window doesn&#x27;t have to be the same size...</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var pull   = require('pull-stream')
+var window = require('pull-window')
+
+function groupTo100 () {
+  var sum = null
+  return window(function (_, cb) {
+    if(sum != null) return
+
+    //sum stuff together until you have 100 or more
+    return function (end, data) {
+      if(end) return cb(null, sum)
+      sum += data
+      if(sum >= 100) {
+        //copy sum like this, incase the next item
+        //comes through sync
+        var _sum = sum; sum = null
+        cb(null, _sum)
+      }
+    }
+  })
+}
+
+pull(
+  pull.count(1000)
+  groupTo100(),
+  pull.log()
+)</code></pre>
+    </div>
+  </div>
+<h2 id="example-sliding-window"><a href="#example-sliding-window" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Example: sliding window</h2>
+<p>to make more over lapping windows
+just return the window function more often.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var pull   = require('pull-stream')
+var window = require('pull-window')
+
+function sliding () {
+  return window(function (_, cb) {
+    var sum = 0, i = 0
+
+    //sum stuff together until you have 100 or more
+    return function (end, data) {
+      if(end) return cb(null, sum)
+      sum += data
+      if(++i >= 10) {
+        //in this example, each window gets it's own sum,
+        //so we don't need to copy it.
+        cb(null, sum)
+      }
+    }
+  })
+}
+
+pull(
+  pull.count(100)
+  sliding(),
+  pull.log()
+)</code></pre>
+    </div>
+  </div>
+<h2 id="api"><a href="#api" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>API</h2>
+<h3 id="window-start-map"><a href="#window-start-map" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>window (start, map)</h3>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">window(function startWindow (data, cb) {
+
+  //called on each chunk
+  //including the first one
+  return function addToWindow (end, data) {
+    //cb(null, aggregate) when done.
+  }
+}, function mapWindow (start, data) {
+  //(optional)
+  //map the window to something that tracks start, also
+})</code></pre>
+    </div>
+  </div>
+<p>By default, windows are mapped to <code>{start: firstData, data: aggregate}</code>.
+unless you pass in an different <code>mapWindow</code> function.</p>
+<h3 id="windowslidingreduce-size"><a href="#windowslidingreduce-size" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>window.sliding(reduce, size)</h3>
+<p>reduce every <code>size</code> items into a single value, in a sliding window</p>
+<h3 id="windowrecentsize-time"><a href="#windowrecentsize-time" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>window.recent(size, time)</h3>
+<p>tumbling window that groups items onto an array,
+either every <code>size</code> items, or within <code>time</code> ms,
+which ever occurs earliest.</p>
+<h2 id="license"><a href="#license" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>License</h2>
+<p>MIT</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,154 @@
+<html>
+    <head>
+    <title>Update your profile - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div class="current"><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li class="current"><a href="/docs/social/update-your-profile.html" title="Update your profile">Update your profile</a></li>
+  <li ><a href="/docs/social/view-a-profile.html" title="View a profile">View a profile</a></li>
+  <li ><a href="/docs/social/follow-users.html" title="Follow users">Follow users</a></li>
+  <li ><a href="/docs/social/query-the-social-graph.html" title="Query the social graph">Query the social graph</a></li>
+  <li ><a href="/docs/social/join-a-pub.html" title="Join a Pub">Join a Pub</a></li>
+</ul>
+        <div class="content">
+          <p>Each user has a profile, comprised of data published by themself and others.
+The profile content is controlled by <a href="/docs/message-types/about.html">About messages</a>.</p>
+<h2 id="get-your-id"><a href="#get-your-id" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Get your ID</h2>
+<p>Use this command to get your ID:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot whoami</code></pre><pre><code class="language-js">sbot.whoami(function (err, info) {
+  // info.id
+})</code></pre>
+    </div>
+  </div>
+<h2 id="set-your-username"><a href="#set-your-username" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Set your username</h2>
+<p>There is no global registry, so you can choose any name you want.
+(It&#x27;s recommended you stay alphanumeric.)</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot publish --type about --about {yourId} --name {name}</code></pre><pre><code class="language-js">sbot.publish({
+  type: 'about',
+  about: yourId,
+  name: name
+}, cb)</code></pre>
+    </div>
+  </div>
+<p>Replace <code>yourId</code> and <code>name</code> with your data.</p>
+<p>Here&#x27;s an example (don&#x27;t copy this directly):</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot publish \
+  --type about \
+  --about "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519" \
+  --name "bob"</code></pre><pre><code class="language-js">sbot.publish({
+  type: 'about',
+  about: '@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519',
+  name: 'bob'
+}, cb)</code></pre>
+    </div>
+  </div>
+<h2 id="set-a-profile-pic"><a href="#set-a-profile-pic" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Set a profile pic</h2>
+<p>First, <a href="/docs/advanced/publish-a-file.html">add the image file to the blobstore.</a>
+Then, publish this message with the outputted file-ID:</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot publish \
+  --type about \
+  --about {yourId} \
+  --image.link {fileId} \       # required
+  --image.width {widthInPx} \   # optional, but recommended
+  --image.height {heightInPx} \ # optional, but recommended
+  --image.name {fileName} \     # optional, but recommended
+  --image.size {sizeInBytes} \  # optional, but recommended
+  --image.type {mimeType}       # optional, but recommended</code></pre><pre><code class="language-js">sbot.publish({
+  type: 'about',
+  about: yourId,
+  image: {
+    link: fileID,       // required
+    width: widthInPx,   // optional, but recommended
+    height: heightInPx, // optional, but recommended
+    name: fileName,     // optional, but recommended
+    size: sizeInBytes,  // optional, but recommended
+    type: mimeType      // optional, but recommended
+  }
+}, cb)</code></pre>
+    </div>
+  </div>
+<p>Here&#x27;s an example (don&#x27;t copy this directly):</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">sbot publish \
+  --type about \
+  --about "@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519" \
+  --image.link "&NfP4H4NZCfiPQ6AZ6fEmilbFL8Hz3wTQVeaxbCnNEt4=.sha256" \
+  --image.size 347856 \
+  --image.type "image/png" \
+  --image.width 512 \
+  --image.height 512</code></pre><pre><code class="language-js">sbot.publish({
+  'type': 'about',
+  'about': '@hxGxqPrplLjRG2vtjQL87abX4QKqeLgCwQpS730nNwE=.ed25519',
+  'image': {
+    'link': '&NfP4H4NZCfiPQ6AZ6fEmilbFL8Hz3wTQVeaxbCnNEt4=.sha256',
+    'size': 347856,
+    'type': 'image/png',
+    'width': 512,
+    'height': 512
+  }
+})</code></pre>
+    </div>
+  </div>
+
+          <ul class="see-also"><li><a href="/docs/message-types/about.html">About messages</a></li><li><a href="/docs/advanced/links.html">Links</a></li></ul>
+          <p class="next"><a href="/docs/social/view-a-profile.html">View a profile</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

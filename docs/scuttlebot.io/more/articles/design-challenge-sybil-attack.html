@@ -1,0 +1,71 @@
+<html>
+    <head>
+    <title>Design Challenge: Sybil Attacks - Scuttlebot</title>
+    <link rel="canonical" href="https://www.scuttlebutt.nz/stories/design-challenge-sybil-attacks.html">
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div class="current"><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="Protocols">Protocols</a></div>
+  <div class="current"><a href="/more/articles/design-challenge-avoid-centralization-and-singletons.html" title="Articles">Articles</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/more/articles/design-challenge-avoid-centralization-and-singletons.html" title="Design Challenge: Avoid Centralization and Singletons">Design Challenge: Avoid Centralization and Singletons</a></li>
+  <li class="current"><a href="/more/articles/design-challenge-sybil-attack.html" title="Design Challenge: Sybil Attacks">Design Challenge: Sybil Attacks</a></li>
+</ul>
+        <div class="content">
+          <h1 id="design-challenge-sybil-attacks"><a href="#design-challenge-sybil-attacks" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Design Challenge: Sybil Attacks</h1>
+<p>If it is possible for an anyone to connect to a computer system then it may be possible to interfere with the operation of that system, and defenses against interference must be designed in.</p>
+<p>For example, email&#x27;s design is vulnerable to spam.
+To send someone an email, all that is required is to have their email address; email is unsolicited messaging, so it&#x27;s easy to send nuisance or fraud emails.</p>
+<h3 id="spam-filters"><a href="#spam-filters" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Spam Filters</h3>
+<p>Email systems deal with spam by filtering it out.
+There are two basic approaches:
+The simplest is <em>pattern matching</em> - messages are compared to models of the sort of messages that spammers send.
+This produces an arms race between spammers and spam filterers.
+Spammers must strive to create messages which beat the filter, while filterers have to improve their model.</p>
+<p>One particularly interesting example of this is (snail) mail advertisers that employ <a href="http://www.writeonresults.com/">handwriting services</a> to write the addresses on their envelopes.
+This fools the receiver into believing that an actual human sent them the letter making them much more likely to open it.
+(This is even being <a href="https://hellobond.com/">automated</a>.)</p>
+<h3 id="social-networks"><a href="#social-networks" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Social Networks</h3>
+<p>The other approach is to use social/trust networks.
+Services like Facebook or Twitter are significantly less vulnerable to spam (if you dont consider the ads spam).
+Instead of receiving personal messages from anyone one who knows your id/address on a social network, you only receive messages from other users you have &quot;followed&quot; or &quot;friended&quot;.</p>
+<p>We like to call this a &quot;Solicited Spam&quot; system.
+Following someone on Twitter means you think they are human, or at least, an amusing bot.
+This is actually a pretty strong signal.
+Email doesn&#x27;t have an explicit social network, but the best spam filtered email systems (like gmail) can use the implicit social network in email: if I send you and email and you reply then we are &quot;friends&quot;.</p>
+<p>Then graph analysis can be applied to the friend network - spammers may be isolated, or clustered together and can be filtered out.</p>
+<p>By building SecureScuttlebutt around a social network, preventing spam becomes easy.
+Since, in a social network application, you only communicate with trusted peers (friends) anyway, and there is usually an explicit &quot;follow&quot; mechanism which expresses who you trust, and humans are pretty good at detecting frauds.
+This is why SSB was made as an inherently social system.</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

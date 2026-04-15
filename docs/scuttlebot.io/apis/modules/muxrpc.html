@@ -1,0 +1,207 @@
+<html>
+    <head>
+    <title>MuxRPC - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div class="current"><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/modules/ssb-client.html" title="SSB-Client">SSB-Client</a></li>
+  <li ><a href="/apis/modules/ssb-feed.html" title="SSB-Feed">SSB-Feed</a></li>
+  <li ><a href="/apis/modules/ssb-keys.html" title="SSB-Keys">SSB-Keys</a></li>
+  <li ><a href="/apis/modules/ssb-ref.html" title="SSB-Ref">SSB-Ref</a></li>
+  <li ><a href="/apis/modules/ssb-msgs.html" title="SSB-Msgs">SSB-Msgs</a></li>
+  <li ><a href="/apis/modules/ssb-msg-schemas.html" title="SSB-Msg-Schemas">SSB-Msg-Schemas</a></li>
+  <li ><a href="/apis/modules/ssb-markdown.html" title="SSB-Markdown">SSB-Markdown</a></li>
+  <li ><a href="/apis/modules/ssb-config.html" title="SSB-Config">SSB-Config</a></li>
+  <li ><a href="/apis/modules/ssb-party.html" title="SSB-Party">SSB-Party</a></li>
+  <li ><a href="/apis/modules/secret-stack.html" title="Secret-Stack">Secret-Stack</a></li>
+  <li class="current"><a href="/apis/modules/muxrpc.html" title="MuxRPC">MuxRPC</a></li>
+  <li ><a href="/apis/modules/muxrpcli.html" title="MuxRPCCli">MuxRPCCli</a></li>
+  <li ><a href="/apis/modules/mdmanifest.html" title="MDManifest">MDManifest</a></li>
+  <li ><a href="/apis/modules/graphmitter.html" title="Graphmitter">Graphmitter</a></li>
+</ul>
+        <div class="content">
+          <h1 id="muxrpc"><a href="#muxrpc" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>muxrpc</h1>
+<p>Combined rpc and multiplexing, with pull-streams.</p>
+<h2 id="example"><a href="#example" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>example</h2>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var MRPC = require('muxrpc')
+var pull = require('pull-stream')
+
+//we need a manifest of methods we wish to expose.
+var api = {
+  //async is a normal async function
+  hello: 'async',
+
+  //source is a pull-stream (readable)
+  stuff: 'source'
+
+  //TODO: sink and duplex pull-streams
+}
+
+//pass the api into the constructor,
+//and then pass the object you are wrapping
+//(if there is a local api)
+var client = MRPC(api, null) () //remoteApi, localApi
+var server = MRPC(null, api) ({
+  hello: function (name, cb) {
+    cb(null, 'hello, ' + name + '!')
+  },
+  stuff: function () {
+    return pull.values([1, 2, 3, 4, 5])
+  }
+})
+
+var a = client.createStream()
+var b = server.createStream()
+
+pull(a, b, a) //pipe together
+
+client.hello('world', function (err, value) {
+  if(err) throw err
+  console.log(value)
+  // hello, world!
+})
+
+pull(client.stuff(), pull.drain(console.log))
+// 1
+// 2
+// 3
+// 4
+// 5</code></pre>
+    </div>
+  </div>
+<h2 id="manifest"><a href="#manifest" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Manifest</h2>
+<p>like multilevel, a <a href="https://github.com/juliangruber/multilevel#plugins">manifest is required</a>
+except it works a little differently, and since muxrpc works with any api,
+not assuming leveldb then you must write the manifest yourself.</p>
+<p>The manifest is simply an object mapping to strings, or nested objects.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">{
+  //a function with a callback.
+  foo: 'async',
+
+  //a function that returns a value
+  //(note this is converted to
+  // an async function for the client)
+  bar: 'sync',
+
+  //a source pull-stream (aka, readable)
+  allTheFoos: 'source',
+
+  //a sink pull-stream (aka, writable)
+  writeFoos: 'sink',
+
+  //a duplex pull-stream
+  fooPhone: 'duplex',
+
+  //create nested objects like this:
+  bar: {
+    ...
+  }
+}</code></pre>
+    </div>
+  </div>
+<h2 id="permissions"><a href="#permissions" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Permissions</h2>
+<p>If you are exposing an api over a network connection,
+then you probably want some sort of authorization system.
+<code>muxrpc@4</code> and earlier had a <code>rpc.permissions()</code> method on
+the rpc object, but this has been removed. Now you must
+provide a permissions object, which has methods <code>{pre, post}</code>.
+<code>pre</code> is called with the path and arguments before the api
+method is actually called, and if it returns false, then the
+user gets an error and the method is not called.</p>
+<p>This is much more flexible than attaching a standard permissions
+method--now all methods on the rpc object act the same (call remote
+methods) and it&#x27;s possible to have a method named &quot;permissions&quot;</p>
+<p>A helper module for providing permissions is provided,
+this enables you to update permissions on the fly</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">var Permissions = require('muxrpc/permissions')
+
+var api = {
+  foo: 'async',
+  bar: 'async',
+  auth: 'async'
+}
+
+//set initial settings
+var perms = Perms({allow: ['auth']})
+
+var rpc = muxrpc(null, api, serializer)({
+  foo: function (val, cb) {
+    cb(null, {okay: 'foo'})
+  },
+  bar: function (val, cb) {
+    cb(null, {okay: 'bar'})
+  },
+  auth: function (pass) {
+    //implement an auth function that sets the permissions,
+    //using allow or deny lists.
+
+    if(pass === 'whatever')
+      perms({deny: ['bar']}) //allow everything except "bar"
+    else if(pass === 's3cr3tz')
+      perms({}) //allow everything!!!
+    else return cb(new Error('ACCESS DENIED'))
+
+    //else we ARE authorized.
+    cb(null, 'ACCESS GRANTED')
+  }
+})
+
+//Get a stream to connect to the remote.
+//As in the above example!
+var ss = rpc.createStream()</code></pre>
+    </div>
+  </div>
+<p><a href="https://github.com/ssbc/muxrpc">View on Github</a></p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,73 @@
+<html>
+    <head>
+    <title>Design Challenge: Avoid Centralization and Singletons - Scuttlebot</title>
+    <link rel="canonical" href="https://www.scuttlebutt.nz/stories/design-challenge-avoid-centralization-and-singletons.html">
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div class="current"><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="Protocols">Protocols</a></div>
+  <div class="current"><a href="/more/articles/design-challenge-avoid-centralization-and-singletons.html" title="Articles">Articles</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li class="current"><a href="/more/articles/design-challenge-avoid-centralization-and-singletons.html" title="Design Challenge: Avoid Centralization and Singletons">Design Challenge: Avoid Centralization and Singletons</a></li>
+  <li ><a href="/more/articles/design-challenge-sybil-attack.html" title="Design Challenge: Sybil Attacks">Design Challenge: Sybil Attacks</a></li>
+</ul>
+        <div class="content">
+          <h1 id="design-challenge-avoid-centralization-and-singletons"><a href="#design-challenge-avoid-centralization-and-singletons" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Design Challenge: Avoid Centralization and Singletons</h1>
+<p>SecureScuttlebutt goes out of it&#x27;s way to avoid both centralization and singletons.</p>
+<h2 id="avoiding-centralization"><a href="#avoiding-centralization" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Avoiding Centralization</h2>
+<p>The danger of centralization is obvious: it creates a single point of failure that can easily be attacked, or act as an attacker.
+And, it creates a monoculture of information, as the central point starts to control <a href="https://www.scuttlebutt.nz/stories/using-trust-in-open-networks.html">what information is trusted, or ranked highly</a>.</p>
+<p>To avoid centralization, you make every peer the same.</p>
+<p>Due to limitations inherent in the modern Internet, this is hard to do.
+Home routers perform Network Address Translation to make a single IP address behave like many, which makes it simple to make outgoing connections, but difficult to receive incoming connections.</p>
+<p>Most networked applications, including SSB, solve this by connecting to publicly addressable servers.
+Sometimes P2P systems use clever techniques (<a href="http://en.wikipedia.org/wiki/Traversal_Using_Relays_around_NAT">TURN</a>, <a href="http://en.wikipedia.org/wiki/STUN">STUN</a>, <a href="http://en.wikipedia.org/wiki/Interactive_Connectivity_Establishment">ICE</a>) to reduce the role of the servers, but it&#x27;s still necessary to have them.</p>
+<p>SSB uses the so-called &quot;Pub&quot; servers to rehost the feeds and blobs of the users, which has the added benefit of improving network availability (two peers don&#x27;t need to be online at the same time to exchange messages).
+However, amongst the community, they&#x27;re considered a centralization risk.</p>
+<p>We mitigate the risk by avoiding putting any special authority or trust in the Pubs.
+Users may be hosted by many pubs at once, and can change pubs without losing the data or identity.
+A pub server may go down, and others will still provide service.</p>
+<p>Contrast this with email servers, which are ostensibly decentralized (you may run your own email server) but you must have <em>exactly one</em> email server, and if it is down you will not receive email, which makes running your own email server a considerable hassle (not to mention handling spam).</p>
+<h2 id="avoiding-singletons"><a href="#avoiding-singletons" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Avoiding Singletons</h2>
+<p>SecureScuttlebutt also avoids P2P structures that represent singletons - specifically, it avoids using a <a href="http://en.wikipedia.org/wiki/Distributed_hash_table">Distributed Hash Table</a> or a <a href="http://en.wikipedia.org/wiki/Bitcoin#Block_chain">global blockchain</a>.</p>
+<p>SSB avoids P2P singletons partially to show that it can be done (most P2P designs use DHT or global blockchains) and also because those are just P2P versions of centralized systems.
+Social Networks are already constructed around a decentralized experience.
+Popular social networks (fb, twitter) have centralized implementations, but you use them to interact with your <em>peers</em>, so on that level they are P2P.</p>
+<p>SecureScuttlebutt takes this decentralized experience and maps the networking layer (the key part of the implementation) on top of the decentralized human/user network.
+It would be a shame to go to all that trouble to decentralize, but then adopt a singleton.
+Also, global blockchains are heavy (require nodes to store entire chain, and to waste CPU power) and DHTs are susceptible to spam.
+These structures also both make the network unprivate, by making all information available globally.</p>
+<p>That said, like any good tool, SSB has been built to interoperate with other programs.
+Though it&#x27;s important to us that core remain viable without singletons, the community is free to add protocols wherever they see fit, and is encouraged to do so.</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

@@ -1,0 +1,59 @@
+<html>
+    <head>
+    <title>Creating test users - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div ><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div class="current"><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/config/configure-scuttlebot.html" title="Configure Scuttlebot">Configure Scuttlebot</a></li>
+  <li ><a href="/docs/config/get-current-version.html" title="Get current version">Get current version</a></li>
+  <li ><a href="/docs/config/get-active-config.html" title="Get active config">Get active config</a></li>
+  <li ><a href="/docs/config/create-a-pub.html" title="Create a Pub">Create a Pub</a></li>
+  <li ><a href="/docs/config/creating-test-databases.html" title="Creating test databases">Creating test databases</a></li>
+  <li class="current"><a href="/docs/config/creating-test-users.html" title="Creating test users">Creating test users</a></li>
+</ul>
+        <div class="content">
+          <h2 id="creating-test-users"><a href="#creating-test-users" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Creating test users</h2>
+<p>Scuttlebot keeps all data and configuration in the <code>~/.ssb</code> directory.</p>
+<p>The primary user&#x27;s private key is kept in the <code>~/.ssb/secret</code> file.</p>
+<p>If you want to set a new primary user, while still using the same database, you can move <code>~/.ssb/secret</code> to some other location (eg <code>~/.ssb/secret.backup</code>).
+Scuttlebot will automatically create a new user and secret, when started next.</p>
+<p>Alternatively, you can <a href="/docs/basics/create-secondary-users.html">create secondary users</a>.</p>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

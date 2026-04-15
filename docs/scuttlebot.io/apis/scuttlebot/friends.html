@@ -1,0 +1,134 @@
+<html>
+    <head>
+    <title>Friends API - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div ><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div class="current"><a href="/apis/scuttlebot/ssb.html" title="Scuttlebot">Scuttlebot</a></div>
+  <div ><a href="/apis/modules/ssb-client.html" title="Modules">Modules</a></div>
+  <div ><a href="/apis/pull-stream/pull-stream.html" title="Pull Stream">Pull Stream</a></div>
+  <div ><a href="/apis/community/ssbify.html" title="Community">Community</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/apis/scuttlebot/ssb.html" title="SSB">SSB</a></li>
+  <li ><a href="/apis/scuttlebot/blobs.html" title="Blobs">Blobs</a></li>
+  <li ><a href="/apis/scuttlebot/block.html" title="Block">Block</a></li>
+  <li class="current"><a href="/apis/scuttlebot/friends.html" title="Friends">Friends</a></li>
+  <li ><a href="/apis/scuttlebot/gossip.html" title="Gossip">Gossip</a></li>
+  <li ><a href="/apis/scuttlebot/invite.html" title="Invite">Invite</a></li>
+  <li ><a href="/apis/scuttlebot/private.html" title="Private">Private</a></li>
+  <li ><a href="/apis/scuttlebot/replicate.html" title="Replicate">Replicate</a></li>
+</ul>
+        <div class="content">
+          <div class="table-of-contents">
+    <a href="#">Jump to section</a>
+    <ul>
+      <li><a href="#all-async">all: async</a></li><li><a href="#hops-async">hops: async</a></li><li><a href="#createfriendstream-source">createFriendStream: source</a></li><li><a href="#get-sync">get: sync</a></li>
+    </ul>
+  </div>
+<h1 id="scuttlebot-friends-plugin"><a href="#scuttlebot-friends-plugin" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>scuttlebot friends plugin</h1>
+<p>Query the follow and flag graphs.</p>
+<h2 id="all-async"><a href="#all-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>all: async</h2>
+<p>Fetch the graph structure.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">all [graph]</code></pre><pre><code class="language-js">all(graph, cb)</code></pre>
+    </div>
+  </div>
+<ul>
+<li><code>graph</code> (string, default: <code>follow</code>): Which graph to view. May be <code>follow</code> or <code>flag</code>.</li>
+</ul>
+<h2 id="hops-async"><a href="#hops-async" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>hops: async</h2>
+<p>List the degrees-of-connection of all known feeds from the given feed.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">hops [start] [graph] [--dunbar number] [--hops number]</code></pre><pre><code class="language-js">hops(start, graph, { dunbar:, hops: }, cb)</code></pre>
+    </div>
+  </div>
+<ul>
+<li><code>start</code> (FeedID, default: local user): Which feed to start from.</li>
+<li><code>graph</code> (string, default: <code>follow</code>): Which graph to view. May be <code>follow</code> or <code>flag</code>.</li>
+<li><code>dunbar</code> (number, default: 150): Limit on how many feeds to include in the list.</li>
+<li><code>hops</code> (number, default: 3): Limit on how many hops out the feed needs to be, to be included.</li>
+</ul>
+<h2 id="createfriendstream-source"><a href="#createfriendstream-source" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>createFriendStream: source</h2>
+<p>Live-stream the ids of feeds which meet the given hops query. If <code>meta</code>
+option is set, then will return steam of <code>{id, hops}</code></p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">createFriendStream
+  [--start feedid]
+  [--graph follow|flag]
+  [--dunbar number]
+  [--hops number]
+  [--meta]</code></pre><pre><code class="language-js">createFriendStream({ 
+  start:,
+  graph:,
+  dunbar:,
+  hops:,
+  meta:
+}, cb)</code></pre>
+    </div>
+  </div>
+<ul>
+<li><code>start</code> (FeedID, default: local user): Which feed to start from.</li>
+<li><code>graph</code> (string, default: <code>follow</code>): Which graph to view. May be <code>follow</code> or <code>flag</code>.</li>
+<li><code>dunbar</code> (number, default: 150): Limit on how many feeds to include in the list.</li>
+<li><code>hops</code> (number, default: 3): Limit on how many hops out the feed needs to be, to be included.</li>
+</ul>
+<h2 id="get-sync"><a href="#get-sync" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>get: sync</h2>
+<p>Get the edge between two different feeds.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">bash</div><div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-bash">get --source {feedid} --dest {feedid} [--graph follow|flag]</code></pre><pre><code class="language-js">get({ source:, dest:, graph: }, cb)</code></pre>
+    </div>
+  </div>
+<ul>
+<li><code>source</code> (FeedID): Edge source.</li>
+<li><code>dest</code> (FeedID): Edge destination.</li>
+<li><code>graph</code> (string, default: <code>follow</code>): Which graph to query. May be <code>follow</code> or <code>flag</code>.</li>
+</ul>
+
+          
+          
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>

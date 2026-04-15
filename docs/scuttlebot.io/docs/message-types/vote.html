@@ -1,0 +1,89 @@
+<html>
+    <head>
+    <title>Vote messages - Scuttlebot</title>
+    
+    <link rel="icon" href="/img/icon.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/prism.css">
+    <script src="/js/prism.js"></script>
+    <script src="/js/code-examples.js"></script>
+    <script src="/js/table-of-contents.js"></script>
+  </head>
+    <body>
+      <div class="hero small">
+      <h1><a href="/"><img src="/img/hermies-256.png"></a> Scuttlebot</h1>
+    </div>
+      <div class="tabs big">
+  <div class="current"><a href="/docs/basics/install-the-database.html" title="Docs">Docs</a></div>
+  <div ><a href="/apis/scuttlebot/ssb.html" title="APIs">APIs</a></div>
+  <div ><a href="/apps/index.html" title="Apps">Apps</a></div>
+  <div ><a href="/more/protocols/secure-scuttlebutt.html" title="More">More</a></div>
+</div>
+      <div class="tabs small">
+  <div ><a href="/docs/basics/install-the-database.html" title="Basics">Basics</a></div>
+  <div ><a href="/docs/social/update-your-profile.html" title="Social">Social</a></div>
+  <div ><a href="/docs/advanced/links.html" title="Advanced">Advanced</a></div>
+  <div class="current"><a href="/docs/message-types/post.html" title="Message Types">Message Types</a></div>
+  <div ><a href="/docs/config/configure-scuttlebot.html" title="Config">Config</a></div>
+</div>
+      <div class="nav-content-unit ">
+        <ul class="nav">
+  <li ><a href="/docs/message-types/post.html" title="Post">Post</a></li>
+  <li ><a href="/docs/message-types/about.html" title="About">About</a></li>
+  <li ><a href="/docs/message-types/contact.html" title="Contact">Contact</a></li>
+  <li class="current"><a href="/docs/message-types/vote.html" title="Vote">Vote</a></li>
+  <li ><a href="/docs/message-types/pub.html" title="Pub">Pub</a></li>
+  <li ><a href="/docs/message-types/custom-types.html" title="Custom Types">Custom Types</a></li>
+</ul>
+        <div class="content">
+          <h2 id="vote"><a href="#vote" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Vote</h2>
+<p>Vote-messages signal approval about someone or something.
+Votes can be on users, messages, or blobs.</p>
+<p>The <code>value</code> should be negative, 0, or positive.
+If the value is non-numeric, it is invalid.</p>
+<p>The <code>reason</code> is an optional string to explain the vote.</p>
+<div class="code-examples">
+    <div class="head">
+      <div class="tab">js</div>
+    </div>
+    <div class="body">
+      <pre><code class="language-js">{
+  type: 'vote',
+  vote: {
+    link: Link,
+    value: -1|0|1,
+    reason: String?
+  }
+}</code></pre>
+    </div>
+  </div>
+<h3 id="voting-on-users"><a href="#voting-on-users" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Voting on users</h3>
+<p>A positive vote on a user signals trust in that user.
+It&#x27;s generally used to &quot;confirm&quot; that you think that user publishes good information.</p>
+<p>A negative vote on a user is a &quot;flag.&quot;
+You can flag a user for publishing bad information, making false claims, or being abusive.
+You can also flag a user if the owner lost the keys.</p>
+<p>Common values for <code>reason</code> in downvotes on users:</p>
+<ul>
+<li><code>dead</code>: Dead Account / Lost Keys</li>
+<li><code>spam</code>: Spammer</li>
+<li><code>abuse</code>: Abusive behavior</li>
+</ul>
+<h3 id="voting-on-messagesblobs"><a href="#voting-on-messagesblobs" class="anchor"><svg aria-hidden="true" class="octicon octicon-link" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path d="M4 9h1v1h-1c-1.5 0-3-1.69-3-3.5s1.55-3.5 3-3.5h4c1.45 0 3 1.69 3 3.5 0 1.41-0.91 2.72-2 3.25v-1.16c0.58-0.45 1-1.27 1-2.09 0-1.28-1.02-2.5-2-2.5H4c-0.98 0-2 1.22-2 2.5s1 2.5 2 2.5z m9-3h-1v1h1c1 0 2 1.22 2 2.5s-1.02 2.5-2 2.5H9c-0.98 0-2-1.22-2-2.5 0-0.83 0.42-1.64 1-2.09v-1.16c-1.09 0.53-2 1.84-2 3.25 0 1.81 1.55 3.5 3 3.5h4c1.45 0 3-1.69 3-3.5s-1.5-3.5-3-3.5z"></path></svg></a>Voting on messages/blobs</h3>
+<p>A positive vote on a message or blobs signals that you like the content of the message/blobs.</p>
+<p>A negative vote on a message is a &quot;flag&quot; that signals that you think the message/blob content should not be used or seen.</p>
+
+          <ul class="see-also"><li><a href="/docs/message-types/custom-types.html">Message schemas</a></li><li><a href="/docs/advanced/links.html">Linking messages</a></li><li><a href="/apis/modules/ssb-msg-schemas.html">SSB-Msg-Schemas API</a></li></ul>
+          <p class="next"><a href="./pub.html">Pub</a></p>
+        </div>
+      </div>
+      <div class="footer">
+  <ul class="footer-section">
+    <li>Community</li>
+    <li><p>#scuttlebutt on freenode</p></li>
+    <li><a href="https://github.com/ssbc">GitHub Org</a></li>
+    <li><a href="https://github.com/ssbc/ssb-server">GitHub Repo</a></li>
+  </ul>
+</div>
+    </body>
+  </html>
