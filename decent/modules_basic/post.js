@@ -1,6 +1,9 @@
 var h = require('hyperscript')
+var renderEmbeddedPost = require('./render-embedded-post')
 
 exports.needs = {
+  avatar_image_link: 'first',
+  message_meta:  'map',
   message_link: 'first',
   markdown:     'first',
   sbot_get:     'first',
@@ -14,6 +17,47 @@ exports.gives = {
 
 exports.create = function (api) {
   var x = {}
+
+  function isInteractiveTarget (target, container) {
+    while (target && target !== container) {
+      var tag = target.tagName
+      if (
+        tag === 'A' ||
+        tag === 'BUTTON' ||
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        tag === 'SUMMARY'
+      ) return true
+      target = target.parentNode
+    }
+    return false
+  }
+
+  function makeCardNavigable (el, targetId) {
+    function goToTarget () {
+      window.location.hash = '#' + targetId
+    }
+
+    el.classList.add('embedded-link-card')
+    el.setAttribute('tabindex', '0')
+    el.setAttribute('role', 'link')
+
+    el.addEventListener('click', function (ev) {
+      if (ev.defaultPrevented) return
+      if (ev.button != null && ev.button !== 0) return
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return
+      if (isInteractiveTarget(ev.target, el)) return
+      goToTarget()
+    })
+
+    el.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' && ev.key !== ' ') return
+      if (isInteractiveTarget(ev.target, el)) return
+      ev.preventDefault()
+      goToTarget()
+    })
+  }
 
   x.message_content = function (data) {
     if (!data.value.content || !data.value.content.text) return
@@ -45,15 +89,9 @@ exports.create = function (api) {
 
     api.sbot_get(quoteId, function (err, value) {
       if (err || !value || !value.content || typeof value.content !== 'object') return
-      var vc = value.content
-      var authorEl = h('div.quoted-post-header',
-        h('span.material-symbols-outlined', {style: {fontSize: '13px', verticalAlign: 'middle'}}, 'repeat'),
-        ' ',
-        api.avatar_link(value.author, h('span.quoted-post-author', api.avatar_name(value.author)))
-      )
-      var text = (vc.text || '').slice(0, 300) + (vc.text && vc.text.length > 300 ? '…' : '')
-      quoteEl.appendChild(authorEl)
-      if (text) quoteEl.appendChild(h('div.quoted-post-text', text))
+      var quotedMsg = { key: quoteId, value: value }
+      makeCardNavigable(quoteEl, quoteId)
+      quoteEl.appendChild(renderEmbeddedPost(api, quotedMsg, 'quote'))
     })
 
     var parts = []

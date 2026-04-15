@@ -347,7 +347,8 @@ textarea {
 /* ── Reaction buttons (quick row) ───────────────────────────────────────── */
 
 /* needs position:relative so the tray can be absolutely anchored */
-.reaction-group {
+.reaction-group,
+.share-group {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -371,19 +372,10 @@ textarea {
   line-height: 1;
 }
 
-.action-btn--react-more {
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.action-btn--react-more:hover {
-  color: #f91880;
-  background: rgba(249, 24, 128, 0.1);
-}
-
 /* ── Reaction tray (Phase 5: floating pill, spring animation) ───────────── */
 
-.reaction-tray {
+.reaction-tray,
+.share-tray {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 0;
@@ -406,14 +398,16 @@ textarea {
               transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.reaction-tray--open {
+.reaction-tray--open,
+.share-tray--open {
   opacity: 1;
   transform: scale(1) translateY(0);
   pointer-events: auto;
 }
 
 /* Tray emoji buttons are slightly larger than the quick-row ones */
-.reaction-tray .action-btn {
+.reaction-tray .action-btn,
+.share-tray .action-btn {
   padding: 4px 5px;
 }
 
@@ -628,37 +622,22 @@ textarea {
 /* ── Quoted post card ───────────────────────────────────────────────────── */
 
 .quoted-post {
-  border: 1px solid #cfd9de;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 1px solid #c9dcec;
+  border-radius: 16px;
+  padding: 0;
   margin-top: 8px;
   font-size: 0.9em;
   cursor: pointer;
   line-height: 1.4;
-  transition: background 0.12s;
+  transition: background 0.12s, border-color 0.12s;
+  background: linear-gradient(180deg, rgba(29, 155, 240, 0.05), rgba(29, 155, 240, 0.015));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  overflow: hidden;
 }
 
 .quoted-post:hover {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.quoted-post-header {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.85em;
-  color: #536471;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.quoted-post-author {
-  font-weight: 600;
-  color: #0f1419;
-}
-
-.quoted-post-text {
-  color: #0f1419;
+  background: linear-gradient(180deg, rgba(29, 155, 240, 0.08), rgba(29, 155, 240, 0.025));
+  border-color: #a7cfe7;
 }
 
 /* ── Repost card ────────────────────────────────────────────────────────── */
@@ -669,31 +648,162 @@ textarea {
 
 .repost-inner {
   border: 1px solid #cfd9de;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 16px;
+  padding: 0;
   cursor: pointer;
   font-size: 0.9em;
   line-height: 1.4;
-  transition: background 0.12s;
+  transition: background 0.12s, border-color 0.12s;
+  background: linear-gradient(180deg, #ffffff, #fafcfd);
+  overflow: hidden;
 }
 
 .repost-inner:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: linear-gradient(180deg, #ffffff, #f4f8fa);
+  border-color: #c4d3da;
 }
 
-.repost-inner-header {
+.embedded-post {
+  padding: 10px 12px 12px;
+}
+
+.embedded-post-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.7em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.embedded-post-kicker-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.embedded-post-kicker-label {
+  line-height: 1;
+}
+
+.embedded-post--quote .embedded-post-kicker {
+  color: #1d5f8a;
+  background: rgba(29, 155, 240, 0.1);
+}
+
+.embedded-post--repost .embedded-post-kicker {
+  color: #58717d;
+  background: rgba(83, 100, 113, 0.08);
+}
+
+.embedded-post-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.embedded-post-header .avatar {
+  gap: 0;
+}
+
+.embedded-post-header .avatar img,
+.embedded-post-header .avatar canvas,
+.embedded-post-header .avatar svg {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.embedded-post-meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.embedded-post-author-row {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.85em;
-  font-weight: 600;
-  color: #536471;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: space-between;
+  font-size: 0.86em;
+  width: 100%;
 }
 
-.repost-inner-text {
+.embedded-post-author {
+  font-weight: 600;
   color: #0f1419;
+}
+
+.embedded-post-timestamp {
+  color: #536471;
+  text-decoration: none;
+}
+
+.embedded-post-timestamp:hover {
+  text-decoration: underline;
+}
+
+.embedded-post-message-meta.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.embedded-post-message-meta.row .timestamp {
+  color: #536471;
+  text-decoration: none;
+}
+
+.embedded-post-message-meta.row .timestamp:hover {
+  text-decoration: underline;
+}
+
+.embedded-post-body {
+  color: #0f1419;
+  padding-left: 40px;
+  overflow: hidden;
+}
+
+.embedded-post-body .markdown {
+  margin: 0;
+  color: #16202a;
+}
+
+.embedded-post-body .markdown p {
+  line-height: 1.45;
+}
+
+.embedded-post-body p:first-child {
+  margin-top: 0;
+}
+
+.embedded-post-body p:last-child {
+  margin-bottom: 0;
+}
+
+.embedded-post-text {
+  color: #0f1419;
+}
+
+.embedded-link-card {
+  cursor: pointer;
+}
+
+.embedded-link-card:focus {
+  outline: 2px solid #1d9bf0;
+  outline-offset: 2px;
+}
+
+.embedded-link-card a {
+  position: relative;
+  z-index: 1;
 }
 
 .repost-unavailable {

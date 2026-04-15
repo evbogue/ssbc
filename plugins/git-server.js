@@ -21,6 +21,7 @@
 const pull      = require('pull-stream')
 const paramap   = require('pull-paramap')
 const cat       = require('pull-cat')
+const cache     = require('pull-cache')
 const fs        = require('fs')
 const os        = require('os')
 const path      = require('path')
@@ -28,6 +29,7 @@ const cp        = require('child_process')
 const toPull    = require('stream-to-pull-stream')
 const gitRepo   = require('ssb-git-repo')
 const GitRepo   = require('pull-git-repo')
+const indexPack = require('pull-git-pack/lib/index-pack')
 
 // ── pkt-line helpers ─────────────────────────────────────────────────────────
 
@@ -42,6 +44,18 @@ const FLUSH = Buffer.from('0000', 'ascii')
 function sidebandPkt(band, data) {
   const payload = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8')
   return pktLine(Buffer.concat([Buffer.from([band]), payload]))
+}
+
+function sidebandPkts(band, data) {
+  const payload = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8')
+  const maxPayload = 65515
+  const packets = []
+
+  for (let i = 0; i < payload.length; i += maxPayload) {
+    packets.push(sidebandPkt(band, payload.slice(i, i + maxPayload)))
+  }
+
+  return packets.length ? packets : [sidebandPkt(band, Buffer.alloc(0))]
 }
 
 // Read the full HTTP request body as a single Buffer.
@@ -69,13 +83,260 @@ function parsePktLines(buf) {
   return { lines, rest: buf.slice(i) }
 }
 
+function buildReceivePackResult(refNames, err, useSideband) {
+  const status = []
+  if (err) {
+    status.push(pktLine('unpack ' + err.message + '\n'))
+  } else {
+    status.push(pktLine('unpack ok\n'))
+    refNames.forEach(name => status.push(pktLine(`ok ${name}\n`)))
+  }
+
+  status.push(FLUSH)
+
+  if (useSideband) {
+    return [sidebandPkt(0x01, Buffer.concat(status)), FLUSH]
+  }
+
+  return status
+}
+
+function execFileBuffer(file, args, opts, cb) {
+  if (typeof opts === 'function') {
+    cb = opts
+    opts = {}
+  }
+
+  const input = opts.input
+  const child = cp.spawn(file, args, Object.assign({
+    stdio: ['pipe', 'pipe', 'pipe']
+  }, opts, { input: undefined }))
+
+  const stdout = []
+  const stderr = []
+
+  child.stdout.on('data', chunk => stdout.push(chunk))
+  child.stderr.on('data', chunk => stderr.push(chunk))
+  child.on('error', cb)
+
+  if (input != null) child.stdin.end(input)
+  else child.stdin.end()
+
+  child.on('close', code => {
+    const out = Buffer.concat(stdout)
+    const errOut = Buffer.concat(stderr)
+    if (code) {
+      const err = new Error(errOut.toString('utf8').trim() || (file + ' returned ' + code))
+      err.stdout = out
+      err.stderr = errOut
+      return cb(err)
+    }
+    cb(null, out, errOut)
+  })
+}
+
+function cleanupDir(dir, cb) {
+  fs.rm(dir, { recursive: true, force: true }, () => cb && cb())
+}
+
+function writeRef(repoDir, refName, hash, cb) {
+  const filename = path.join(repoDir, refName)
+  fs.mkdir(path.dirname(filename), { recursive: true }, err => {
+    if (err) return cb(err)
+    fs.writeFile(filename, hash + '\n', cb)
+  })
+}
+
+function normalizeReceivePack(packBuf, updates, cb) {
+  fs.mkdtemp(path.join(os.tmpdir(), 'ssbc-git-receive-pack-'), (err, tmpDir) => {
+    if (err) return cb(err)
+
+    const repoDir = path.join(tmpDir, 'repo.git')
+    const fixedIdx = path.join(tmpDir, 'incoming.idx')
+    const fixedPack = path.join(tmpDir, 'incoming.pack')
+
+    function done(err, idxStream, packStream, objectIds) {
+      if (err) {
+        return cleanupDir(tmpDir, () => cb(err))
+      }
+
+      const cleanup = () => cleanupDir(tmpDir)
+      cb(null, idxStream, packStream, objectIds, cleanup)
+    }
+
+    execFileBuffer('git', ['init', '--bare', repoDir], initErr => {
+      if (initErr) return done(initErr)
+
+      const indexPackProc = cp.spawn('git', [
+        'index-pack',
+        '--stdin',
+        '--fix-thin',
+        '-o', fixedIdx,
+        fixedPack
+      ], {
+        stdio: ['pipe', 'ignore', 'pipe']
+      })
+
+      let stderr = Buffer.alloc(0)
+      indexPackProc.stderr.on('data', chunk => {
+        stderr = Buffer.concat([stderr, chunk])
+      })
+      indexPackProc.on('error', done)
+      indexPackProc.stdin.on('error', () => {})
+      indexPackProc.stdin.end(packBuf)
+
+      indexPackProc.on('close', code => {
+        if (code) {
+          const msg = stderr.toString('utf8').trim() || ('git index-pack returned ' + code)
+          return done(new Error(msg))
+        }
+
+        fs.readFile(fixedPack, (readErr, fixedPackBuf) => {
+          if (readErr) return done(readErr)
+
+          fs.readFile(fixedIdx, (idxReadErr, idxBuf) => {
+            if (idxReadErr) return done(idxReadErr)
+
+            execFileBuffer('git', ['show-index'], { input: idxBuf }, (showIdxErr, stdout) => {
+              if (showIdxErr) return done(showIdxErr)
+              const objectIds = stdout.toString('utf8')
+                .trim()
+                .split('\n')
+                .filter(Boolean)
+                .map(line => line.trim().split(/\s+/)[1])
+                .filter(Boolean)
+
+              execFileBuffer('git', ['unpack-objects', '-r'], {
+                cwd: repoDir,
+                input: fixedPackBuf
+              }, unpackErr => {
+                if (unpackErr) return done(unpackErr)
+
+                const nextRef = [...updates]
+                ;(function writeNextRef() {
+                  const update = nextRef.shift()
+                  if (!update) return repack(objectIds)
+                  if (!update.new) return writeNextRef()
+                  writeRef(repoDir, update.name, update.new, err => {
+                    if (err) return done(err)
+                    writeNextRef()
+                  })
+                })()
+
+                function repack(objectIds) {
+                  execFileBuffer('git', [
+                    'pack-objects',
+                    '--stdout',
+                    '--all',
+                    '--window=0',
+                    '--depth=0',
+                    '--no-reuse-delta',
+                    '--no-reuse-object'
+                  ], { cwd: repoDir }, (repackErr, stdout) => {
+                    if (repackErr) return done(repackErr)
+                    indexPack(bufToPull(stdout), (err, idxStream, packStream) => {
+                      if (err) return done(err)
+                      done(null, idxStream, packStream, objectIds)
+                    })
+                  })
+                }
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+function collectBlobLink(repo, read, cb) {
+  pull(read, repo.addSSBBlob(cb))
+}
+
+function publishReceivePackUpdate(repo, updates, idxStream, packStream, objectIds, cb) {
+  const packCached = cache(packStream)
+  const refs = {}
+
+  updates.forEach(update => {
+    refs[update.name] = update.new
+  })
+
+  let packLink
+  let idxLink
+  let finished = false
+
+  function complete(err) {
+    if (finished) return
+    if (err) {
+      finished = true
+      return cb(err)
+    }
+    if (!packLink || !idxLink) return
+
+    const msg = {
+      type: 'git-update',
+      recps: repo.recps,
+      repo: repo.id,
+      refs,
+      packs: [packLink],
+      indexes: [idxLink],
+      num_objects: objectIds.length || undefined,
+      object_ids: objectIds.length ? objectIds : undefined
+    }
+
+    function publish(value) {
+      const publishFn = repo.recps
+        ? repo.sbot.private.publish.bind(repo.sbot.private, value, repo.recps)
+        : repo.sbot.publish.bind(repo.sbot, value)
+
+      publishFn((err, publishedMsg) => {
+        if (err) {
+          if (/must not be large/.test(err.message) && value.object_ids) {
+            const smaller = Object.assign({}, value)
+            delete smaller.object_ids
+            delete smaller.num_objects
+            return publish(smaller)
+          }
+          return cb(err)
+        }
+
+        repo._processNewMsg(publishedMsg)
+        cb(null)
+      })
+    }
+
+    if (!repo.sbot.blobs.push) return publish(msg)
+
+    console.error('Pushing blobs...')
+    repo.sbot.blobs.push(packLink.link, err => {
+      if (err) return cb(err)
+      repo.sbot.blobs.push(idxLink.link, err => {
+        if (err) return cb(err)
+        publish(msg)
+      })
+    })
+  }
+
+  collectBlobLink(repo, packCached(), (err, link) => {
+    if (err) return complete(err)
+    packLink = link
+    complete()
+  })
+
+  collectBlobLink(repo, idxStream, (err, link) => {
+    if (err) return complete(err)
+    idxLink = link
+    complete()
+  })
+}
+
 // Build the full ref advertisement body for an info/refs response.
 // refs:    [{name, hash}]
 // symrefs: [{name, ref}]  (e.g. {name:'HEAD', ref:'refs/heads/master'})
 function buildRefAdvert(service, refs, symrefs) {
   const caps = service === 'git-upload-pack'
     ? ['multi_ack_detailed', 'no-done', 'side-band-64k', 'thin-pack', 'ofs-delta', 'no-progress', 'include-tag']
-    : ['report-status', 'delete-refs', 'no-thin', 'quiet', 'ofs-delta']
+    : ['report-status', 'report-status-v2', 'delete-refs', 'side-band-64k', 'no-thin', 'quiet', 'ofs-delta']
 
   // symref=HEAD:refs/heads/master style capabilities
   const validSymrefs = symrefs.filter(s => s.ref)
@@ -156,44 +417,6 @@ function parseCreateOpts(opts) {
 
   if (!opts || typeof opts !== 'object' || Array.isArray(opts)) return {}
   return opts
-}
-
-function indexPackFixThin(buf, cb) {
-  const name = Math.random().toString(36).slice(2)
-  const idxFilename = path.join(os.tmpdir(), name + '.idx')
-  const packFilename = path.join(os.tmpdir(), name + '.pack')
-  const child = cp.spawn('git', [
-    'index-pack',
-    '--stdin',
-    '--fix-thin',
-    '-o', idxFilename,
-    packFilename
-  ], {
-    stdio: ['pipe', 'pipe', 'pipe']
-  })
-
-  let stderr = ''
-  child.stderr.on('data', chunk => {
-    stderr += chunk.toString('utf8')
-  })
-
-  child.stdin.on('error', () => {})
-  child.stdin.end(buf)
-
-  child.on('close', code => {
-    if (code) {
-      return cb(new Error((stderr.trim() || ('git index-pack returned ' + code))))
-    }
-
-    function cleanup() {
-      fs.unlink(idxFilename, () => {})
-      fs.unlink(packFilename, () => {})
-    }
-
-    const idx = toPull(fs.createReadStream(idxFilename), cleanup)
-    const pack = toPull(fs.createReadStream(packFilename), cleanup)
-    cb(null, idx, pack)
-  })
 }
 
 // ── Raw blob endpoint ─────────────────────────────────────────────────────────
@@ -310,7 +533,7 @@ function handleUploadPack(sbot, repoId, req, res) {
         res.write(pktLine('NAK\n'))
         // Pack data must be sideband-wrapped (we advertise side-band-64k).
         pull(packStream, pull.drain(
-          chunk => res.write(sidebandPkt(0x01, chunk)),
+          chunk => sidebandPkts(0x01, chunk).forEach(buf => res.write(buf)),
           (err) => {
             if (err && err !== true) {
               console.error('git-server: pack stream error:', err)
@@ -331,6 +554,15 @@ function handleReceivePack(sbot, repoId, req, res) {
 
     // Pkt-lines until flush = ref updates; remainder is raw pack data.
     const { lines, rest } = parsePktLines(body)
+    const requestedCaps = new Set()
+    if (lines[0]) {
+      const nullIdx = lines[0].indexOf('\0')
+      if (nullIdx !== -1) {
+        lines[0].slice(nullIdx + 1).trim().split(/\s+/).filter(Boolean).forEach(cap => {
+          requestedCaps.add(cap)
+        })
+      }
+    }
 
     // Parse ref update lines: "<old> <new> <name>[\0<caps>]"
     const updates = []
@@ -353,19 +585,15 @@ function handleReceivePack(sbot, repoId, req, res) {
 
       const refNames = updates.map(u => u.name)
       const hasPack  = rest.length > 0 && updates.some(u => u.new !== null)
+      const useSideband = requestedCaps.has('side-band-64k')
 
       function sendResult(err) {
         res.writeHead(200, {
           'Content-Type': 'application/x-git-receive-pack-result',
           'Cache-Control': 'no-cache'
         })
-        if (err) {
-          res.write(pktLine('unpack ' + err.message + '\n'))
-        } else {
-          res.write(pktLine('unpack ok\n'))
-          refNames.forEach(name => res.write(pktLine(`ok ${name}\n`)))
-        }
-        res.write(FLUSH)
+        buildReceivePackResult(refNames, err, useSideband).forEach(buf => res.write(buf))
+
         res.end()
       }
 
@@ -376,13 +604,15 @@ function handleReceivePack(sbot, repoId, req, res) {
         return
       }
 
-      // Build an index and normalize thin packs before storing the result.
-      indexPackFixThin(rest, (err, idxStream, packfileFixed) => {
+      normalizeReceivePack(rest, updates, (err, idxStream, packfileFixed, objectIds, cleanup) => {
         if (err) return sendResult(new Error('index-pack failed: ' + err.message))
-        repo.uploadPack(pull.values(updates), pull.once({
-          pack: packfileFixed,
-          idx:  idxStream
-        }), sendResult)
+        publishReceivePackUpdate(repo, updates, idxStream, pull(
+          packfileFixed,
+          pull.filter(buf => buf.length)
+        ), objectIds, err => {
+          if (cleanup) cleanup()
+          sendResult(err)
+        })
       })
     })
   })
@@ -862,4 +1092,11 @@ module.exports.handleGitRequest = function (sbot, req, res) {
   }
 
   return true
+}
+
+module.exports._test = {
+  buildRefAdvert,
+  parsePktLines,
+  buildReceivePackResult,
+  sidebandPkts
 }

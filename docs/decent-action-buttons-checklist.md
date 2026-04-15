@@ -63,6 +63,8 @@ Files likely involved:
 
 ## Phase 3: Repost vs Quote UX
 
+- [x] Bundle `Repost` and `Quote` under one share-style control.
+  - visible action row shows `Repost`; hover/long-press opens a compact tray with `Repost` and `Quote`
 - [ ] Clarify the action model:
   - `Reply` = join this conversation
   - `Repost` = reshare as-is
@@ -82,15 +84,13 @@ Files likely involved:
 ## Phase 4: Replace Like With Reactions ✅
 
 - [x] Replace the current `Like` button with a reaction control.
-- [x] Use actual emoji in the UI instead of icon-font or text-symbol stand-ins.
+- [x] Use emoji in the picker UI instead of icon-font or text-symbol stand-ins.
+- [x] Use a calmer Material Symbols heart for the default inline reaction trigger.
 - [x] Set default quick reaction to `❤️`.
-- [x] Pin `✌️` as the second quick reaction and treat it as traditional SSB “Dig”.
 - [x] Keep the common path fast:
   - tap/click = send default reaction immediately
 - [x] Provide a richer path:
-  - expand affordance (`+` button) opens inline reaction tray (Phase 5 will add animation/gesture polish)
-- [x] Include a `+` or picker affordance that opens the full emoji picker.
-  - `+` reveals an inline tray: `😂 🔥 😮 👍 👎` (Phase 6 wires up the full picker behind it)
+  - hover or long-press on the inline trigger opens the compact reaction tray
 - [x] Define one-reaction-per-user-per-post behavior.
   - Uses timestamp comparison against `window.CACHE` to find the user's most-recent vote
 - [x] Clicking the same reaction again removes it.
@@ -110,17 +110,18 @@ Files likely involved:
 ## Phase 5: Reaction Tray UX ✅
 
 - [x] Build a compact anchored reaction tray instead of opening a giant emoji wall first.
-- [x] Start with a curated quick row:
+- [x] Start with a curated tray:
   - `❤️` `✌️` `😂` `🔥` `😮` `😭` `👍` `👎`
-  - `+` in the tray is reserved for Phase 6 full picker
+- [x] Keep the inline action row compact:
+  - a single default heart trigger is always visible
 - [x] Make the tray feel gesture-based, not form-based.
 - [ ] Drag-across and release-to-select — deferred; requires pointer-capture API work.
 - [x] Keep the tray anchored near the post action row.
   - `position: absolute; bottom: calc(100% + 8px)` anchored to `.reaction-group`
 - [x] Ensure mobile and desktop both feel intentional:
-  - mobile tap = default (❤️ or ✌️ in quick row)
+  - mobile tap = default (`❤️`)
   - mobile long-press (400 ms) = opens tray
-  - desktop click = default (❤️ or ✌️ in quick row); `+` click also opens tray
+  - desktop click = default (`❤️`)
   - desktop hover (300 ms hover-intent delay) = opens tray
 
 **Animation:** spring cubic-bezier (0.34, 1.56, 0.64, 1) scale + opacity.
@@ -230,8 +231,8 @@ Files likely involved:
 - [ ] Reply always opens a valid reply flow.
 - [ ] Quote always opens a valid quote flow.
 - [ ] Repost remains the fast reshare path.
-- [ ] Reaction control supports immediate `❤️` and fast access to `✌️`.
-- [ ] Reaction UI uses actual emoji.
+- [ ] Reaction control supports immediate `❤️` and fast access to the tray.
+- [ ] Reaction picker uses emoji while the inline trigger stays visually calm.
 - [ ] No dead-end embedded previews.
 - [ ] No silent failures.
 - [ ] No console errors during standard post-action usage.
@@ -240,7 +241,7 @@ Files likely involved:
 
 - [ ] Decide whether quote-without-commentary should be allowed.
 - [ ] Decide whether default quick reaction stays fixed as `❤️` forever or becomes adaptive later.
-- [ ] Decide whether `✌️` should be explicitly labeled as `Dig` in the quick tray.
+- [ ] Decide whether `✌️` should be explicitly labeled as `Dig` in the tray.
 - [ ] Decide whether to expose a “who reacted” drilldown in the first release or defer it.
 
 ## Recommended Execution Order
@@ -248,6 +249,6 @@ Files likely involved:
 - [ ] 1. Finish action reliability and fallback routing.
 - [ ] 2. Make reposted and quoted originals clickable.
 - [ ] 3. Improve repost vs quote rendering and visual clarity.
-- [ ] 4. Replace like with a minimal reaction tray.
+- [x] 4. Replace like with a minimal reaction tray.
 - [ ] 5. Add full emoji picker.
 - [ ] 6. Add aggregation, polish, and deeper verification.

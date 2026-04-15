@@ -17,8 +17,8 @@ exports.gives = {
   message_action:       true
 }
 
-// Quick reactions always visible in the action row
-var QUICK_REACTIONS = ['❤️', '✌️']
+// Keep the inline action row compact; the full picker opens on hover/long-press
+var QUICK_REACTIONS = ['❤️']
 
 // Full curated row inside the floating tray
 var TRAY_EMOJIS = ['❤️', '✌️', '😂', '🔥', '😮', '😭', '👍', '👎']
@@ -478,6 +478,9 @@ exports.create = function (api) {
     function makeBtn (emoji, inTray) {
       var isActive = myReaction === emoji
       var count    = counts[emoji] || 0
+      var iconEl = inTray
+        ? h('span.reaction-emoji', emoji)
+        : h('span.material-symbols-outlined.action-icon', 'favorite')
       return h(
         'button.action-btn.action-btn--react' + (isActive ? '.action-btn--reacted' : ''),
         {
@@ -489,7 +492,7 @@ exports.create = function (api) {
             reactAndClose(emoji)
           }
         },
-        h('span.reaction-emoji', emoji),
+        iconEl,
         count > 0 ? h('span.action-count', String(count)) : null
       )
     }
@@ -523,25 +526,9 @@ exports.create = function (api) {
       if (!pickerOpen) closeTray()
     })
 
-    // ── More button (+ toggle for tray) ─────────────────────────────────────
-    var moreBtn = h('button.action-btn.action-btn--react-more',
-      {
-        type:    'button',
-        title:   'More reactions',
-        onclick: function (e) {
-          e.preventDefault()
-          e.stopPropagation()
-          if (trayOpen) closeTray(true)
-          else openTray()
-        }
-      },
-      h('span', '+')
-    )
-
     // ── Reaction group container ────────────────────────────────────────────
     var reactionGroup = h('div.reaction-group',
       QUICK_REACTIONS.map(function (e) { return makeBtn(e, false) }),
-      moreBtn,
       trayEl
     )
     // Note: pickerEl is appended to reactionGroup lazily inside buildPickerOnce()
