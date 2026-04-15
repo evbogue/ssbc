@@ -41,13 +41,20 @@ Files likely involved:
 - [decent/modules_basic/thread.js](/Users/evbogue/Code/ssbc/decent/modules_basic/thread.js)
 - [decent/modules_basic/public.js](/Users/evbogue/Code/ssbc/decent/modules_basic/public.js)
 
-## Phase 2: Source Post Navigation
+## Phase 2: Source Post Navigation ✅
 
-- [ ] Make repost embedded cards clickable to the original post/thread.
-- [ ] Make quoted embedded cards clickable to the original post/thread.
-- [ ] Preserve author/avatar links to author profile inside embedded cards.
-- [ ] Keep outer repost/quote timestamps linking to the repost/quote message itself.
-- [ ] Ensure clicking the embedded body is a large, forgiving target and not a tiny text-only link.
+- [x] Make repost embedded cards clickable to the original post/thread.
+- [x] Make quoted embedded cards clickable to the original post/thread.
+- [x] Preserve author/avatar links to author profile inside embedded cards.
+- [x] Keep outer repost/quote timestamps linking to the repost/quote message itself.
+- [x] Ensure clicking the embedded body is a large, forgiving target and not a tiny text-only link.
+
+**Implementation notes:**
+- `repost.js`: click handler on `.repost-inner` navigates to `#c.repost` (the original post's thread).
+- `post.js`: click handler on `.quoted-post` navigates to `#quoteId` (the quoted post's thread).
+- Guard in both handlers: if the click originated inside an `<a>` tag (the author link), the event passes through normally so profile navigation still works.
+- `cursor: pointer` added to `.repost-inner` and `.quoted-post` — the hover background was already there; now the cursor matches.
+- Outer timestamps continue to link to the repost/quote message itself via `timestamp.js` — no change needed.
 
 Files likely involved:
 

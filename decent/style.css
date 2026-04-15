@@ -633,6 +633,7 @@ textarea {
   padding: 10px 12px;
   margin-top: 8px;
   font-size: 0.9em;
+  cursor: pointer;
   line-height: 1.4;
   transition: background 0.12s;
 }
@@ -670,6 +671,7 @@ textarea {
   border: 1px solid #cfd9de;
   border-radius: 12px;
   padding: 10px 12px;
+  cursor: pointer;
   font-size: 0.9em;
   line-height: 1.4;
   transition: background 0.12s;

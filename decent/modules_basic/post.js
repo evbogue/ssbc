@@ -32,6 +32,17 @@ exports.create = function (api) {
     // Quoted post — async fetch and render inline card
     var quoteEl = h('div.quoted-post')
 
+    // Clicking the card body navigates to the original post's thread.
+    // Guard: if the click came from inside an <a> (the author link), let it go.
+    quoteEl.addEventListener('click', function (e) {
+      var node = e.target
+      while (node && node !== quoteEl) {
+        if (node.tagName === 'A') return
+        node = node.parentNode
+      }
+      window.location.hash = '#' + quoteId
+    })
+
     api.sbot_get(quoteId, function (err, value) {
       if (err || !value || !value.content || typeof value.content !== 'object') return
       var vc = value.content

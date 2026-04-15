@@ -27,6 +27,17 @@ exports.create = function (api) {
 
     var inner = h('div.repost-inner', h('em', 'Loading…'))
 
+    // Clicking the card body navigates to the original post's thread.
+    // Guard: if the click came from inside an <a> (the author link), let it go.
+    inner.addEventListener('click', function (e) {
+      var node = e.target
+      while (node && node !== inner) {
+        if (node.tagName === 'A') return
+        node = node.parentNode
+      }
+      window.location.hash = '#' + c.repost
+    })
+
     api.sbot_get(c.repost, function (err, value) {
       inner.innerHTML = ''
       if (err || !value || !value.content || typeof value.content !== 'object') {
