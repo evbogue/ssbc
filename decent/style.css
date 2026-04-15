@@ -1806,10 +1806,36 @@ textarea {
 
 .profile-crop-modal {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 20px;
-  max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  max-width: 360px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+}
+
+.profile-crop-canvas-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f1419;
+  line-height: 0;
+}
+
+.profile-crop-canvas-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+}
+
+/* circular crop indicator: darkens corners, spotlights the crop circle */
+.profile-crop-canvas-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
 .profile-banner-crop-modal {
@@ -1823,7 +1849,9 @@ textarea {
   font-size: 1em;
   font-weight: 700;
   color: #0f1419;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eff3f4;
 }
 
 .banner-crop-canvas {
@@ -1846,8 +1874,10 @@ textarea {
 .profile-crop-buttons {
   display: flex;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 16px;
   justify-content: flex-end;
+  padding-top: 12px;
+  border-top: 1px solid #eff3f4;
 }
 
 /* Petname */
