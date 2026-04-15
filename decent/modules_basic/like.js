@@ -23,6 +23,118 @@ var QUICK_REACTIONS = ['❤️', '✌️']
 // Full curated row inside the floating tray
 var TRAY_EMOJIS = ['❤️', '✌️', '😂', '🔥', '😮', '😭', '👍', '👎']
 
+// ── Full emoji data (Phase 6) ────────────────────────────────────────────────
+var EMOJI_CATEGORIES = [
+  {
+    label: '😀 Smileys',
+    emojis: [
+      '😀','😁','😂','🤣','😅','😊','🥹','😍','🤩','🥰',
+      '😎','🥳','😜','🤪','😇','🤔','🫡','😮','😱','😤',
+      '🤬','😭','😢','😴','🥱','😷','🤒','🤗','🫠','😪'
+    ]
+  },
+  {
+    label: '👋 People',
+    emojis: [
+      '👋','🤚','✋','🖐','👌','🤌','✌️','🤞','🤙','🫶',
+      '👍','👎','👏','🙌','🤝','💪','🦾','🙏','🫂','🤜'
+    ]
+  },
+  {
+    label: '🐶 Nature',
+    emojis: [
+      '🐶','🐱','🐭','🐸','🐧','🦊','🐺','🦋','🌸','🌺',
+      '🌻','🍀','🌈','⛅','🌊','🔥','❄️','🌙','⭐','🌍'
+    ]
+  },
+  {
+    label: '🍕 Food',
+    emojis: [
+      '🍕','🍔','🌮','🍣','🍜','🍩','🍪','🎂','🍺','🥂',
+      '☕','🧁','🍓','🍉','🥑','🌶️','🧀','🥚','🍫','🍭'
+    ]
+  },
+  {
+    label: '🎉 Fun',
+    emojis: [
+      '🎉','🎊','🎈','🎁','🏆','🥇','🎮','🎵','🎶','🎤',
+      '⚽','🏀','🎯','🚀','✈️','🏖️','💰','💎','🔮','🪄'
+    ]
+  },
+  {
+    label: '❤️ Hearts',
+    emojis: [
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔',
+      '💕','💞','💓','💗','💘','💝','💖','💫','✨','💯'
+    ]
+  }
+]
+
+// Keyword → emoji list used for search
+var EMOJI_KEYWORDS = {
+  heart:   ['❤️','🧡','💛','💚','💙','💜','🤍','🖤','💕','💞','💓','💗','💘','💝','💖'],
+  love:    ['❤️','😍','🥰','💕','💖','💝','🫶'],
+  laugh:   ['😂','🤣','😅','😁'],
+  smile:   ['😊','😀','😁','🥹'],
+  cool:    ['😎','🤩','🥳'],
+  party:   ['🎉','🥳','🎊','🎈','🎁'],
+  sad:     ['😭','😢','💔'],
+  angry:   ['😤','🤬'],
+  fire:    ['🔥'],
+  clap:    ['👏','🙌'],
+  thanks:  ['🙏','🫶','💕'],
+  ok:      ['👌','👍'],
+  good:    ['👍','✌️','💪','😊'],
+  bad:     ['👎','😤'],
+  peace:   ['✌️','🌈'],
+  dig:     ['✌️'],
+  rocket:  ['🚀'],
+  star:    ['⭐','✨','💫'],
+  dog:     ['🐶'],
+  cat:     ['🐱'],
+  pizza:   ['🍕'],
+  beer:    ['🍺'],
+  coffee:  ['☕'],
+  music:   ['🎵','🎶','🎤'],
+  sport:   ['⚽','🏀','🎯'],
+  money:   ['💰','💎'],
+  snow:    ['❄️'],
+  sun:     ['⭐','🌻'],
+  wave:    ['🌊','👋'],
+  strong:  ['💪','🦾'],
+  think:   ['🤔','🫡'],
+  sick:    ['😷','🤒'],
+  sleep:   ['😴','🥱'],
+  food:    ['🍕','🍔','🌮','🍣','🍜'],
+  cake:    ['🎂','🍩','🧁','🍫'],
+  wow:     ['😮','😱','🤩'],
+  cry:     ['😭','😢','💔'],
+  hug:     ['🤗','🫶','🫂'],
+  flex:    ['💪','🦾'],
+  like:    ['👍','❤️','✌️'],
+  dislike: ['👎'],
+  rainbow: ['🌈'],
+  shine:   ['✨','💫','⭐']
+}
+
+// ── Recents via localStorage ─────────────────────────────────────────────────
+var RECENTS_KEY = 'decent:recent-reactions'
+var RECENTS_MAX = 16
+
+function getRecents () {
+  try { return JSON.parse(localStorage.getItem(RECENTS_KEY) || '[]') }
+  catch (e) { return [] }
+}
+
+function addToRecents (emoji) {
+  try {
+    var list = getRecents().filter(function (e) { return e !== emoji })
+    list.unshift(emoji)
+    if (list.length > RECENTS_MAX) list = list.slice(0, RECENTS_MAX)
+    localStorage.setItem(RECENTS_KEY, JSON.stringify(list))
+  } catch (e) {}
+}
+
 exports.create = function (api) {
   var x = {}
 
@@ -113,12 +225,18 @@ exports.create = function (api) {
     var myReaction = (myVote && myVote.value > 0) ? myVote.emoji : null
 
     // ── State ───────────────────────────────────────────────────────────────
-    var trayOpen      = false
-    var closeTimer    = null
-    var hoverTimer    = null
-    var longPressTimer= null
-    var outsideClickFn= null
-    var escKeyFn      = null
+    var trayOpen       = false
+    var pickerOpen     = false
+    var closeTimer     = null
+    var hoverTimer     = null
+    var longPressTimer = null
+    var outsideClickFn = null
+    var escKeyFn       = null
+
+    // Lazily-built picker elements — created once on first open
+    var pickerEl          = null
+    var pickerSearchInput = null
+    var pickerBodyEl      = null
 
     // ── Core send ───────────────────────────────────────────────────────────
     function sendReaction (emoji) {
@@ -134,7 +252,9 @@ exports.create = function (api) {
     }
 
     function reactAndClose (emoji) {
+      addToRecents(emoji)
       sendReaction(emoji)
+      closePicker()
       closeTray(true)
     }
 
@@ -146,12 +266,18 @@ exports.create = function (api) {
       trayOpen = true
       trayEl.classList.add('reaction-tray--open')
 
-      // Close on any outside click
       outsideClickFn = function (e) {
-        if (!reactionGroup.contains(e.target)) closeTray(true)
+        if (!reactionGroup.contains(e.target)) {
+          closePicker()
+          closeTray(true)
+        }
       }
       escKeyFn = function (e) {
-        if (e.key === 'Escape') closeTray(true)
+        if (e.key === 'Escape') {
+          // Two-level: first Escape closes picker (if open), second closes tray
+          if (pickerOpen) closePicker()
+          else closeTray(true)
+        }
       }
       document.addEventListener('click', outsideClickFn, true)
       document.addEventListener('keydown', escKeyFn)
@@ -162,6 +288,7 @@ exports.create = function (api) {
       clearTimeout(hoverTimer)
       if (immediate) {
         if (!trayOpen) return
+        closePicker()
         trayOpen = false
         trayEl.classList.remove('reaction-tray--open')
         if (outsideClickFn) {
@@ -175,6 +302,134 @@ exports.create = function (api) {
       } else {
         closeTimer = setTimeout(function () { closeTray(true) }, 180)
       }
+    }
+
+    // ── Emoji picker (Phase 6) ──────────────────────────────────────────────
+
+    function renderPickerBody (query) {
+      pickerBodyEl.innerHTML = ''
+
+      if (query) {
+        // Gather results: exact prefix matches first, then partial
+        var seen = {}
+        var results = []
+        var kw
+        for (kw in EMOJI_KEYWORDS) {
+          if (kw.indexOf(query) === 0) {
+            EMOJI_KEYWORDS[kw].forEach(function (e) {
+              if (!seen[e]) { seen[e] = true; results.push(e) }
+            })
+          }
+        }
+        for (kw in EMOJI_KEYWORDS) {
+          if (kw.indexOf(query) > 0) {
+            EMOJI_KEYWORDS[kw].forEach(function (e) {
+              if (!seen[e]) { seen[e] = true; results.push(e) }
+            })
+          }
+        }
+        // Also scan all emojis for any keyword that contains the query
+        if (!results.length) {
+          EMOJI_CATEGORIES.forEach(function (cat) {
+            if (cat.label.toLowerCase().indexOf(query) >= 0) {
+              cat.emojis.forEach(function (e) {
+                if (!seen[e]) { seen[e] = true; results.push(e) }
+              })
+            }
+          })
+        }
+
+        if (results.length) {
+          var grid = h('div.emoji-grid')
+          results.forEach(function (e) { grid.appendChild(makePickerBtn(e)) })
+          pickerBodyEl.appendChild(grid)
+        } else {
+          pickerBodyEl.appendChild(
+            h('div.reaction-picker__empty', 'No emoji for "' + query + '"')
+          )
+        }
+        return
+      }
+
+      // No query: recents first, then categories
+      var recents = getRecents()
+      if (recents.length) {
+        var rGrid = h('div.emoji-grid')
+        recents.forEach(function (e) { rGrid.appendChild(makePickerBtn(e)) })
+        pickerBodyEl.appendChild(
+          h('div.reaction-picker__section',
+            h('div.reaction-picker__label', 'Recently used'),
+            rGrid
+          )
+        )
+      }
+
+      EMOJI_CATEGORIES.forEach(function (cat) {
+        var grid = h('div.emoji-grid')
+        cat.emojis.forEach(function (e) { grid.appendChild(makePickerBtn(e)) })
+        pickerBodyEl.appendChild(
+          h('div.reaction-picker__section',
+            h('div.reaction-picker__label', cat.label),
+            grid
+          )
+        )
+      })
+    }
+
+    function makePickerBtn (emoji) {
+      return h(
+        'button.emoji-btn' + (myReaction === emoji ? '.emoji-btn--active' : ''),
+        {
+          type:    'button',
+          title:   emoji,
+          onclick: function (e) {
+            e.preventDefault()
+            e.stopPropagation()
+            reactAndClose(emoji)
+          }
+        },
+        emoji
+      )
+    }
+
+    function buildPickerOnce () {
+      if (pickerEl) return
+      pickerSearchInput = h('input.reaction-picker__search', {
+        type:         'text',
+        placeholder:  'Search emoji…',
+        autocomplete: 'off',
+        oninput: function () {
+          renderPickerBody(this.value.trim().toLowerCase())
+        }
+      })
+      pickerBodyEl = h('div.reaction-picker__body')
+      pickerEl = h('div.reaction-picker', pickerSearchInput, pickerBodyEl)
+      reactionGroup.appendChild(pickerEl)
+    }
+
+    function openPicker () {
+      if (pickerOpen) return
+      // Ensure tray is open so the picker is visible in context
+      if (!trayOpen) openTray()
+      pickerOpen = true
+      buildPickerOnce()
+      // Position picker above the tray (tray height + gaps)
+      var trayH = trayEl.offsetHeight || 44
+      pickerEl.style.bottom = 'calc(100% + ' + (trayH + 16) + 'px)'
+      // Reset search and refresh recents each time the picker opens
+      pickerSearchInput.value = ''
+      renderPickerBody('')
+      // Add open class after a rAF so the CSS transition fires
+      requestAnimationFrame(function () {
+        pickerEl.classList.add('reaction-picker--open')
+        pickerSearchInput.focus()
+      })
+    }
+
+    function closePicker () {
+      if (!pickerOpen) return
+      pickerOpen = false
+      if (pickerEl) pickerEl.classList.remove('reaction-picker--open')
     }
 
     // ── Button factories ────────────────────────────────────────────────────
@@ -197,9 +452,24 @@ exports.create = function (api) {
       )
     }
 
-    // ── Tray (floating pill, Phase 5) ───────────────────────────────────────
+    // ── Tray (floating pill) ────────────────────────────────────────────────
+    var pickerTriggerBtn = h('button.action-btn.reaction-picker-trigger',
+      {
+        type:    'button',
+        title:   'More emoji',
+        onclick: function (e) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (pickerOpen) closePicker()
+          else openPicker()
+        }
+      },
+      h('span', '···')
+    )
+
     var trayEl = h('div.reaction-tray',
-      TRAY_EMOJIS.map(function (e) { return makeBtn(e, true) })
+      TRAY_EMOJIS.map(function (e) { return makeBtn(e, true) }),
+      pickerTriggerBtn
     )
 
     // Keep tray open while mouse is over it
@@ -207,9 +477,11 @@ exports.create = function (api) {
       clearTimeout(closeTimer)
       clearTimeout(hoverTimer)
     })
-    trayEl.addEventListener('mouseleave', function () { closeTray() })
+    trayEl.addEventListener('mouseleave', function () {
+      if (!pickerOpen) closeTray()
+    })
 
-    // ── More button (+ toggle) ──────────────────────────────────────────────
+    // ── More button (+ toggle for tray) ─────────────────────────────────────
     var moreBtn = h('button.action-btn.action-btn--react-more',
       {
         type:    'button',
@@ -230,8 +502,9 @@ exports.create = function (api) {
       moreBtn,
       trayEl
     )
+    // Note: pickerEl is appended to reactionGroup lazily inside buildPickerOnce()
 
-    // Desktop hover — open after 300 ms hover-intent delay, close on leave
+    // Desktop hover — open tray after 300 ms hover-intent delay, close on leave
     var hasFineMouse = typeof window !== 'undefined' &&
       window.matchMedia && window.matchMedia('(pointer: fine)').matches
     if (hasFineMouse) {
@@ -240,7 +513,7 @@ exports.create = function (api) {
       })
       reactionGroup.addEventListener('mouseleave', function () {
         clearTimeout(hoverTimer)
-        closeTray()
+        if (!pickerOpen) closeTray()
       })
     }
 

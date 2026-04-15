@@ -125,14 +125,25 @@ Files likely involved:
 - [decent/modules_basic/like.js](/Users/evbogue/Code/ssbc/decent/modules_basic/like.js)
 - [decent/style.css](/Users/evbogue/Code/ssbc/decent/style.css)
 
-## Phase 6: Full Emoji Picker
+## Phase 6: Full Emoji Picker ✅
 
-- [ ] Add a full emoji picker behind the quick tray.
-- [ ] Add search.
-- [ ] Add “Recent” reactions.
-- [ ] Add sensible category grouping.
-- [ ] Prefer recents and likely/common reactions over dumping users into a giant default grid.
+- [x] Add a full emoji picker behind the quick tray.
+- [x] Add search.
+- [x] Add “Recent” reactions.
+- [x] Add sensible category grouping.
+- [x] Prefer recents and likely/common reactions over dumping users into a giant default grid.
 - [ ] Consider a “Common here” section later if community-specific usage data is available.
+
+**Implementation notes:**
+- Picker is accessed via the `···` button at the end of the tray pill.
+- Search uses a keyword→emoji index; prefix matches rank above partial matches; category name used as a final fallback.
+- “Recently used” section appears at the top when there is no query; powered by `localStorage` key `decent:recent-reactions`, max 16 entries.
+- Six curated categories: Smileys, People, Nature, Food, Fun, Hearts — 20 emojis each.
+- Picker is built lazily (once on first open) and stays in the DOM; recents and search reset on every open.
+- Picker is `position: absolute` on `.reaction-group`, positioned just above the tray via JS (`trayEl.offsetHeight + 16px`).
+- Two-level Escape: first press closes the picker (keeps tray visible); second press closes the tray.
+- Selecting any emoji from the picker records it to recents, sends the reaction, and closes both picker and tray.
+- Same spring cubic-bezier open/close animation as the tray (Phase 5).
 
 ## Phase 7: Reaction Data Model
 
