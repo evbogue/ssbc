@@ -15,7 +15,7 @@ var self_id = require('../keys').id
 //
 
 exports.needs = {
-  sbot_query: 'first',
+  sbot_messagesByType: 'first',
   blob_url: 'first'
 }
 
@@ -36,61 +36,58 @@ var last = 0
 
 exports.create = function (api) {
   var avatars  = {}
+  // Registry of live img elements per author so the live query can update
+  // them when a new avatar message arrives after initial render.
+  var imgRegistry = {}
+
+  function updateImgs (id) {
+    var list = imgRegistry[id]
+    if (!list) return
+    var blobSrc = api.blob_url(avatars[id].image)
+    for (var i = list.length - 1; i >= 0; i--) {
+      var el = list[i]
+      // Drop detached elements from the registry to avoid leaks
+      if (!document.contains(el)) { list.splice(i, 1); continue }
+      el.src = blobSrc
+    }
+  }
 
   //blah blah
   return {
     connection_status: function (err) {
       if (err) return
       pull(
-        api.sbot_query({
-          query: [{
-            $filter: {
-              timestamp: {$gt: last || 0 },
-              value: { content: {
-                type: "about",
-                about: {$prefix: "@"}
-            }}
-          }},
-          {
-            $map: {
-              id: ["value", "content", "about"],
-              image: ["value", "content", "image"],
-              by: ["value", "author"],
-              ts: 'timestamp'
-          }}],
-          live: true
-        }),
-        pull.drain(function (a) {
-          if(a.sync) {
+        api.sbot_messagesByType({type: 'about', live: true}),
+        pull.drain(function (msg) {
+          if (msg.sync) {
             ready = true
-            while(waiting.length) waiting.shift()()
+            while (waiting.length) waiting.shift()()
             return
           }
-          last = a.ts
 
-          var image = a.image
-          if(image && 'object' === typeof image && 'string' === typeof image.link)
+          var c  = msg.value && msg.value.content
+          var by = msg.value && msg.value.author
+          if (!c || !c.about) return
+
+          var image = c.image
+          if (image && 'object' === typeof image && 'string' === typeof image.link)
             image = image.link
 
-          if(!ref.isBlob(image))
-            return
+          if (!ref.isBlob(image)) return
 
-          a.image = image
+          var a = { id: c.about, image: image, by: by, ts: msg.timestamp }
 
           //set image for avatar.
-          //overwrite another avatar
-          //you picked.
-          if(
-            //if there is no avatar
-              (!avatars[a.id]) ||
-            //if i chose this avatar
-              (a.by == self_id) ||
-            //they chose their own avatar,
-            //and current avatar was not chosen by me
-              (a.by === a.id && avatars[a.id].by != self_id)
-          )
+          //overwrite another avatar you picked.
+          if (
+            (!avatars[a.id]) ||
+            (a.by == self_id) ||
+            (a.by === a.id && avatars[a.id].by != self_id)
+          ) {
             avatars[a.id] = a
-
+            // Push the new avatar to any already-rendered img elements
+            updateImgs(a.id)
+          }
         })
       )
     },
@@ -103,6 +100,10 @@ exports.create = function (api) {
       ;(classes || '').split('.').filter(Boolean).forEach(function (c) {
         img.classList.add(c)
       })
+
+      // Register this element so future live-query updates can reach it
+      if (!imgRegistry[author]) imgRegistry[author] = []
+      imgRegistry[author].push(img)
 
       function go () {
         if(avatars[author]) img.src = api.blob_url(avatars[author].image)

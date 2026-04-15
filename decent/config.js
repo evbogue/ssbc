@@ -24,17 +24,10 @@ function rewriteRemoteForLocation (remote) {
 
 module.exports = function () {
   const remote = rewriteRemoteForLocation(loadRemote())
-  let blobsUrl
-  if (remote) {
-    try {
-      const url = new URL(remote.split('~')[0].replace(/^ws/, 'http'))
-      url.pathname = '/blobs/get'
-      blobsUrl = url.toString()
-    } catch (_) {
-      blobsUrl = 'http://localhost:8989/blobs/get'
-    }
-  } else {
-    blobsUrl = 'http://localhost:8989/blobs/get'
-  }
+  // Use a same-origin relative URL so blobs are served by the decent-ui HTTP
+  // server (which proxies sbot.blobs) rather than the raw sbot WS port.
+  const blobsUrl = (typeof window !== 'undefined' && window.location)
+    ? window.location.origin + '/blobs/get'
+    : 'http://localhost:8888/blobs/get'
   return { remote, blobsUrl }
 }

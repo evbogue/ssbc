@@ -1,7 +1,6 @@
 'use strict'
 var h             = require('hyperscript')
 var pull          = require('pull-stream')
-var dataurl       = require('dataurl-')
 var hyperfile     = require('hyperfile')
 var hypercrop     = require('hypercrop')
 var hyperlightbox = require('hyperlightbox')
@@ -27,20 +26,25 @@ exports.create = function (api) {
 
   // ── Blob upload helper ──────────────────────────────────────────────
   function uploadBlob (dataURL, cb) {
-    var parsed = dataurl.parse(dataURL)
-    var xhr    = new XMLHttpRequest()
-    var base   = api.blobs_url()
-    var url    = base.replace(/\/blobs\/get\/?$/, '/blobs/add')
-    if (url === base) url = '/blobs/add'
-    xhr.open('POST', url, true)
+    // Decode base64 data URL to binary using native browser APIs.
+    // dataurl-.parse() returns a browserify Buffer that XHR serialises as a
+    // base64 string rather than raw bytes, so we decode it ourselves.
+    var parts  = dataURL.split(',')
+    var mime   = parts[0].match(/:([^;]+)/)[1]
+    var binary = atob(parts[1])
+    var arr    = new Uint8Array(binary.length)
+    for (var i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
+
+    var xhr = new XMLHttpRequest()
+    xhr.open('POST', '/blobs/add', true)
     xhr.responseType = 'text'
     xhr.onload = function () {
       if (xhr.status < 200 || xhr.status >= 300)
         return cb(new Error('Upload failed: ' + xhr.status))
-      cb(null, { link: xhr.responseText.trim(), size: parsed.data.length, type: parsed.mimetype })
+      cb(null, { link: xhr.responseText.trim(), size: arr.length, type: mime })
     }
     xhr.onerror = function () { cb(new Error('Network error')) }
-    xhr.send(parsed.data)
+    xhr.send(arr)
   }
 
   return function (id) {
@@ -403,19 +407,26 @@ exports.create = function (api) {
         h('span.material-symbols-outlined', 'add_a_photo'), ' Change banner')
       bannerEl.appendChild(bannerOverlay)
       bannerEl.onclick = function () {
-        hyperfile.asDataURL(function (data) {
+        var bannerInput = hyperfile.asDataURL(function (data) {
+          document.body.removeChild(bannerInput)
           showBannerCropper(data, function (croppedData) {
             bannerEl.style.backgroundImage = 'url(' + croppedData + ')'
-            uploadBlob(croppedData, function (err, file) { if (!err) pendingBanner = file })
+            uploadBlob(croppedData, function (err, file) {
+            if (!err) pendingBanner = Object.assign({}, file, { width: 1600, height: 534, name: 'banner.jpg' })
+          })
           })
         })
+        bannerInput.style.display = 'none'
+        document.body.appendChild(bannerInput)
+        bannerInput.click()
       }
 
       // Avatar: click to crop then upload (exports 400×400 JPEG for retina clarity)
       avatarWrap.classList.add('profile-avatar--editable')
       avatarWrap.title = 'Click to change photo'
       avatarWrap.onclick = function () {
-        hyperfile.asDataURL(function (data) {
+        var fileInput = hyperfile.asDataURL(function (data) {
+          document.body.removeChild(fileInput)
           var cropCanvas
           var cropModal = h('div.profile-crop-modal',
             h('div.profile-crop-title',
@@ -427,26 +438,34 @@ exports.create = function (api) {
             h('button.btn', {type: 'button', onclick: function () { getLightbox().close() }}, 'Cancel'),
             h('button.btn.btn-primary', {type: 'button', onclick: function () {
               if (!cropCanvas || !cropCanvas.selection) return
-              // Draw selection onto a 400×400 canvas and export as JPEG 85%
+              // Draw selection onto a 512×512 canvas (spec-recommended size) and export as JPEG 85%
               var out = document.createElement('canvas')
-              out.width = 400
-              out.height = 400
-              out.getContext('2d').drawImage(cropCanvas.selection, 0, 0, 400, 400)
+              out.width = 512
+              out.height = 512
+              out.getContext('2d').drawImage(cropCanvas.selection, 0, 0, 512, 512)
               var cropped = out.toDataURL('image/jpeg', 0.85)
               avatarImg.src = cropped
-              uploadBlob(cropped, function (err, file) { if (!err) pendingAvatar = file })
+              uploadBlob(cropped, function (err, file) {
+                if (!err) pendingAvatar = Object.assign({}, file, { width: 512, height: 512, name: 'avatar.jpg' })
+              })
               getLightbox().close()
             }}, 'Use this photo')
           )
+          var cropWrap = h('div.profile-crop-canvas-wrap')
           var img = new Image()
           img.onload = function () {
             cropCanvas = hypercrop(img)
-            cropModal.appendChild(cropCanvas)
+            cropWrap.appendChild(cropCanvas)
+            cropModal.appendChild(cropWrap)
+            cropModal.appendChild(h('p.profile-crop-hint', 'Drag to reposition · scroll to zoom'))
             cropModal.appendChild(btnRow)
           }
           img.src = data
           getLightbox().show(cropModal)
         })
+        fileInput.style.display = 'none'
+        document.body.appendChild(fileInput)
+        fileInput.click()
       }
 
       nameEl.style.display = 'none'
@@ -499,6 +518,7 @@ exports.create = function (api) {
           if (newName) nameSpan.textContent = newName
           if (newBio !== description) { description = newBio; bioEl.textContent = newBio }
           if (pendingBanner) headerImageLink = pendingBanner.link
+          if (pendingAvatar) avatarImg.src = api.blob_url(pendingAvatar.link)
         }
         cancelEdit()
       })
