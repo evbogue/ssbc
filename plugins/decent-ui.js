@@ -3,6 +3,8 @@
 const fs        = require('fs')
 const http      = require('http')
 const path      = require('path')
+const pull      = require('pull-stream')
+const toPull    = require('stream-to-pull-stream')
 const gitServer = require('./git-server')
 
 const DEFAULT_PORT = 8888
@@ -15,7 +17,14 @@ const MIME_MAP = {
   '.jpg':  'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png':  'image/png',
-  '.svg':  'image/svg+xml'
+  '.svg':  'image/svg+xml',
+  '.otf':  'font/otf',
+  '.ttf':  'font/ttf',
+  '.woff': 'font/woff',
+  '.woff2':'font/woff2',
+  '.eot':  'application/vnd.ms-fontobject',
+  '.pdf':  'application/pdf',
+  '.ico':  'image/x-icon'
 }
 
 function getContentType(filePath) {
@@ -70,6 +79,7 @@ exports.manifest = {}
 
 exports.init = function (sbot, config) {
   const decentDir = path.join(__dirname, '..', 'decent', 'build')
+  const docsDir   = path.join(__dirname, '..', 'docs')
   const cfg    = (config && config.decent) || {}
   const port   = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
   const host   = typeof cfg.host === 'string' ? cfg.host : DEFAULT_HOST
@@ -199,7 +209,88 @@ exports.init = function (sbot, config) {
     })
   }
 
+  function handleBlobAdd(req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    pull(
+      toPull(req),
+      sbot.blobs.add(function (err, hash) {
+        if (err) {
+          res.statusCode = 500
+          res.end(err.message || 'blob add error')
+          return
+        }
+        res.end(hash)
+      })
+    )
+  }
+
+  function handleBlobGet(req, res) {
+    const blobHash = decodeURIComponent(req.url.replace(/^\/blobs\/get\/?/, ''))
+    if (!blobHash) { respondNotFound(res); return }
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Cache-Control', 'max-age=31536000')
+    pull(
+      sbot.blobs.get(blobHash),
+      toPull.sink(res, function (err) {
+        if (err && !res.headersSent) { res.statusCode = 404; res.end('not found') }
+      })
+    )
+  }
+
+  function serveDocsFile(req, res) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') { respondInvalid(res); return }
+    // Strip leading /docs and resolve inside docs/scuttlebot.io/
+    const stripped = req.url.replace(/^\/docs\/?/, '') || 'index.html'
+    const rel = stripped.split('?')[0]
+    if (rel.indexOf('..') !== -1) { respondInvalid(res); return }
+    const base = path.join(docsDir, 'scuttlebot.io')
+    const candidates = [
+      path.join(base, rel),
+      path.join(base, rel, 'index.html')
+    ]
+    function tryNext(i) {
+      if (i >= candidates.length) { respondNotFound(res); return }
+      fs.stat(candidates[i], (err, stat) => {
+        if (err || !stat || !stat.isFile()) { tryNext(i + 1); return }
+        const ct = getContentType(candidates[i])
+        if (req.method === 'HEAD') {
+          res.writeHead(200, { 'Content-Type': ct })
+          res.end()
+          return
+        }
+        // Rewrite root-relative URLs in HTML so navigation works under /docs/
+        if (ct.startsWith('text/html')) {
+          fs.readFile(candidates[i], 'utf8', (rErr, html) => {
+            if (rErr) { respondNotFound(res); return }
+            // Replace href="/ and src="/ (but not href="//") with the /docs/ prefix
+            html = html.replace(/(href|src)="\/(?!\/)/g, '$1="/docs/')
+            res.writeHead(200, { 'Content-Type': ct })
+            res.end(html)
+          })
+        } else {
+          res.writeHead(200, { 'Content-Type': ct })
+          fs.createReadStream(candidates[i]).pipe(res)
+        }
+      })
+    }
+    tryNext(0)
+  }
+
   function handleRequest(req, res) {
+    if (req.method === 'POST' && req.url === '/blobs/add') {
+      handleBlobAdd(req, res)
+      return
+    }
+    if ((req.method === 'GET' || req.method === 'HEAD') &&
+        req.url.startsWith('/blobs/get')) {
+      handleBlobGet(req, res)
+      return
+    }
+    if ((req.method === 'GET' || req.method === 'HEAD') &&
+        (req.url === '/docs' || req.url.startsWith('/docs/'))) {
+      serveDocsFile(req, res)
+      return
+    }
     if (gitServer.handleGitRequest(sbot, req, res)) return
     serveStatic(req, res)
   }

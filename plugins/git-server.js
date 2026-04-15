@@ -139,109 +139,60 @@ function cleanupDir(dir, cb) {
   fs.rm(dir, { recursive: true, force: true }, () => cb && cb())
 }
 
-function writeRef(repoDir, refName, hash, cb) {
-  const filename = path.join(repoDir, refName)
-  fs.mkdir(path.dirname(filename), { recursive: true }, err => {
-    if (err) return cb(err)
-    fs.writeFile(filename, hash + '\n', cb)
-  })
-}
 
+// Validate and index an incoming receive-pack packfile, then return pull-stream
+// sources for the pack and index suitable for storage as SSB blobs.
+//
+// We advertise `no-thin` in our capabilities so git clients send complete packs
+// (no missing delta bases). `git index-pack` validates the pack and writes the
+// index without needing any existing repo context.
+//
+// Previous implementation ran `git pack-objects --all` which traverses the full
+// commit graph from the new refs. That blew up because parent commits live in
+// SSB blobs, not in the temp dir. We now use the index-pack output directly —
+// no unpack-objects, no repack, no graph traversal.
 function normalizeReceivePack(packBuf, updates, cb) {
   fs.mkdtemp(path.join(os.tmpdir(), 'ssbc-git-receive-pack-'), (err, tmpDir) => {
     if (err) return cb(err)
 
-    const repoDir = path.join(tmpDir, 'repo.git')
-    const fixedIdx = path.join(tmpDir, 'incoming.idx')
+    const fixedIdx  = path.join(tmpDir, 'incoming.idx')
     const fixedPack = path.join(tmpDir, 'incoming.pack')
 
     function done(err, idxStream, packStream, objectIds) {
-      if (err) {
-        return cleanupDir(tmpDir, () => cb(err))
-      }
-
-      const cleanup = () => cleanupDir(tmpDir)
-      cb(null, idxStream, packStream, objectIds, cleanup)
+      if (err) return cleanupDir(tmpDir, () => cb(err))
+      cb(null, idxStream, packStream, objectIds, () => cleanupDir(tmpDir))
     }
 
-    execFileBuffer('git', ['init', '--bare', repoDir], initErr => {
-      if (initErr) return done(initErr)
+    const indexPackProc = cp.spawn('git', [
+      'index-pack', '--stdin', '-o', fixedIdx, fixedPack
+    ], { stdio: ['pipe', 'ignore', 'pipe'] })
 
-      const indexPackProc = cp.spawn('git', [
-        'index-pack',
-        '--stdin',
-        '--fix-thin',
-        '-o', fixedIdx,
-        fixedPack
-      ], {
-        stdio: ['pipe', 'ignore', 'pipe']
-      })
+    let stderr = Buffer.alloc(0)
+    indexPackProc.stderr.on('data', chunk => { stderr = Buffer.concat([stderr, chunk]) })
+    indexPackProc.on('error', done)
+    indexPackProc.stdin.on('error', () => {})
+    indexPackProc.stdin.end(packBuf)
 
-      let stderr = Buffer.alloc(0)
-      indexPackProc.stderr.on('data', chunk => {
-        stderr = Buffer.concat([stderr, chunk])
-      })
-      indexPackProc.on('error', done)
-      indexPackProc.stdin.on('error', () => {})
-      indexPackProc.stdin.end(packBuf)
+    indexPackProc.on('close', code => {
+      if (code) {
+        const msg = stderr.toString('utf8').trim() || ('git index-pack returned ' + code)
+        return done(new Error(msg))
+      }
 
-      indexPackProc.on('close', code => {
-        if (code) {
-          const msg = stderr.toString('utf8').trim() || ('git index-pack returned ' + code)
-          return done(new Error(msg))
-        }
+      fs.readFile(fixedPack, (packReadErr, packBuf) => {
+        if (packReadErr) return done(packReadErr)
 
-        fs.readFile(fixedPack, (readErr, fixedPackBuf) => {
-          if (readErr) return done(readErr)
+        fs.readFile(fixedIdx, (idxReadErr, idxBuf) => {
+          if (idxReadErr) return done(idxReadErr)
 
-          fs.readFile(fixedIdx, (idxReadErr, idxBuf) => {
-            if (idxReadErr) return done(idxReadErr)
+          execFileBuffer('git', ['show-index'], { input: idxBuf }, (showIdxErr, stdout) => {
+            if (showIdxErr) return done(showIdxErr)
 
-            execFileBuffer('git', ['show-index'], { input: idxBuf }, (showIdxErr, stdout) => {
-              if (showIdxErr) return done(showIdxErr)
-              const objectIds = stdout.toString('utf8')
-                .trim()
-                .split('\n')
-                .filter(Boolean)
-                .map(line => line.trim().split(/\s+/)[1])
-                .filter(Boolean)
+            const objectIds = stdout.toString('utf8')
+              .trim().split('\n').filter(Boolean)
+              .map(line => line.trim().split(/\s+/)[1]).filter(Boolean)
 
-              execFileBuffer('git', ['unpack-objects', '-r'], {
-                cwd: repoDir,
-                input: fixedPackBuf
-              }, unpackErr => {
-                if (unpackErr) return done(unpackErr)
-
-                const nextRef = [...updates]
-                ;(function writeNextRef() {
-                  const update = nextRef.shift()
-                  if (!update) return repack(objectIds)
-                  if (!update.new) return writeNextRef()
-                  writeRef(repoDir, update.name, update.new, err => {
-                    if (err) return done(err)
-                    writeNextRef()
-                  })
-                })()
-
-                function repack(objectIds) {
-                  execFileBuffer('git', [
-                    'pack-objects',
-                    '--stdout',
-                    '--all',
-                    '--window=0',
-                    '--depth=0',
-                    '--no-reuse-delta',
-                    '--no-reuse-object'
-                  ], { cwd: repoDir }, (repackErr, stdout) => {
-                    if (repackErr) return done(repackErr)
-                    indexPack(bufToPull(stdout), (err, idxStream, packStream) => {
-                      if (err) return done(err)
-                      done(null, idxStream, packStream, objectIds)
-                    })
-                  })
-                }
-              })
-            })
+            done(null, bufToPull(idxBuf), bufToPull(packBuf), objectIds)
           })
         })
       })
