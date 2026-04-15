@@ -11,6 +11,7 @@ the frontend (`decent/`) is a browserified single-page app.
 ```bash
 node bin.js start          # starts SSB server + HTTP UI at http://127.0.0.1:8888
 npm run build:web          # rebuilds decent/build/ (run after any frontend change)
+                           # equivalent to: cd decent && npm run lite
 ```
 
 The server must be running before the browser app can connect.
@@ -198,6 +199,64 @@ mcp__playwright__browser_navigate  →  http://127.0.0.1:8888/
 Use `browser_file_upload` to test avatar/banner photo uploads.
 Use `browser_network_requests` with `filter: 'blobs'` to verify upload requests.
 Kill stuck browser processes with `pkill -9 -f "ms-playwright"` if needed.
+
+---
+
+## Frontend plugin wiring — important details
+
+### `'map'` vs `'first'` plug types
+
+`message_meta` and `message_action` are both `'map'` — **all** registered providers run and
+their outputs are collected.  Multiple modules contribute to the same post row:
+
+| Plug | Providers |
+|---|---|
+| `message_meta` | `timestamp.js` (timestamp link), `private.js` (recipient chips), `like.js` (reaction chips) |
+| `message_action` | `message.js` (reply btn), `repost.js` (share group), `like.js` (reaction group) |
+
+Never assume a `'map'` plug has only one implementation.
+
+### Key globals
+
+- `window.CACHE` — in-memory object of all messages the client has seen, keyed by msg hash.
+  Used for reaction counts, backlink detection, etc.  Read-only from UI modules.
+- `require('../keys').id` — the current user's feed ID (`@...ed25519`).  Import as `selfId`.
+
+### Hash routing
+
+```js
+window.location.hash = '#/'        // → public feed
+window.location.hash = '#' + key   // → thread view for that SSB key
+```
+
+Cross-route intent is passed via `sessionStorage`:
+- `decent_reply_intent` — consumed by `thread.js` to auto-open the reply composer
+- `decent_quote_intent` — consumed by `public.js` to preload a quote
+
+### SSB key encoding gotcha
+
+**Never call `decodeURIComponent` on a raw SSB message key.**  Keys start with `%` followed
+by base64; base64 characters after `%` frequently form valid percent-encoded sequences, so
+`decodeURIComponent` silently mangles ~12% of real keys.  Always compare keys as raw strings.
+
+### `vote` field name
+
+The spec field is `vote.reason` (not `vote.expression`).  Always write `reason`; always read
+`reason || expression` for backwards compatibility with older messages.
+
+### Embedded post cards
+
+`render-embedded-post.js` is the shared helper for both repost and quote inline cards.
+It renders: kicker label → author avatar+name+reaction chips → markdown body.
+
+`makeCardNavigable(el, targetId)` (defined in both `repost.js` and `post.js`) makes a card
+element keyboard- and click-navigable while letting inner `<a>` / `<button>` elements handle
+their own events.  Use this pattern for any future clickable card.
+
+### Decent frontend uses `var`, not `const`/`let`
+
+All existing modules in `decent/modules_*` use old-style `var` and CommonJS.  Match the
+surrounding style — do not introduce `const`/`let` or arrow functions into these files.
 
 ---
 
