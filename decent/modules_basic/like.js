@@ -151,8 +151,8 @@ exports.create = function (api) {
     var isOldFormat = typeof vote === 'string'
     var voteValue   = isOldFormat ? 1 : (vote.value || 0)
     var voteLink    = isOldFormat ? vote : vote.link
-    var emoji       = (!isOldFormat && vote.expression && vote.expression.length <= 8)
-      ? vote.expression : '❤️'
+    var rawReason   = !isOldFormat && (vote.reason || vote.expression)
+    var emoji       = (rawReason && rawReason.length <= 8) ? rawReason : '❤️'
     return [
       voteValue > 0 ? (emoji + ' reacted to') : 'removed reaction from',
       ' ', api.message_link(voteLink)
@@ -176,8 +176,8 @@ exports.create = function (api) {
       } else if (c.vote && typeof c.vote === 'object') {
         voteLink  = c.vote.link
         voteValue = c.vote.value || 0
-        voteEmoji = (c.vote.expression && c.vote.expression.length <= 8)
-          ? c.vote.expression : '❤️'
+        voteEmoji = ((c.vote.reason || c.vote.expression) && (c.vote.reason || c.vote.expression).length <= 8)
+          ? (c.vote.reason || c.vote.expression) : '❤️'
       } else { continue }
 
       if (voteLink !== msg.key) continue
@@ -214,7 +214,7 @@ exports.create = function (api) {
               e.preventDefault()
               e.stopPropagation()
               var newVal = isActive ? 0 : 1
-              var vote = { type: 'vote', vote: { link: msg.key, value: newVal, expression: emoji } }
+              var vote = { type: 'vote', vote: { link: msg.key, value: newVal, reason: emoji } }
               if (msg.value.content.recps) {
                 vote.recps = msg.value.content.recps.map(function (r) {
                   return r && typeof r !== 'string' ? r.link : r
@@ -249,8 +249,8 @@ exports.create = function (api) {
       } else if (c.vote && typeof c.vote === 'object') {
         voteLink  = c.vote.link
         voteValue = c.vote.value || 0
-        voteEmoji = (c.vote.expression && c.vote.expression.length <= 8)
-          ? c.vote.expression : '❤️'
+        voteEmoji = ((c.vote.reason || c.vote.expression) && (c.vote.reason || c.vote.expression).length <= 8)
+          ? (c.vote.reason || c.vote.expression) : '❤️'
       } else { continue }
 
       if (voteLink !== msg.key) continue
@@ -283,7 +283,7 @@ exports.create = function (api) {
     // ── Core send ───────────────────────────────────────────────────────────
     function sendReaction (emoji) {
       var newVal = myReaction === emoji ? 0 : 1
-      var vote = { type: 'vote', vote: { link: msg.key, value: newVal, expression: emoji } }
+      var vote = { type: 'vote', vote: { link: msg.key, value: newVal, reason: emoji } }
       if (msg.value.content.recps) {
         vote.recps = msg.value.content.recps.map(function (r) {
           return r && typeof r !== 'string' ? r.link : r
