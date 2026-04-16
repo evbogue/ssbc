@@ -1057,18 +1057,61 @@ textarea {
   padding-left: 10px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 
 .git-commit {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   font-size: 0.9em;
 }
 
+.git-commit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .git-commit-title {
+  flex: 1;
   color: #333;
+}
+
+.git-commit-byline {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.git-commit-author {
+  color: #555;
+}
+
+.git-commit-stats {
+  color: #888;
+}
+
+.git-stat-add {
+  color: #22863a;
+  font-weight: 600;
+}
+
+.git-stat-del {
+  color: #cb2431;
+  font-weight: 600;
+}
+
+.git-commit-body-preview {
+  margin-left: 1.8em;
+  color: #666;
+  font-size: 0.88em;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  font-style: italic;
 }
 
 .git-commits-more {

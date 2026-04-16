@@ -446,33 +446,67 @@ exports.create = function (api) {
       }
 
       if(c.type === 'git-update') {
-        // Build commit rows with lazy-loaded file-change counts
         function renderUpdateCommit(commit, repoId) {
           if (typeof commit.sha1 !== 'string') return h('div.git-commit')
           var browseHref = '#git/' + encodeURIComponent(repoId) +
             '/commit/' + commit.sha1
-          var filesEl = h('span.git-commit-files-count')
-          // Lazy-load file count from JSON API
+
+          // Lazy-load +/- line stats from the diff endpoint
+          var statsEl = h('span.git-commit-stats')
           ;(function () {
             var url = window.location.origin + '/git/' +
-              encodeURIComponent(repoId) + '/json/commit/' + commit.sha1
+              encodeURIComponent(repoId) + '/json/diff/' + commit.sha1
             var xhr = new XMLHttpRequest()
             xhr.open('GET', url)
             xhr.onload = function () {
               if (xhr.status !== 200) return
               var data
               try { data = JSON.parse(xhr.responseText) } catch (_) { return }
-              var n = (data && data.files && data.files.length) || 0
-              if (n > 0) {
-                filesEl.textContent = ' (' + n + ' file' + (n !== 1 ? 's' : '') + ')'
+              var add = 0, del = 0, files = 0
+              if (data && data.files) {
+                files = data.files.length
+                data.files.forEach(function (f) {
+                  if (f.hunks) f.hunks.forEach(function (hunk) {
+                    hunk.lines.forEach(function (l) {
+                      if (l.type === 'add') add++
+                      else if (l.type === 'del') del++
+                    })
+                  })
+                })
               }
+              var parts = []
+              if (files) parts.push(files + ' file' + (files !== 1 ? 's' : ''))
+              if (add)   parts.push(h('span.git-stat-add', '+' + add))
+              if (del)   parts.push(h('span.git-stat-del', '−' + del))
+              parts.forEach(function (p) {
+                if (statsEl.childNodes.length) statsEl.appendChild(document.createTextNode(' '))
+                if (typeof p === 'string') statsEl.appendChild(document.createTextNode(p))
+                else statsEl.appendChild(p)
+              })
             }
             xhr.send()
           }())
+
+          var authorName = commit.author && commit.author.name
+            ? commit.author.name : null
+
+          // commit.body is the multi-line description below the title
+          var bodyText = typeof commit.body === 'string' && commit.body.trim()
+            ? commit.body.trim().slice(0, 300) +
+              (commit.body.trim().length > 300 ? '…' : '')
+            : null
+
           return h('div.git-commit',
-            h('a', {href: browseHref}, h('code.git-sha', commit.sha1.substr(0, 7))),
-            commit.title ? h('span.git-commit-title', ' ' + commit.title) : null,
-            filesEl)
+            h('div.git-commit-row',
+              h('a', {href: browseHref}, h('code.git-sha', commit.sha1.substr(0, 7))),
+              commit.title ? h('span.git-commit-title', commit.title) : null,
+              h('span.git-commit-byline',
+                authorName ? h('span.git-commit-author', authorName) : null,
+                statsEl
+              )
+            ),
+            bodyText ? h('div.git-commit-body-preview', bodyText) : null
+          )
         }
 
         var repoId = c.repo
@@ -480,8 +514,14 @@ exports.create = function (api) {
           h('p', 'pushed to ', repoLink(repoId)),
           c.refs ? h('div.git-refs', Object.keys(c.refs).map(function (ref) {
             var rev = c.refs[ref]
+            var shortName = shortRefName(ref)
+            var branchHref = rev
+              ? '#git/' + encodeURIComponent(repoId) + '/tree/' + encodeURIComponent(shortName)
+              : null
             return h('div.git-ref',
-              h('span.git-branch-badge', shortRefName(ref)),
+              branchHref
+                ? h('a.git-branch-badge', {href: branchHref}, shortName)
+                : h('span.git-branch-badge', shortName),
               rev
                 ? h('code.git-sha', rev.substr(0, 7))
                 : h('em.git-ref-deleted', 'deleted'))
