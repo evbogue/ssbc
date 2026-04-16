@@ -12,6 +12,7 @@
   "relatedMessages": "async",
   "add": "async",
   "publish": "async",
+  "search": "async",
   "getAddress": "sync",
   "getLatest": "async",
   "latest": "source",

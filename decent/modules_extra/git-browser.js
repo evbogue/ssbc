@@ -3,14 +3,18 @@ var h         = require('hyperscript')
 var pull      = require('pull-stream')
 var human     = require('human-time')
 var highlight = require('../highlight')
+var selfId    = require('../keys').id
 
 exports.needs = {
   markdown:            'first',
   message_compose:     'first',
   message_render:      'first',
+  message_confirm:     'first',
   sbot_links:          'first',
   sbot_messagesByType: 'first',
-  avatar_name:         'first'
+  avatar_name:         'first',
+  avatar_image:        'first',
+  sbot_get:            'first'
 }
 
 exports.gives = {
@@ -54,14 +58,137 @@ exports.create = function (api) {
     return h('div.git-breadcrumbs', crumbs)
   }
 
+  function getIssueState(id, cb) {
+    pull(
+      api.sbot_links({dest: id, rel: 'issues', values: true, reverse: true}),
+      pull.map(function (msg) {
+        return msg.value.content.issues
+      }),
+      pull.flatten(),
+      pull.filter(function (issue) {
+        return issue && (issue.link === id)
+      }),
+      pull.map(function (issue) {
+        return issue.merged ? 'merged' : issue.open === false ? 'closed' : 'open'
+      }),
+      pull.take(1),
+      pull.collect(function (err, updates) {
+        cb(err, (updates && updates[0]) || 'open')
+      })
+    )
+  }
+
+  function layout(repoId, sub, container) {
+    var header = h('div.git-forge-header', 'Loading repo info…')
+    var wrapper = h('div.git-forge-layout', header, h('div.git-forge-container', container))
+
+    api.sbot_get(repoId, function (err, msg) {
+      header.innerHTML = ''
+      if (err) {
+        header.appendChild(h('div.git-forge-repo-title', 'Error: ' + err.message))
+        return
+      }
+
+      var name = (msg && msg.content && msg.content.name) || repoId.substr(0, 10) + '…'
+      var author = msg.author
+
+      var tabs = [
+        h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId),
+          className: (!sub || sub === 'tree' || sub === 'blob') ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '📄'), ' Code'),
+        h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId, 'log'),
+          className: (sub === 'log' || sub === 'commit') ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '🕒'), ' Commits'),
+        h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId, 'issues'),
+          className: sub === 'issues' ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '⊙'), ' Issues'),
+        h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId, 'pulls'),
+          className: sub === 'pulls' ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '⇅'), ' Pull Requests'),
+        h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId, 'activity'),
+          className: sub === 'activity' ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '📈'), ' Activity')
+      ]
+
+      if (author === selfId) {
+        tabs.push(h('a.git-forge-tab', {
+          href: gitBrowseRoute(repoId, 'settings'),
+          className: sub === 'settings' ? 'active' : ''
+        }, h('span.git-forge-tab-icon', '⚙'), ' Settings'))
+      }
+
+      header.appendChild(h('div',
+        h('div.git-forge-repo-title',
+          h('span', api.avatar_image(author, 'thumbnail')),
+          h('span', api.avatar_name(author)),
+          h('span.git-forge-sep', ' / '),
+          h('a', {href: gitBrowseRoute(repoId)}, h('strong', name))
+        ),
+        h('div.git-forge-tabs', tabs)
+      ))
+    })
+
+    return wrapper
+  }
+
+  function renderSidebar(repoId, ref, currentPathParts) {
+    var sidebar = h('div.git-forge-sidebar', 
+      h('div.git-sidebar-header', 'Files'),
+      h('div.git-sidebar-tree', 'Loading…')
+    )
+    var treeEl = sidebar.querySelector('.git-sidebar-tree')
+
+    fetchJson(gitApiUrl(repoId, 'tree/' + encodeURIComponent(ref)), function (err, data) {
+      if (err) { treeEl.textContent = 'Error loading tree'; return }
+      treeEl.innerHTML = ''
+      var entries = (data && data.entries) || []
+      
+      entries.forEach(function (e) {
+        var href = e.isDir
+          ? gitBrowseRoute(repoId, 'tree', ref, [e.name])
+          : gitBrowseRoute(repoId, 'blob', ref, [e.name])
+        
+        var isActive = currentPathParts && currentPathParts[0] === e.name
+        
+        treeEl.appendChild(h('a.git-sidebar-item', {
+          href: href,
+          className: isActive ? 'active' : ''
+        }, 
+          h('span.git-sidebar-icon', e.isDir ? '📁' : '📄'),
+          e.name
+        ))
+      })
+    })
+
+    return sidebar
+  }
+
   function renderCommitRow(repoId, c) {
     var author = c && c.author ? c.author : {}
     var sha1 = (c && c.sha1) || ''
     var date = author.date ? new Date(author.date) : null
+    
+    var status = h('span.git-mesh-status', '...')
+    fetchJson(gitApiUrl(repoId, 'commit/' + sha1), function (err) {
+      if (err) {
+        status.textContent = 'Syncing'
+        status.className = 'git-mesh-status remote'
+      } else {
+        status.textContent = 'Local'
+        status.className = 'git-mesh-status local'
+      }
+    })
+
     return h('div.git-commit',
       h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
         h('code.git-sha', sha1.substr(0, 7))),
       h('span.git-commit-title', ' ' + (c.title || '')),
+      status,
       h('span.git-commit-meta',
         ' — ', author.name || '',
         date ? [', ', human(date)] : ''))
@@ -104,26 +231,13 @@ exports.create = function (api) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
 
       var refs     = (data && data.refs)    || []
-      var symrefs  = (data && data.symrefs) || []
       var defaultRef = 'HEAD'
-      var symHead = null
-      for (var i = 0; i < symrefs.length; i++) {
-        if (symrefs[i].name === 'HEAD') { symHead = symrefs[i]; break }
-      }
+      var symHead = (data && data.symrefs && data.symrefs.find(r => r.name === 'HEAD'))
       if (symHead && symHead.ref) {
         defaultRef = symHead.ref.replace(/^refs\/heads\//, '')
       } else {
-        for (var j = 0; j < refs.length; j++) {
-          var m = /^refs\/heads\/(.+)$/.exec(refs[j].name)
-          if (m) { defaultRef = m[1]; break }
-        }
-      }
-
-      var headPills = []
-      for (var k = 0; k < refs.length; k++) {
-        var bm = /^refs\/heads\/(.+)$/.exec(refs[k].name)
-        if (bm) headPills.push(h('a.git-branch-badge',
-          {href: gitBrowseRoute(repoId, 'tree', bm[1])}, bm[1]))
+        var firstHead = refs.find(r => /^refs\/heads\/(.+)$/.test(r.name))
+        if (firstHead) defaultRef = firstHead.name.replace(/^refs\/heads\//, '')
       }
 
       var logEl  = h('div', 'Loading log…')
@@ -146,16 +260,21 @@ exports.create = function (api) {
       })
 
       container.innerHTML = ''
-      container.appendChild(h('div.git-browser',
-        h('div.git-browser-header',
-          headPills.length ? headPills : h('em', 'No branches'),
-          ' ',
-          h('a.git-browse-link', {href: gitBrowseRoute(repoId, 'tree', defaultRef)}, 'Browse ▸')
-        ),
-        readmeEl,
-        h('h4.git-section-title', 'Recent commits on ', h('span.git-branch-badge', defaultRef)),
-        logEl
-      ))
+      var main = h('div.git-forge-main',
+        renderSidebar(repoId, defaultRef, []),
+        h('div.git-forge-content',
+          h('div.git-browser',
+            h('div.git-forge-repo-meta',
+              h('span.git-forge-repo-meta-item', h('strong', 'Default Branch: '), h('span.git-branch-badge', defaultRef)),
+              h('span.git-forge-repo-meta-item', h('strong', 'Clone locally: '), h('code.git-clone-input', 'git clone ' + window.location.origin + '/git/' + encodeURIComponent(repoId)))
+            ),
+            readmeEl,
+            h('h4.git-section-title', 'Latest Activity'),
+            logEl
+          )
+        )
+      )
+      container.appendChild(main)
     })
   }
 
@@ -188,20 +307,28 @@ exports.create = function (api) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
       var entries = (data && data.entries) || []
       var rows = entries.map(function (e) {
-        var icon  = e.isDir ? '▸' : ' '
+        var icon  = e.isDir ? '📁' : '📄'
         var href  = e.isDir
           ? gitBrowseRoute(repoId, 'tree', ref, pathParts.concat([e.name]))
           : gitBrowseRoute(repoId, 'blob', ref, pathParts.concat([e.name]))
         return h('tr',
           h('td.git-tree-icon', icon),
-          h('td.git-tree-name', h('a', {href: href}, e.name)))
+          h('td.git-tree-name', h('a', {href: href}, e.name)),
+          h('td.git-tree-meta', ' '))
       })
+      
       container.innerHTML = ''
-      container.appendChild(h('div.git-browser',
-        renderBranchBar(repoId, ref),
-        breadcrumbs(repoId, ref, pathParts),
-        h('table.git-tree-table', h('tbody', rows))
-      ))
+      var main = h('div.git-forge-main',
+        renderSidebar(repoId, ref, pathParts),
+        h('div.git-forge-content',
+          h('div.git-browser',
+            renderBranchBar(repoId, ref),
+            breadcrumbs(repoId, ref, pathParts),
+            h('table.git-tree-table', h('tbody', rows))
+          )
+        )
+      )
+      container.appendChild(main)
     })
   }
 
@@ -215,18 +342,23 @@ exports.create = function (api) {
   function renderBlobScreen(repoId, ref, pathParts, container) {
     var fileName = pathParts[pathParts.length - 1] || ''
 
-    // Images: serve via raw endpoint, no JSON fetch needed
     if (IMAGE_EXTS.test(fileName)) {
       container.innerHTML = ''
-      container.appendChild(h('div.git-browser',
-        breadcrumbs(repoId, ref, pathParts),
-        h('div.git-image-view',
-          h('img.git-blob-image', {
-            src: rawBlobUrl(repoId, ref, pathParts),
-            alt: fileName
-          })
+      var main = h('div.git-forge-main',
+        renderSidebar(repoId, ref, pathParts),
+        h('div.git-forge-content',
+          h('div.git-browser',
+            breadcrumbs(repoId, ref, pathParts),
+            h('div.git-image-view',
+              h('img.git-blob-image', {
+                src: rawBlobUrl(repoId, ref, pathParts),
+                alt: fileName
+              })
+            )
+          )
         )
-      ))
+      )
+      container.appendChild(main)
       return
     }
 
@@ -243,7 +375,6 @@ exports.create = function (api) {
         try { md = api.markdown({text: data.content}) } catch (_) {}
         contentEl.appendChild(md || h('pre.git-blob-content', data.content))
       } else {
-        // Syntax-highlighted code view
         var pre = h('pre.git-blob-content.git-highlighted')
         var code = h('code')
         code.innerHTML = highlight(data.content || '', fileName)
@@ -252,14 +383,20 @@ exports.create = function (api) {
       }
 
       container.innerHTML = ''
-      container.appendChild(h('div.git-browser',
-        breadcrumbs(repoId, ref, pathParts),
-        contentEl
-      ))
+      var main = h('div.git-forge-main',
+        renderSidebar(repoId, ref, pathParts),
+        h('div.git-forge-content',
+          h('div.git-browser',
+            breadcrumbs(repoId, ref, pathParts),
+            contentEl
+          )
+        )
+      )
+      container.appendChild(main)
     })
   }
 
-  function renderDiffFile(file) {
+  function renderDiffFile(repoId, sha1, file, commentsMap) {
     var statusLabel = {added: '+', deleted: '−', modified: '~', renamed: '→'}[file.status] || '~'
     var statusClass = 'git-diff-status-' + (file.status || 'modified')
 
@@ -269,25 +406,71 @@ exports.create = function (api) {
     } else if (!file.hunks || !file.hunks.length) {
       body = h('div.git-diff-empty', 'No changes')
     } else {
-        var hunkEls = file.hunks.map(function (hunk) {
-          var lineEls = hunk.lines.map(function (line) {
-            var cls = 'git-diff-line git-diff-line-' + line.type
-            var oldLn = line.oldLn != null ? String(line.oldLn) : ''
-            var newLn = line.newLn != null ? String(line.newLn) : ''
-            var prefix = line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '
-            return h('tr', {className: cls},
-              h('td.git-diff-ln', oldLn),
-              h('td.git-diff-ln', newLn),
-              h('td.git-diff-prefix', prefix),
-            h('td.git-diff-code', line.text))
+      var rows = []
+      file.hunks.forEach(function (hunk) {
+        rows.push(h('tr.git-diff-hunk-header', h('td', {colspan: '4'}, '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@')))
+        
+        hunk.lines.forEach(function (line) {
+          var cls = 'git-diff-line git-diff-line-' + line.type
+          var oldLn = line.oldLn != null ? String(line.oldLn) : ''
+          var newLn = line.newLn != null ? String(line.newLn) : ''
+          var prefix = line.type === 'add' ? '+' : line.type === 'del' ? '-' : ' '
+          
+          var addCommentBtn = h('span.git-diff-add-comment-btn', '+')
+          
+          var lineRow = h('tr', {className: cls},
+            h('td.git-diff-ln', oldLn),
+            h('td.git-diff-ln', newLn, addCommentBtn),
+            h('td.git-diff-prefix', prefix),
+            h('td.git-diff-code', line.text)
+          )
+          
+          rows.push(lineRow)
+
+          var lineKey = file.path + ':' + (line.newLn || line.oldLn)
+          if (commentsMap && commentsMap[lineKey]) {
+            commentsMap[lineKey].forEach(function (link) {
+              var lc = link.value.content
+              rows.push(h('tr.git-diff-inline-comment-row', h('td', {colspan: 4},
+                h('div.git-diff-inline-comment',
+                  h('div.git-diff-inline-comment-header',
+                    h('strong', api.avatar_name(link.value.author)),
+                    ' · ', human(new Date(link.value.timestamp))
+                  ),
+                  h('div.git-diff-inline-comment-body', lc.text || '')
+                )
+              )))
+            })
+          }
+
+          addCommentBtn.onclick = function () {
+            var composerWrap = h('div.git-diff-inline-compose')
+            var composerRow = h('tr.git-diff-inline-comment-row', h('td', {colspan: 4}, composerWrap))
+            lineRow.parentNode.insertBefore(composerRow, lineRow.nextSibling)
+            
+            composerWrap.appendChild(api.message_compose(
+              { type: 'git-comment', repo: repoId, commit: sha1, path: file.path, line: line.newLn || line.oldLn },
+              function (v) { return v },
+              function (err, msg) {
+                if (err) { alert(err); composerRow.remove(); return }
+                if (!msg) { composerRow.remove(); return }
+                var lc = msg.value.content
+                var newComment = h('tr.git-diff-inline-comment-row', h('td', {colspan: 4},
+                  h('div.git-diff-inline-comment',
+                    h('div.git-diff-inline-comment-header',
+                      h('strong', api.avatar_name(msg.value.author)),
+                      ' · just now'
+                    ),
+                    h('div.git-diff-inline-comment-body', lc.text || '')
+                  )
+                ))
+                composerRow.parentNode.replaceChild(newComment, composerRow)
+              }
+            ))
+          }
         })
-        var hunkHeader = '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@'
-        return [
-          h('tr.git-diff-hunk-header', h('td', {colspan: '4'}, hunkHeader)),
-          lineEls
-        ]
       })
-      body = h('table.git-diff-table', h('tbody', hunkEls))
+      body = h('table.git-diff-table', h('tbody', rows))
     }
 
     var header = h('div.git-diff-file-header',
@@ -296,8 +479,7 @@ exports.create = function (api) {
       file.truncated ? h('span.git-diff-truncated', ' (truncated)') : null
     )
 
-    var details = h('details.git-diff-file', {open: true}, h('summary', header), body)
-    return details
+    return h('details.git-diff-file', {open: true}, h('summary', header), body)
   }
 
   function renderCommitScreen(repoId, sha1, container) {
@@ -305,96 +487,24 @@ exports.create = function (api) {
 
     var commitData = null
     var diffData   = null
-    var pending    = 2
+    var commentsMap = {}
+    var pending    = 3
 
     function tryRender() {
       if (--pending !== 0) return
-      if (!commitData) return  // error already shown
+      if (!commitData) return
 
       var c    = commitData
       var date = (c.author && c.author.date) ? new Date(c.author.date) : null
 
-      // Diff section
       var diffEl = h('div.git-diff')
       if (diffData && diffData.files && diffData.files.length) {
-        var stats = diffData.files.reduce(function (acc, f) {
-          if (f.hunks) f.hunks.forEach(function (hunk) {
-            hunk.lines.forEach(function (l) {
-              if (l.type === 'add') acc.add++
-              else if (l.type === 'del') acc.del++
-            })
-          })
-          return acc
-        }, {add: 0, del: 0})
-        diffEl.appendChild(h('div.git-diff-stats',
-          h('span.git-diff-stat-files', diffData.files.length + ' file' + (diffData.files.length !== 1 ? 's' : '') + ' changed'),
-          ' ',
-          stats.add ? h('span.git-diff-stat-add', '+' + stats.add) : null,
-          stats.del ? h('span.git-diff-stat-del', ' −' + stats.del) : null
-        ))
         diffData.files.forEach(function (f) {
-          diffEl.appendChild(renderDiffFile(f))
+          diffEl.appendChild(renderDiffFile(repoId, sha1, f, commentsMap))
         })
       } else {
         diffEl.appendChild(h('em', 'Diff not available'))
       }
-
-      // Comment section
-      var commentsEl   = h('div.git-review-comments')
-      var commentFormEl = h('div.git-review-compose')
-
-      pull(
-        api.sbot_links({dest: repoId, rel: 'repo', values: true, reverse: true}),
-        pull.filter(function (link) {
-          return link.value.content.type === 'git-comment' &&
-                 link.value.content.commit === sha1
-        }),
-        pull.drain(function (link) {
-          var lc = link.value.content
-          var commentDate = new Date(link.value.timestamp)
-          var locLabel = lc.path
-            ? h('code.git-sha', lc.path + (lc.line != null ? ':' + lc.line : ''))
-            : null
-          commentsEl.appendChild(h('div.git-review-comment',
-            h('div.git-review-comment-header',
-              h('strong', api.avatar_name(link.value.author)),
-              locLabel ? [' ', locLabel] : '',
-              ' · ', human(commentDate)
-            ),
-            h('div.git-review-comment-body', lc.text || '')
-          ))
-        }, function (err) {
-          if (err) console.error('git-comment load error', err)
-        })
-      )
-
-      commentFormEl.appendChild(h('div',
-        h('a.git-review-add-comment', {
-          href: '#',
-          onclick: function (e) {
-            e.preventDefault()
-            var el = this
-            el.style.display = 'none'
-            commentFormEl.appendChild(api.message_compose(
-              {type: 'git-comment', repo: repoId, commit: sha1},
-              function (value) { return value },
-              function (err, msg) {
-                if (err) { alert(err); el.style.display = ''; return }
-                if (!msg) { el.style.display = ''; return }
-                var lc = msg.value.content
-                commentsEl.appendChild(h('div.git-review-comment',
-                  h('div.git-review-comment-header',
-                    h('strong', api.avatar_name(msg.value.author)),
-                    lc.path ? [' ', h('code.git-sha', lc.path + (lc.line != null ? ':' + lc.line : ''))] : ''
-                  ),
-                  h('div.git-review-comment-body', lc.text || '')
-                ))
-                el.style.display = ''
-              }
-            ))
-          }
-        }, 'Add review comment…')
-      ))
 
       container.innerHTML = ''
       container.appendChild(h('div.git-browser',
@@ -411,10 +521,7 @@ exports.create = function (api) {
         ),
         c.body ? h('pre.git-commit-body', c.body) : null,
         h('h4.git-section-title', 'Changes'),
-        diffEl,
-        h('h4.git-section-title', 'Review comments'),
-        commentsEl,
-        commentFormEl
+        diffEl
       ))
     }
 
@@ -428,6 +535,166 @@ exports.create = function (api) {
       diffData = err ? null : data
       tryRender()
     })
+
+    pull(
+      api.sbot_links({dest: repoId, rel: 'repo', values: true, reverse: true}),
+      pull.filter(function (link) {
+        return link.value.content.type === 'git-comment' &&
+               link.value.content.commit === sha1
+      }),
+      pull.collect(function (err, links) {
+        if (!err && links) {
+          links.forEach(function (link) {
+            var lc = link.value.content
+            if (lc.path && lc.line) {
+              var key = lc.path + ':' + lc.line
+              if (!commentsMap[key]) commentsMap[key] = []
+              commentsMap[key].push(link)
+            }
+          })
+        }
+        tryRender()
+      })
+    )
+  }
+
+  function renderListScreen(repoId, type, container) {
+    var isPR = type === 'pull-request'
+    var btnText = isPR ? 'New Pull Request' : 'New Issue'
+    
+    var list = h('div.git-forge-list', h('div.git-forge-list-empty', 'Loading ' + (isPR ? 'pull requests' : 'issues') + '…'))
+    var composerWrap = h('div')
+
+    container.innerHTML = ''
+    container.appendChild(h('div',
+      h('div.git-forge-list-actions',
+        h('button.git-forge-btn-primary', {
+          onclick: function () {
+            this.style.display = 'none'
+            composerWrap.appendChild(api.message_compose(
+              { type: type, project: repoId },
+              function (val) { return val },
+              function (err, msg) {
+                if (err) { alert(err); this.style.display = ''; return }
+                if (!msg) { this.style.display = ''; return }
+                renderListScreen(repoId, type, container)
+              }
+            ))
+          }
+        }, btnText)
+      ),
+      composerWrap,
+      list
+    ))
+
+    var count = 0
+    pull(
+      api.sbot_links({dest: repoId, rel: 'project', values: true, reverse: true}),
+      pull.filter(function (link) {
+        return link.value.content.type === type
+      }),
+      pull.drain(function (link) {
+        if (count === 0) list.innerHTML = ''
+        count++
+
+        var c = link.value.content
+        var title = c.title || (c.text ? (c.text.length > 80 ? c.text.substr(0, 80) + '…' : c.text) : link.key)
+        var author = link.value.author
+        var date = new Date(link.value.timestamp)
+        
+        var stateEl = h('span.git-state-badge', '...')
+        getIssueState(link.key, function (err, state) {
+          if (!err) {
+            stateEl.textContent = state
+            stateEl.className = 'git-state-badge git-state-' + state
+          }
+        })
+
+        list.appendChild(h('div.git-forge-list-item',
+          api.avatar_image(author, 'thumbnail'),
+          h('div.git-forge-list-item-main',
+            h('a.git-forge-list-item-title', {href: '#' + link.key}, title),
+            h('div.git-forge-list-item-meta',
+              stateEl,
+              ' #', link.key.substr(1, 6),
+              ' opened ', human(date), ' by ', api.avatar_name(author)
+            )
+          )
+        ))
+      }, function (err) {
+        if (err) console.error(err)
+        if (count === 0) list.innerHTML = h('div.git-forge-list-empty', 'No ' + (isPR ? 'pull requests' : 'issues') + ' found.')
+      })
+    )
+  }
+
+  function renderActivityScreen(repoId, container) {
+    container.innerHTML = h('div.git-forge-list-empty', 'Fetching mesh activity…')
+    
+    var count = 0
+    pull(
+      api.sbot_links({dest: repoId, values: true, reverse: true}),
+      pull.filter(function (link) {
+        var t = link.value.content.type
+        return ['git-update', 'git-comment', 'issue', 'pull-request'].indexOf(t) !== -1
+      }),
+      pull.drain(function (link) {
+        if (count === 0) container.innerHTML = ''
+        count++
+
+        var c = link.value.content
+        var type = c.type === 'git-update' ? 'push' : (c.type === 'git-comment' ? 'comment' : 'issue')
+        var author = link.value.author
+        var date = new Date(link.value.timestamp)
+        
+        var summary = ''
+        if (c.type === 'git-update') summary = 'pushed new commits'
+        else if (c.type === 'git-comment') summary = 'commented on code'
+        else if (c.type === 'issue') summary = 'opened an issue'
+        else if (c.type === 'pull-request') summary = 'opened a pull request'
+
+        container.appendChild(h('div.git-forge-activity-item', {className: type},
+          h('div',
+            h('strong', api.avatar_name(author)),
+            ' ' + summary + ' ',
+            h('span.git-forge-list-item-meta', human(date))
+          ),
+          h('div.git-forge-list-item-meta', h('small', '#' + link.key.substr(1, 10)))
+        ))
+      }, function (err) {
+        if (err) console.error(err)
+        if (count === 0) container.innerHTML = h('div.git-forge-list-empty', 'No mesh activity recorded for this repo yet.')
+      })
+    )
+  }
+
+  function renderSettingsScreen(repoId, container) {
+    container.innerHTML = ''
+    container.appendChild(h('div.git-forge-card',
+      h('div.git-forge-card-header', 'Repository Settings'),
+      h('div.git-forge-card-body',
+        h('p', 'As the owner of this repository, you can manage its metadata here.'),
+        h('hr'),
+        h('div',
+          h('h4', 'Update Name'),
+          api.message_compose({ type: 'about', about: repoId }, function (val) {
+            return { type: 'about', about: repoId, name: val.text }
+          }, function (err, msg) {
+            if (err) alert(err)
+            if (msg) alert('Name updated on the mesh!')
+          })
+        ),
+        h('hr', {style: {margin: '24px 0'}}),
+        h('div',
+          h('h4', {style: {color: '#cf222e'}}, 'Danger Zone'),
+          h('p', 'Currently, repositories cannot be deleted from the SSB log, but you can signal that it is archived.'),
+          h('button.git-forge-btn-primary', {
+            style: {background: '#cf222e'},
+            onclick: function () { alert('Archiving logic will be implemented in a future update.') }
+          }, 'Archive Repository')
+        )
+      )
+    ))
   }
 
   return {
@@ -441,38 +708,45 @@ exports.create = function (api) {
       try { repoId = decodeURIComponent(parts[1]) } catch (_) { return }
 
       var sub = parts[2]
-
-      var wrapper = h('div.scroller__wrapper')
-      var outer   = h('div.column.scroller', {style: {overflow: 'auto'}}, wrapper)
+      var content = h('div')
+      var outer = h('div.column.scroller', {style: {overflow: 'auto'}},
+        h('div.scroller__wrapper', layout(repoId, sub, content))
+      )
 
       if (!sub) {
-        renderRepoScreen(repoId, wrapper)
+        renderRepoScreen(repoId, content)
       } else if (sub === 'tree') {
         var treeRef   = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
         var treePath  = parts.slice(4).map(decodeURIComponent)
-        renderTreeScreen(repoId, treeRef, treePath, wrapper)
+        renderTreeScreen(repoId, treeRef, treePath, content)
       } else if (sub === 'blob') {
         var blobRef   = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
         var blobPath  = parts.slice(4).map(decodeURIComponent)
-        renderBlobScreen(repoId, blobRef, blobPath, wrapper)
+        renderBlobScreen(repoId, blobRef, blobPath, content)
       } else if (sub === 'commit') {
-        renderCommitScreen(repoId, parts[3] || '', wrapper)
+        renderCommitScreen(repoId, parts[3] || '', content)
       } else if (sub === 'log') {
         var logRef = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
-        // Full log view — just render a log screen
-        var logWrapper = wrapper
-        logWrapper.textContent = 'Loading…'
+        content.textContent = 'Loading log…'
         fetchJson(gitApiUrl(repoId, 'log/' + encodeURIComponent(logRef)), function (err, data) {
-          logWrapper.innerHTML = ''
+          content.innerHTML = ''
           if (err) {
-            logWrapper.appendChild(h('div.git-browser', h('em', 'Error: ' + err.message)))
+            content.appendChild(h('div.git-browser', h('em', 'Error: ' + err.message)))
           } else {
-            logWrapper.appendChild(h('div.git-browser',
+            content.appendChild(h('div.git-browser',
               h('h4.git-section-title', 'Log: ', h('span.git-branch-badge', logRef)),
               renderLog(repoId, (data && data.commits) || [])
             ))
           }
         })
+      } else if (sub === 'issues') {
+        renderListScreen(repoId, 'issue', content)
+      } else if (sub === 'pulls') {
+        renderListScreen(repoId, 'pull-request', content)
+      } else if (sub === 'activity') {
+        renderActivityScreen(repoId, content)
+      } else if (sub === 'settings') {
+        renderSettingsScreen(repoId, content)
       }
 
       return outer

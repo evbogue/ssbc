@@ -7,11 +7,11 @@ var ssbKeys = require('ssb-keys')
 
 var createSsbServer =
   require('secret-stack')(require('./defaults'))
-    .use(require('ssb-db'))
-    .use(require('ssb-replicate'))
+    .use(require('../lib/db'))
+    .use(require('../lib/vendor/ssb-replicate-stub'))
     .use(require('../plugins/friends'))
     .use(require('ssb-gossip'))
-    .use(require('ssb-logging'))
+    .use(require('../lib/vendor/ssb-logging'))
 
 var createHash = require('crypto').createHash
 

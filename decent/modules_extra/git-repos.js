@@ -6,8 +6,10 @@ var human = require('human-time')
 exports.needs = {
   sbot_messagesByType: 'first',
   sbot_links:          'first',
+  sbot_publish:        'first',
   avatar_name:         'first',
-  avatar_image:        'first'
+  avatar_image:        'first',
+  message_compose:     'first'
 }
 
 exports.gives = {
@@ -25,7 +27,6 @@ exports.create = function (api) {
     var browse  = '#git/' + encodeURIComponent(repoId)
     var cloneUrl = window.location.origin + '/git/' + encodeURIComponent(repoId)
 
-    // Lazy-fetch branch count from JSON refs endpoint
     var branchEl = h('span.git-repo-meta-item', '…')
     ;(function () {
       var xhr = new XMLHttpRequest()
@@ -66,16 +67,53 @@ exports.create = function (api) {
     )
   }
 
+  function renderCreateForm(container, onCreated) {
+    var form = h('div.git-forge-card', {style: {margin: '20px 0'}},
+      h('div.git-forge-card-header', 'Create New Repository'),
+      h('div.git-forge-card-body',
+        api.message_compose(
+          { type: 'git-repo' },
+          function (val) {
+            // Transform the composer output to a git-repo message
+            return { type: 'git-repo', name: val.text }
+          },
+          function (err, msg) {
+            if (err) return alert(err)
+            if (msg) onCreated(msg)
+          }
+        )
+      )
+    )
+    container.insertBefore(form, container.firstChild)
+  }
+
   return {
     screen_view: function (route) {
       if (route !== 'repos') return
 
       var grid    = h('div.repos-grid')
-      var empty   = h('p.repos-empty', 'No repositories found. Create one with ', h('code', 'node bin git.create my-project'), '.')
+      var empty   = h('p.repos-empty', 'No repositories found. Create one to get started.')
       var count   = 0
-      var wrapper = h('div.scroller__wrapper',
+      
+      var createArea = h('div')
+      var header = h('div.repos-header', {style: {display: 'flex', 'justify-content': 'space-between', 'align-items': 'center'}},
         h('h2.repos-heading', 'Repositories'),
-        grid, empty)
+        h('button.git-forge-btn-primary', {
+          onclick: function () {
+            this.style.display = 'none'
+            renderCreateForm(createArea, function (msg) {
+              window.location.hash = '#git/' + encodeURIComponent(msg.key)
+            })
+          }
+        }, 'New Repository')
+      )
+
+      var wrapper = h('div.scroller__wrapper',
+        header,
+        createArea,
+        grid, 
+        empty
+      )
       var outer = h('div.column.scroller', {style: {overflow: 'auto'}}, wrapper)
 
       pull(

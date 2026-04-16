@@ -31,7 +31,8 @@ module.exports = {
     sbot_gossip_connect: true,
     sbot_progress:       true,
     sbot_publish:        true,
-    sbot_whoami:         true
+    sbot_whoami:         true,
+    sbot_search:         true
   },
 
   create: function (api) {
@@ -139,6 +140,10 @@ module.exports = {
 
       sbot_whoami: rec.async(function (cb) {
         sbot.whoami(cb)
+      }),
+
+      sbot_search: rec.async(function (opts, cb) {
+        sbot.search(opts, cb)
       })
     }
   }

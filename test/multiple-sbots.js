@@ -5,11 +5,11 @@ tape('createSsbServer method allows creating multiple servers with the same plug
 
   // server1
   createSsbServer()
-    .use(require('ssb-replicate'))
+    .use(require('../lib/vendor/ssb-replicate-stub'))
 
   // server2
   createSsbServer()
-    .use(require('ssb-replicate'))
+    .use(require('../lib/vendor/ssb-replicate-stub'))
     .use(require('ssb-gossip'))
 
   t.pass()

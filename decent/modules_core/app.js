@@ -50,6 +50,7 @@ module.exports = {
         {route: 'friends', label: 'Friends', icon: 'groups'},
         {route: selfId, label: 'Profile', icon: 'account_circle'},
         {route: 'private', label: 'Private', icon: 'mail_lock'},
+        {route: 'code-explore', label: 'Explore', icon: 'explore'},
         {route: 'repos', label: 'Repos', icon: 'account_tree'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
         {route: 'key', label: 'Keys', icon: 'vpn_key'}
@@ -70,10 +71,21 @@ module.exports = {
         )
       }))
 
+      var searchInput = h('input.nav-search', {
+        placeholder: 'Search mesh...',
+        onkeydown: function (e) {
+          if (e.keyCode === 13) { // Enter
+            window.location.hash = '#code-search/' + encodeURIComponent(this.value)
+            this.value = ''
+          }
+        }
+      })
+
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
             h('a.brand', {href: '#/'}, 'Decent'),
+            searchInput,
             nav,
             h('div.pull-right', api.menu())
           )
