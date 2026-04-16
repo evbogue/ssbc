@@ -531,8 +531,15 @@ exports.create = function (api) {
               c.commits.map(function (commit) {
                 return renderUpdateCommit(commit, repoId)
               }),
-              c.commits_more > 0
-                ? h('div.git-commit.git-commits-more', '+ ', c.commits_more, ' more') : null)
+              c.commits_more > 0 ? (function () {
+                var firstRef = Object.keys(c.refs || {})
+                  .filter(function (r) { return /^refs\/heads\//.test(r) })[0]
+                var branch = firstRef ? shortRefName(firstRef) : 'HEAD'
+                var logHref = '#git/' + encodeURIComponent(repoId) +
+                  '/log/' + encodeURIComponent(branch)
+                return h('div.git-commit.git-commits-more',
+                  h('a', {href: logHref}, '+ ' + c.commits_more + ' more…'))
+              }()) : null)
           ] : null,
           Array.isArray(c.issues) ? c.issues.map(function (issue) {
             if (issue.merged === true)
