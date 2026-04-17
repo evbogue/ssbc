@@ -164,9 +164,16 @@ add a one-line note of anything that differed from the plan.
 **Goal:** one package, one lockfile, one `decent/src/` tree.  No behavior change.
 
 **Status:** Done
-**Note:** `modules_embedded/` was removed instead of moved because it only referenced a
-missing `patchbay/` checkout; `manifest.json` was kept and moved into `src/` because the
-frontend still loads it at runtime.
+**Notes:**
+- `modules_embedded/` was removed instead of moved because it only referenced a
+  missing `patchbay/` checkout.
+- `manifest.json` was kept and moved into `src/` because `src/modules/core/sbot.js`
+  loads it at connect time (muxrpc manifest for the sbot RPC surface).
+- Follow-up cleanup: deleted three dead Patchbay-era scripts (`scripts/build.js`,
+  `dir.js`, `create-index.js` — all `require`d a non-existent `patchbay/public`);
+  deleted unused `src/modules/core/_screen_view.js` and the commented-out reference
+  in `core/index.js`; rewrote `decent/README.md` to reflect the new layout; fixed
+  stale `cd decent && npm run lite` references in AGENTS.md and top-level README.
 
 #### Step 1.1 — Audit `decent/` dependencies
 

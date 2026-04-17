@@ -96,11 +96,11 @@ The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.j
 ### Build
 
 ```bash
-npm --prefix decent install --ignore-scripts
+npm install
 npm run build:web
 ```
 
-Build output: `decent/build/index.html`, `decent/build/bundle.js`, `decent/build/style.css`
+Build output: `decent/build/index.html`, `decent/build/style.css`
 
 ### Access
 

@@ -115,7 +115,6 @@ Otherwise: proceed.
 ```bash
 node bin.js start          # starts SSB server + HTTP UI at http://127.0.0.1:8888
 npm run build:web          # rebuilds decent/build/ (run after any frontend change)
-                           # equivalent to: cd decent && npm run lite
 ```
 
 The server must be running before the browser app can connect.

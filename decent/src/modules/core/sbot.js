@@ -45,6 +45,7 @@ module.exports = {
       }
 
       createClient(keys, {
+        // muxrpc manifest describing the sbot RPC surface; required at connect time
         manifest: require('../../manifest.json'),
         remote:   require('../../config')().remote,
         caps:     config.caps
