@@ -106,6 +106,17 @@ Build output: `decent/build/index.html`, `decent/build/style.css`
 
 With the server running, open **http://127.0.0.1:8888/**
 
+Archived Scuttlebot documentation is also served at:
+
+- **http://127.0.0.1:8888/docs**
+
+Those docs are served from `docs/scuttlebot.io/`. Their vendored source lives in
+`vendor/scuttlebot.io/`, and you can resync generated output with:
+
+```bash
+npm run sync:scuttlebot-docs
+```
+
 Override host/port in `~/.ssb/config`:
 
 ```json

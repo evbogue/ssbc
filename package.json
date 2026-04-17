@@ -17,6 +17,7 @@
   "scripts": {
     "start": "node bin start",
     "build:web": "node decent/scripts/style.js && mkdir -p decent/build && browserify decent/src/main.js | indexhtmlify --title \"Decent SSB\" > decent/build/index.html && node decent/scripts/postprocess-index.js",
+    "sync:scuttlebot-docs": "bash scripts/sync-scuttlebot-docs.sh",
     "prepublishOnly": "npm test",
     "test": "set -e; for t in test/*.js; do echo TEST $t; node $t; done",
     "test:pretty": "npm run test | tap-spec",
