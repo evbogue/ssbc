@@ -1,6 +1,6 @@
 # Work Order: Decent Frontend Modernization
 
-**Status:** Not started
+**Status:** In progress
 **Owner:** Whoever picks this up next
 **Scope:** `decent/` only.  Server code (`bin.js`, `plugins/`, `lib/`, `test/`) is out of scope.
 **Prerequisites:** Familiarity with `AGENTS.md` at repo root.  Read it first.
@@ -163,7 +163,10 @@ add a one-line note of anything that differed from the plan.
 
 **Goal:** one package, one lockfile, one `decent/src/` tree.  No behavior change.
 
-**Status:** Not started
+**Status:** Done
+**Note:** `modules_embedded/` was removed instead of moved because it only referenced a
+missing `patchbay/` checkout; `manifest.json` was kept and moved into `src/` because the
+frontend still loads it at runtime.
 
 #### Step 1.1 — Audit `decent/` dependencies
 

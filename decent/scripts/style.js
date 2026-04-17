@@ -3,11 +3,11 @@ const fs   = require('fs')
 const path = require('path')
 
 const buildDir   = path.join(__dirname, '..', 'build')
-const srcCss     = path.join(__dirname, '..', 'style.css')
+const srcCss     = path.join(__dirname, '..', 'src', 'style.css')
 const destCss    = path.join(buildDir, 'style.css')
 // app.js does require('../style.css.json') to inline styles as a fallback when
 // no <link rel="stylesheet"> is present.  Generate it from the source CSS.
-const destCssJson = path.join(__dirname, '..', 'style.css.json')
+const destCssJson = path.join(__dirname, '..', 'src', 'style.css.json')
 
 if (!fs.existsSync(buildDir))
   fs.mkdirSync(buildDir, { recursive: true })

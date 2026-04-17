@@ -64,7 +64,7 @@ Rules:
 ### Style matching
 
 - Server-side (`plugins/`, `lib/`, `test/`): modern — `const`/`let`, arrows, templates.
-- Decent frontend (`decent/modules_*/`): old-style — `var`, named functions, string concat.
+- Decent frontend (`decent/src/modules/**`): old-style — `var`, named functions, string concat.
 - Don't refactor style as a side-effect of feature work.  File style is load-bearing.
 
 ### When Ev says "go"
@@ -102,11 +102,12 @@ Otherwise: proceed.
 | Path | What lives there |
 |---|---|
 | `plugins/` | Server-side SSB plugins (decent-ui, git-server) |
-| `decent/modules_core/` | Low-level plumbing: SSB connection, message confirm, blob URLs, screen routing |
-| `decent/modules_basic/` | All UI components: avatar, feed, post, profile, follow, etc. |
-| `decent/modules_extra/` | Optional/experimental modules |
+| `decent/src/modules/core/` | Low-level plumbing: SSB connection, message confirm, blob URLs, screen routing |
+| `decent/src/modules/ui/` | Main UI components: avatar, feed, post, profile, follow, etc. |
+| `decent/src/modules/git/` | Git and forge-related UI modules |
+| `decent/src/modules/extras/` | Optional and experimental UI modules |
 | `decent/build/` | Generated — do not edit by hand |
-| `decent/style.css` | All CSS (single file, no preprocessor) |
+| `decent/src/style.css` | All CSS (single file, no preprocessor) |
 | `test/` | Node.js tape tests |
 
 ## How to run
@@ -133,7 +134,7 @@ The server must be running before the browser app can connect.
 
 The **backend** (`plugins/decent-ui.js`) serves static assets, proxies blobs via
 `/blobs/add` and `/blobs/get/:hash`, and handles git-ssb HTTP requests.  The **frontend**
-(`decent/index.js`) is a plugin system where each module declares `needs`/`gives` keys that
+(`decent/src/main.js`) is a plugin system where each module declares `needs`/`gives` keys that
 are wired together at startup — think dependency injection without a framework.
 
 ## Coding Style & Naming Conventions
@@ -141,7 +142,7 @@ are wired together at startup — think dependency injection without a framework
 - Language: Node.js, CommonJS (`require`, `module.exports`), callback-style APIs and pull-streams.
 - Indentation: 2 spaces, no hard tabs. Prefer single quotes and omit semicolons (match existing files).
 - **Server-side** (`plugins/`, `lib/`, `test/`): use `const`/`let`, arrow functions, template literals.
-- **Decent frontend** (`decent/modules_*/`): use `var`, named functions, and string concatenation —
+- **Decent frontend** (`decent/src/modules/**`): use `var`, named functions, and string concatenation —
   match the existing old-style CommonJS in those files.  Do not mix styles within a module.
 - File and symbol names: camelCase for functions/variables, kebab-case for CLI commands,
   lowerCamelCase JSON/config keys.
@@ -302,7 +303,7 @@ The server returns the blob hash (`&...sha256`) as plain text.  Store the full
 - `'first'` means the first registered implementation wins; `'map'` means all run and
   outputs are merged.
 - After changing a module, rebuild with `npm run build:web`.
-- The module system is in `decent/plugs.js` and wired in `decent/index.js`.
+- The module system is in `decent/src/wire.js` and wired in `decent/src/main.js`.
 
 ### `'map'` vs `'first'` plug types
 
@@ -355,7 +356,7 @@ their own events.  Use this pattern for any future clickable card.
 
 ### Decent frontend uses `var`, not `const`/`let`
 
-All existing modules in `decent/modules_*` use old-style `var` and CommonJS.  Match the
+All existing modules in `decent/src/modules/**` use old-style `var` and CommonJS.  Match the
 surrounding style — do not introduce `const`/`let` or arrow functions into these files.
 
 ---
@@ -421,8 +422,8 @@ sessions:
 - `avatar-image.js` — live avatar img rendering and per-author registry.
 - `about.js` — `message_content` preview for `type:about` messages.
 - `decent-ui.js` (plugin) — HTTP server, blob endpoints, git routes.
-- `decent/style.css` — all CSS; search for the class name.
-- `decent/modules_core/sbot.js` — all SSB RPC wrappers; add new API calls here.
+- `decent/src/style.css` — all CSS; search for the class name.
+- `decent/src/modules/core/sbot.js` — all SSB RPC wrappers; add new API calls here.
 
 ## Security & Configuration Tips
 

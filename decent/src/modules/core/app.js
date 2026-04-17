@@ -9,7 +9,7 @@ module.exports = {
       var hasStylesheet = document.querySelector('link[rel="stylesheet"][href*="style.css"]')
       if (!hasStylesheet) {
         document.head.appendChild(
-          h('style', {'data-decent-style': 'true'}, require('../../../style.css.json'))
+          h('style', {'data-decent-style': 'true'}, require('../../style.css.json'))
         )
       }
 
