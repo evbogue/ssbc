@@ -1,7 +1,7 @@
 'use strict'
 var h    = require('hyperscript')
 var pull = require('pull-stream')
-var Scroller = require('../scroller')
+var Scroller = require('../../scroller')
 
 exports.needs = {
   message_render:      'first',

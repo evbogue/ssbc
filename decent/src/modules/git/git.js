@@ -10,7 +10,7 @@ var getAvatar = require('ssb-avatar')
 var KVGraph = require('kvgraph')
 var mergeRepo = require('ssb-git/merge')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var message_link = plugs.first(exports.message_link = [])
 //var message_confirm = plugs.first(exports.message_confirm = [])
 //var message_compose = plugs.first(exports.message_compose = [])
@@ -38,7 +38,7 @@ exports.gives = {
 }
 
 
-var self_id = require('../keys').id
+var self_id = require('../../keys').id
 
 function shortRefName(ref) {
   return ref.replace(/^refs\/(heads|tags)\//, '')

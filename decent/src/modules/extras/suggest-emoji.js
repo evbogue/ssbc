@@ -1,4 +1,4 @@
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var emoji_url = plugs.first(exports.emoji_url = [])
 //var emoji_names = plugs.first(exports.emoji_names = [])
 

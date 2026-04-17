@@ -3,7 +3,8 @@ if (typeof process !== 'undefined' && process.env)
 
 require('depject')(
   // from more specialized to more general
-  require('../modules_extra'),
+  require('./modules/git'),
+  require('./modules/extras'),
   require('./modules/ui'),
   require('./modules/core')
 ).app[0]()

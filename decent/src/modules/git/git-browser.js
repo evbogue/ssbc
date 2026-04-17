@@ -2,8 +2,8 @@
 var h         = require('hyperscript')
 var pull      = require('pull-stream')
 var human     = require('human-time')
-var highlight = require('../highlight')
-var selfId    = require('../keys').id
+var highlight = require('../../highlight')
+var selfId    = require('../../keys').id
 
 exports.needs = {
   markdown:            'first',

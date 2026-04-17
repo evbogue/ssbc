@@ -1,10 +1,10 @@
 'use strict'
 var h = require('hyperscript')
-var u = require('../util')
+var u = require('../../util')
 var pull = require('pull-stream')
-var Scroller = require('../scroller')
+var Scroller = require('../../scroller')
 var paramap = require('pull-paramap')
-var plugs = require('../plugs')
+var plugs = require('../../wire')
 var cont = require('cont')
 var ref = require('ssb-ref')
 
@@ -135,7 +135,7 @@ exports.create = function (api) {
         var ids = {}
         var oldest
 
-        var id = require('../keys').id
+        var id = require('../../keys').id
         ids[id] = true
         getFirstMessage(id, function (err, msg) {
           if (err && err !== true) return console.error(err)

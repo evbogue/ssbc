@@ -1,12 +1,12 @@
 var h = require('hyperscript')
-var u = require('../util')
+var u = require('../../util')
 var pull = require('pull-stream')
-var Scroller = require('../scroller')
+var Scroller = require('../../scroller')
 var keys
-try { keys = require('../keys') } catch (_) {}
+try { keys = require('../../keys') } catch (_) {}
 var BROWSER_SECRET_KEY = 'decent/.ssb/secret'
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 // var message_render = plugs.first(exports.message_render = [])
 // var message_compose = plugs.first(exports.message_compose = [])
 // var sbot_log = plugs.first(exports.sbot_log = [])

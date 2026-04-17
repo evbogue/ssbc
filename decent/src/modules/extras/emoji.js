@@ -1,7 +1,7 @@
 var emojis = require('emoji-named-characters')
 var emojiNames = Object.keys(emojis)
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var blob_url = plugs.first(exports.blob_url = [])
 //
 
