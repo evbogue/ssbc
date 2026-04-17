@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "node bin start",
-    "build:web": "node decent/scripts/style.js && mkdir -p decent/build && browserify decent/index.js | indexhtmlify --title \"Decent SSB\" > decent/build/index.html && node decent/scripts/postprocess-index.js",
+    "build:web": "node decent/scripts/style.js && mkdir -p decent/build && browserify decent/src/main.js | indexhtmlify --title \"Decent SSB\" > decent/build/index.html && node decent/scripts/postprocess-index.js",
     "prepublishOnly": "npm test",
     "test": "set -e; for t in test/*.js; do echo TEST $t; node $t; done",
     "test:pretty": "npm run test | tap-spec",
