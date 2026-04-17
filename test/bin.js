@@ -25,7 +25,8 @@ function ssbServer(t, argv, opts) {
   opts = opts || {}
   argv = argv.slice()
 
-  if (!argv.some((arg) => /^--decent\.port(?:=|$)/.test(arg)))
+  if (!argv.some((arg) => /^--decent\.port(?:=|$)/.test(arg)) &&
+      !argv.some((arg) => /^--ws\.port(?:=|$)/.test(arg)))
     argv.push('--decent.port=0')
 
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
@@ -187,6 +188,53 @@ test('ssbServer should have websockets and http server by default', (t) => {
         t.equal(feed.id[0], '@', 'feed.id has @ sigil')
         end()
       })
+    })
+  })
+})
+
+test('decent and websockets share one internal port', (t) => {
+  const p    = '/tmp/ssbServer_shared_port_' + Date.now()
+  const caps = crypto.randomBytes(32).toString('base64')
+  const end  = ssbServer(t, [
+    'start',
+    '--host=127.0.0.1',
+    '--port=9001',
+    '--ws.port=9002',
+    '--path', p,
+    '--caps.shs', caps
+  ])
+
+  try_often(10, (cb) => {
+    exec([
+      join(__dirname, '../bin.js'),
+      'address',
+      'device',
+      '--',
+      '--host=127.0.0.1',
+      '--port=9001',
+      '--ws.port=9002',
+      '--path', p,
+      '--caps.shs', caps
+    ].join(' '), {
+      env: Object.assign({}, process.env, { ssb_appname: 'test' })
+    }, (err, stdout) => {
+      if (err) return cb(err)
+      cb(null, JSON.parse(stdout))
+    })
+  }, (err, addr) => {
+    t.error(err, 'ssb-server public address succeeds eventually')
+    if (err) return end()
+
+    const remotes = ma.decode(addr)
+    const ws_remotes = remotes.filter((a) => a.find((c) => c.name === 'ws'))
+    t.equal(ws_remotes.length, 1, 'has one ws remote')
+
+    const remote = ma.encode([ws_remotes[0]])
+    t.ok(remote.indexOf('9002') > 0, 'ws address uses the shared http port')
+
+    connect(9002, '127.0.0.1', (connectErr) => {
+      t.error(connectErr, 'shared decent/ws port is listening')
+      end()
     })
   })
 })

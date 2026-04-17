@@ -81,6 +81,51 @@ function requestIsForwarded(req) {
   ))
 }
 
+function pickSharedWsExternal(wsIncoming) {
+  if (!Array.isArray(wsIncoming)) return null
+
+  for (const conf of wsIncoming) {
+    if (conf && typeof conf.external === 'string' && conf.external)
+      return conf.external
+  }
+
+  for (const conf of wsIncoming) {
+    if (!conf || typeof conf.host !== 'string' || !conf.host) continue
+    const scope = Array.isArray(conf.scope) ? conf.scope : [conf.scope]
+    if (scope.indexOf('public') !== -1) return conf.host
+  }
+
+  return null
+}
+
+function attachWsToServer(config, server, port) {
+  if (!config || config.ws === false) return
+
+  const wsIncoming = config.connections &&
+    config.connections.incoming &&
+    Array.isArray(config.connections.incoming.ws)
+    ? config.connections.incoming.ws
+    : []
+
+  const first = wsIncoming[0] || {}
+  const shared = {
+    scope: ['device', 'local', 'public'],
+    transform: first.transform || 'shs',
+    port,
+    server
+  }
+  const external = pickSharedWsExternal(wsIncoming)
+  if (external) shared.external = external
+
+  if (!config.connections) config.connections = {}
+  if (!config.connections.incoming) config.connections.incoming = {}
+  config.connections.incoming.ws = [shared]
+
+  if (!config.ws || typeof config.ws !== 'object') config.ws = {}
+  config.ws.port = port
+  config.ws.server = server
+}
+
 exports.name = 'decent-ui'
 exports.version = '1.0.0'
 exports.manifest = {}
@@ -89,9 +134,18 @@ exports.init = function (sbot, config) {
   const decentDir = path.join(__dirname, '..', 'decent', 'build')
   const docsDir   = path.join(__dirname, '..', 'docs')
   const cfg    = (config && config.decent) || {}
-  const port   = typeof cfg.port === 'number' ? cfg.port : DEFAULT_PORT
+  const wsCfg  = (config && config.ws) || {}
+  const port   = typeof cfg.port === 'number'
+    ? cfg.port
+    : typeof wsCfg.port === 'number'
+      ? wsCfg.port
+      : DEFAULT_PORT
   const host   = typeof cfg.host === 'string' ? cfg.host : DEFAULT_HOST
   let styleHref = '/style.css'
+  const wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
+  let wsHost   = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
+  const wsRemote = typeof cfg.wsRemote === 'string' ? cfg.wsRemote : null
+  let loggedRemote = false
 
   try {
     const builtStylePath = path.join(decentDir, 'style.css')
@@ -104,11 +158,6 @@ exports.init = function (sbot, config) {
       styleHref = '/style.css?v=' + fallbackStat.mtimeMs
     } catch (_) {}
   }
-  const wsCfg  = (config && config.ws) || {}
-  const wsPort = typeof wsCfg.port === 'number' ? wsCfg.port : 8989
-  let wsHost   = typeof cfg.wsHost === 'string' ? cfg.wsHost : null
-  const wsRemote = typeof cfg.wsRemote === 'string' ? cfg.wsRemote : null
-  let loggedRemote = false
 
   console.log('decent-ui config:', JSON.stringify(cfg))
 
@@ -310,6 +359,7 @@ exports.init = function (sbot, config) {
   }
 
   const server = http.createServer(handleRequest)
+  attachWsToServer(config, server, port)
 
   server.on('error', (err) => {
     console.error('decent-ui server error:', err.message || err)
