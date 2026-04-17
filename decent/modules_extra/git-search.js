@@ -41,13 +41,9 @@ exports.create = function (api) {
 
       var query = decodeURIComponent(route.slice(12)).toLowerCase()
       var results = h('div.git-forge-list')
-      var empty = h('div.git-forge-list-empty', 'Searching for "' + query + '"...')
+      var empty = h('div.git-forge-list-empty', '')
 
       var wrapper = h('div.scroller__wrapper',
-        h('div.git-forge-header', {style: {padding: '24px 32px'}},
-          h('h2', 'Search Results'),
-          h('p', {style: {color: '#57606a'}}, 'Results for "', h('strong', query), '" across the mesh.')
-        ),
         h('div.git-forge-container',
           results,
           empty
@@ -62,7 +58,7 @@ exports.create = function (api) {
           return
         }
         if (!msgs || msgs.length === 0) {
-          results.appendChild(h('div.git-forge-list-empty', 'No repositories or issues found matching "' + query + '".'))
+          results.appendChild(h('div.git-forge-list-empty', 'No results'))
           return
         }
 

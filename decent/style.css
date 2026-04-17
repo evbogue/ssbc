@@ -886,6 +886,22 @@ textarea {
   padding-right: 10px;
 }
 
+.navbar-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px 0 0;
+  flex-shrink: 0;
+}
+
+.navbar-avatar img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
 .navbar .container-fluid {
   display: flex;
   align-items: center;
@@ -924,6 +940,9 @@ textarea {
   float: none;
   margin-left: auto;
   order: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .material-symbols-outlined {
@@ -2715,19 +2734,25 @@ tr:hover .git-diff-add-comment-btn {
 .nav-search {
   border: 1px solid #d0d7de;
   border-radius: 6px;
-  padding: 4px 12px;
-  margin: 8px 16px;
+  padding: 4px 10px;
+  margin: 0 8px 0 0;
   background: #f6f8fa;
   font-size: 0.85em;
-  width: 200px;
-  transition: all 0.2s ease;
+  width: 160px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .nav-search:focus {
   background: #fff;
-  width: 300px;
   outline: none;
   border-color: #0969da;
   box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1);
+}
+
+@media (max-width: 640px) {
+  .nav-search {
+    width: 110px;
+    font-size: 0.8em;
+  }
 }
 

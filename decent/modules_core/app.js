@@ -2,7 +2,7 @@ var plugs = require('../plugs')
 var h = require('hyperscript')
 
 module.exports = {
-  needs: {screen_view: 'first', menu: 'first'},
+  needs: {screen_view: 'first', menu: 'first', avatar_image: 'first'},
   gives: 'app',
   create: function (api) {
     return function () {
@@ -48,10 +48,7 @@ module.exports = {
       var navItems = [
         {route: 'public', label: 'Public', icon: 'newspaper'},
         {route: 'friends', label: 'Friends', icon: 'groups'},
-        {route: selfId, label: 'Profile', icon: 'account_circle'},
         {route: 'private', label: 'Private', icon: 'mail_lock'},
-        {route: 'code-explore', label: 'Explore', icon: 'explore'},
-        {route: 'repos', label: 'Repos', icon: 'account_tree'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
         {route: 'key', label: 'Keys', icon: 'vpn_key'}
       ]
@@ -72,7 +69,7 @@ module.exports = {
       }))
 
       var searchInput = h('input.nav-search', {
-        placeholder: 'Search mesh...',
+        placeholder: 'Search',
         onkeydown: function (e) {
           if (e.keyCode === 13) { // Enter
             window.location.hash = '#code-search/' + encodeURIComponent(this.value)
@@ -81,13 +78,18 @@ module.exports = {
         }
       })
 
+      var profileLink = h('a.navbar-avatar', {
+        href: '#' + selfId,
+        title: 'Profile',
+        'aria-label': 'Profile'
+      }, api.avatar_image(selfId, 'thumbnail'))
+
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            h('a.brand', {href: '#/'}, 'Decent'),
-            searchInput,
+            profileLink,
             nav,
-            h('div.pull-right', api.menu())
+            h('div.pull-right', searchInput, api.menu())
           )
         )
       )
