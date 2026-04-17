@@ -73,6 +73,14 @@ function formatHostForUrl(host) {
   return host.indexOf(':') !== -1 ? '[' + host + ']' : host
 }
 
+function requestIsForwarded(req) {
+  return !!(req && req.headers && (
+    req.headers['x-forwarded-host'] ||
+    req.headers['x-forwarded-proto'] ||
+    req.headers['x-forwarded-port']
+  ))
+}
+
 exports.name = 'decent-ui'
 exports.version = '1.0.0'
 exports.manifest = {}
@@ -137,6 +145,12 @@ exports.init = function (sbot, config) {
       const explicitRemote = wsRemote + '~shs:' + key
       if (!loggedRemote) { loggedRemote = true; console.log('decent-ui ws remote:', explicitRemote) }
       return explicitRemote
+    }
+
+    if (requestIsForwarded(req)) {
+      const sameOriginRemote = wsProto + '://' + formatHostForUrl(baseHost) + '~shs:' + key
+      if (!loggedRemote) { loggedRemote = true; console.log('decent-ui ws remote:', sameOriginRemote) }
+      return sameOriginRemote
     }
 
     const wsTarget  = wsHost || baseHost
