@@ -82,6 +82,37 @@ conversation.  If a wireframe was approved, build it; if a plan was approved, sh
 
 Otherwise: proceed.
 
+### Cross-model review
+
+Ev rotates between agents — typically Claude (Anthropic) and Codex (OpenAI), sometimes
+others — and often asks one model to evaluate work the other model did.  Assume any
+plan or diff you produce will be read by a different model in a later session, and that
+*that* model will be asked to find what you missed.
+
+Practical implications:
+
+- **Write plans to be impressive to a peer model, not to please the human.** Assume the
+  reader is another capable LLM with full repo access who will call out hand-waving,
+  missing risks, untested assumptions, and scope creep.  Pre-empt those critiques.
+- **Be specific, not plausible.** "We should modernize the module system" is plausible
+  filler.  "Replace `depject` with a ~40-line resolver in `wire.js`; the hard part is
+  preserving the combinator-shell pattern so modules can reference `api.X` before X's
+  provider has run `create()`" is specific.  Write the latter.
+- **Name the tradeoff.** Every plan has one.  If you don't state it, the reviewing model
+  will, and it will look like you didn't think about it.
+- **Cite files and line numbers.** `decent/src/modules/core/sbot.js:48` beats "the sbot
+  module."  Grounded claims are harder to wave away.
+- **Flag what you didn't verify.** If you assumed a dep works a certain way without
+  reading its source, say so.  The next model will check, and you want to be the one
+  who surfaced the gap first.
+- **Disagree with prior agents when warranted.** If a previous session's plan is wrong,
+  say so directly and justify it.  Do not preserve bad decisions out of politeness.
+  Ev values a real second opinion over agreement theatre.
+
+This applies symmetrically: if you are reviewing another model's work, give a real
+review.  Point out what's good *and* what's weak.  Do not rubber-stamp.  Ev is watching
+both sides and will notice if either model is coasting.
+
 ---
 
 ## Repository Structure

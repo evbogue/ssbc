@@ -1,9 +1,56 @@
 # Work Order: Decent Frontend Modernization
 
-**Status:** In progress
-**Owner:** Whoever picks this up next
+**Status:** Phase 1 done. Phases 2–4 **deferred** (not cancelled).
+**Owner:** Whoever picks this up next, if ever.
 **Scope:** `decent/` only.  Server code (`bin.js`, `plugins/`, `lib/`, `test/`) is out of scope.
 **Prerequisites:** Familiarity with `AGENTS.md` at repo root.  Read it first.
+
+## Deferral decision (2026-04-17)
+
+Phase 1 landed the legibility wins that actually mattered: one `package.json`, one
+lockfile, a tidy `decent/src/` tree, dead Patchbay scripts removed, `decent/README.md`
+rewritten to match reality.  A casual observer opening the repo today can orient
+themselves in minutes.
+
+What's left — CommonJS, `var`, depject, browserify — is ugly but stable.  It works,
+tests pass, builds in seconds, and it is **not actively blocking any feature work.**
+The remaining modernization is aesthetic, not structural.
+
+The right time to start Phases 2–4 is when there is a **concrete pain point** that one
+of them would unblock.  Examples:
+
+- "I can't build feature X because depject's wiring hides a needed piece of state."
+- "Dep Y won't load through browserify and I need it."
+- "A new contributor bounced off `var` + callbacks and gave up."
+
+Absent such a pain point, the phases below are deferred.  Do not start them as a ritual.
+The plans remain in this document so a future session can pick them up with full context
+when a real reason emerges.
+
+### The "no build tool" idea — also deferred
+
+A tempting alternative to Phase 3 (esbuild bundler) is to ship Decent's own source as
+raw ES modules loaded by the browser, and build a `vendor.js` ESM bundle of npm deps
+only.  This would preserve the current single-server deploy while removing the rebuild
+step from the everyday edit loop — edit a file, reload the browser, see the change; no
+watcher, no bundler in the dev inner loop.
+
+Why this is attractive: Decent's own code is the part that changes daily; the npm deps
+change rarely.  Rebuilding the whole bundle on every source save is mostly redundant.
+
+Why it is deferred alongside Phase 3:
+
+- It still requires esbuild (or equivalent) for the `vendor.js` bundle, because the SSB
+  npm dep tree is deeply CommonJS and needs Buffer/process/crypto shims that only a
+  bundler provides.  So it is "fewer builds," not "no builds."
+- Splitting source/vendor means serving a directory instead of a single inlined HTML
+  file.  Currently the built artifact is one file you can host anywhere.  Moving to a
+  directory is fine for anyone running a pub but is a small regression in deployability.
+- It is only worth the rewrite if day-to-day iteration speed is currently painful.
+  Today's build is ~2 seconds.  It is not painful.
+
+**If** Phase 3 is ever picked up, re-read this note — the buildless hybrid is probably
+the better target than a classic single-bundle rebuild.
 
 ---
 
@@ -294,9 +341,14 @@ build and tests pass.
 **Goal:** convert `decent/src/**/*.js` from CommonJS to ES modules.  Replace depject's
 directory-scan wiring with an explicit import graph in `wire.js`.  `var` → `const`/`let`.
 
-**Status:** Not started
+**Status:** **Deferred.**  See the deferral note at the top of this document.
 
-**Start only after Phase 1 is merged.**
+During discussion it became clear Phase 2 is better split into two sub-phases:
+**Phase 2a** (ESM syntax conversion only, keep depject) and **Phase 2b** (replace
+depject with a hand-rolled resolver in `wire.js`).  That split is preserved below so a
+future session can pick up the smaller sub-phase first.
+
+**Start only after Phase 1 is merged AND a concrete pain point justifies the work.**
 
 #### Decision to make before starting
 
@@ -356,9 +408,14 @@ friends, private, thread view, profile edit, avatar upload, git repo browse, sea
 **Goal:** replace `browserify` + `indexhtmlify` + `postprocess-index.js` with one esbuild
 config.
 
-**Status:** Not started
+**Status:** **Deferred.**  See the deferral note at the top of this document.
 
-**Start only after Phase 2 is merged.**
+If Phase 3 is ever picked up, **also evaluate the "no build tool" hybrid** described at
+the top: ship Decent's own source as raw ESM in the browser and use esbuild only to
+produce a `vendor.js` bundle of npm deps.  That target is likely better than the
+classic single-bundle rebuild.
+
+**Start only after Phase 2 is merged AND a concrete pain point justifies the work.**
 
 #### Plan
 
