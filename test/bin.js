@@ -23,6 +23,11 @@ function ssbServer(t, argv, opts) {
   count++
   exited = false
   opts = opts || {}
+  argv = argv.slice()
+
+  if (!argv.some((arg) => /^--decent\.port(?:=|$)/.test(arg)))
+    argv.push('--decent.port=0')
+
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 
   const sh = spawn(

@@ -410,7 +410,7 @@ not try to cram the DOM rewrite into this doc.
 - [ ] `ls decent/` shows `src/`, `build/`, `scripts/` (or empty), `README.md`, `LICENSE`.
       No stray files at `decent/` root.
 - [ ] One `package.json` at repo root.  No `decent/package.json`.
-- [ ] One lockfile at repo root (`package-lock.json`).  No `decent/yarn.lock`.
+- [ ] One lockfile at repo root (`npm-shrinkwrap.json`).  No `decent/yarn.lock`.
 - [ ] `npm install` at repo root installs everything.
 - [ ] `npm run build:web` produces `decent/build/index.html`.
 - [ ] `npm test` passes with 0 failures.
@@ -435,7 +435,7 @@ not try to cram the DOM rewrite into this doc.
 - **Ev pushes changes mid-session** → `git pull --rebase`, resolve any conflicts, keep
   going.
 - **A module uses a pattern you don't understand** → read the other modules that `need`
-  or `give` the same key; the wiring tells you what's expected.  Also read `plugs.js`
+  or `give` the same key; the wiring tells you what's expected.  Also read `src/wire.js`
   for what `'first'` and `'map'` mean.
 
 ## When you're done with a phase
