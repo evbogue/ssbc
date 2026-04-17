@@ -1,4 +1,4 @@
-var plugs = require('../plugs')
+var plugs = require('../../wire')
 var h = require('hyperscript')
 
 module.exports = {
@@ -9,7 +9,7 @@ module.exports = {
       var hasStylesheet = document.querySelector('link[rel="stylesheet"][href*="style.css"]')
       if (!hasStylesheet) {
         document.head.appendChild(
-          h('style', {'data-decent-style': 'true'}, require('../style.css.json'))
+          h('style', {'data-decent-style': 'true'}, require('../../../style.css.json'))
         )
       }
 
@@ -44,7 +44,7 @@ module.exports = {
         setTitle(route, view)
       }
 
-      var selfId = require('../keys').id
+      var selfId = require('../../keys').id
       var navItems = [
         {route: 'public', label: 'Public', icon: 'newspaper'},
         {route: 'friends', label: 'Friends', icon: 'groups'},

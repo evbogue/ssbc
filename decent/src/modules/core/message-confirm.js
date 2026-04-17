@@ -1,10 +1,10 @@
 var lightbox = require('hyperlightbox')
 var h = require('hyperscript')
-var u = require('../util')
-var self_id = require('../keys').id
+var u = require('../../util')
+var self_id = require('../../keys').id
 //publish or add
 
-var plugs = require('../plugs')
+var plugs = require('../../wire')
 
 exports.needs = {
   publish: 'first', message_content: 'first', avatar: 'first',

@@ -1,4 +1,4 @@
-var config = require('../config')
+var config = require('../../config')
 
 module.exports = {
   gives: 'blobs_url',
@@ -8,4 +8,3 @@ module.exports = {
     }
   }
 }
-

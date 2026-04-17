@@ -6,7 +6,7 @@ const ref          = require('ssb-ref')
 const Reconnect    = require('pull-reconnect')
 const createClient = require('ssb-client')
 const createConfig = require('ssb-config/inject')
-const keys         = require('../keys')
+const keys         = require('../../keys')
 
 const config = createConfig(process.env.ssb_appname)
 
@@ -45,8 +45,8 @@ module.exports = {
       }
 
       createClient(keys, {
-        manifest: require('../manifest.json'),
-        remote:   require('../config')().remote,
+        manifest: require('../../../manifest.json'),
+        remote:   require('../../config')().remote,
         caps:     config.caps
       }, function (err, _sbot) {
         if (err) return notify(err)

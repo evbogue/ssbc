@@ -4,7 +4,7 @@
 
 //used by tabs and split views
 
-var sv = require('../plugs').first(exports.screen_view = [])
+var sv = require('../../wire').first(exports.screen_view = [])
 exports._screen_view = function (value) {
   return sv(value)
 }

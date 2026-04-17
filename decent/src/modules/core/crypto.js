@@ -1,6 +1,6 @@
 'use strict'
 var ref     = require('ssb-ref')
-var keys    = require('../keys')
+var keys    = require('../../keys')
 var ssbKeys = require('ssb-keys')
 var ssbVal  = require('ssb-validate')
 var config  = require('ssb-config/inject')(process.env.ssb_appname)

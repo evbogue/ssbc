@@ -5,5 +5,5 @@ require('depject')(
   // from more specialized to more general
   require('../modules_extra'),
   require('../modules_basic'),
-  require('../modules_core')
+  require('./modules/core')
 ).app[0]()
