@@ -1,5 +1,5 @@
 
-var signifier = require('../plugs').first(exports.signifier = [])
+var signifier = require('../../wire').first(exports.signifier = [])
 var h = require('hyperscript')
 
 exports.needs = { signifier: 'first' }

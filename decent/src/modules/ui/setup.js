@@ -2,7 +2,7 @@
 var h = require('hyperscript')
 var pull = require('pull-stream')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //
 //var avatar_edit = plugs.first(exports.avatar_edit = [])
 //var invite_parse = plugs.first(exports.invite_parse = [])
@@ -132,7 +132,7 @@ exports.create = function (api) {
 
     if(path !== 'setup') return
 
-    var id = require('../keys').id
+    var id = require('../../keys').id
 
     //set up an avatar
 
@@ -152,7 +152,7 @@ exports.create = function (api) {
       //show realtime changes in your followers, especially for local.
 
       exports.progress_bar(),
-      exports.setup_joined_network(require('../keys').id)
+      exports.setup_joined_network(require('../../keys').id)
     ))
   }
 

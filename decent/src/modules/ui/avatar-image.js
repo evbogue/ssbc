@@ -7,11 +7,11 @@ var visualize = require('visualize-buffer')
 
 var pull = require('pull-stream')
 
-var self_id = require('../keys').id
+var self_id = require('../../keys').id
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var sbot_query = plugs.first(exports.sbot_query = [])
-//var blob_url = require('../plugs').first(exports.blob_url = [])
+//var blob_url = require('../../wire').first(exports.blob_url = [])
 //
 
 exports.needs = {

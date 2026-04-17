@@ -4,6 +4,6 @@ if (typeof process !== 'undefined' && process.env)
 require('depject')(
   // from more specialized to more general
   require('../modules_extra'),
-  require('../modules_basic'),
+  require('./modules/ui'),
   require('./modules/core')
 ).app[0]()

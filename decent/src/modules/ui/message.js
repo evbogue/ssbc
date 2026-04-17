@@ -1,8 +1,8 @@
 var h = require('hyperscript')
-var u = require('../util')
+var u = require('../../util')
 var pull = require('pull-stream')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //
 //var message_content = plugs.first(exports.message_content = [])
 //var message_content_mini = plugs.first(exports.message_content_mini = [])

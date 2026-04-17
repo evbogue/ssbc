@@ -1,7 +1,7 @@
 var h = require('hyperscript')
 var ref = require('ssb-ref')
 
-//var first = require('../plugs').first
+//var first = require('../../wire').first
 //var sbot_get = first(exports.sbot_get = [])
 //var message_name = first(exports.message_name = [])
 

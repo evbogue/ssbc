@@ -1,12 +1,12 @@
 'use strict'
 var ref = require('ssb-ref')
 var ssbClient = require('ssb-client')
-var id = require('../keys').id
+var id = require('../../keys').id
 var h = require('hyperscript')
 
 var Progress = require('hyperprogress')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var sbot_publish = plugs.first(exports.sbot_publish = [])
 //var sbot_gossip_connect = plugs.first(exports.sbot_gossip_connect = [])
 //var follower_of = plugs.first(exports.follower_of = [])

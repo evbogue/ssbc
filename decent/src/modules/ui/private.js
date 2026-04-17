@@ -1,10 +1,10 @@
 'use strict'
 var h = require('hyperscript')
-var u = require('../util')
+var u = require('../../util')
 var pull = require('pull-stream')
-var Scroller = require('../scroller')
+var Scroller = require('../../scroller')
 var ref = require('ssb-ref')
-var keys = require('../keys')
+var keys = require('../../keys')
 
 function map(ary, iter) {
   if(Array.isArray(ary)) return ary.map(iter)

@@ -1,12 +1,12 @@
 'use strict'
 var h = require('hyperscript')
-var selfId = require('../keys').id
+var selfId = require('../../keys').id
 var suggest = require('suggest-box')
 var mentions = require('ssb-mentions')
 var lightbox = require('hyperlightbox')
 var cont = require('cont')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var suggest_mentions= plugs.asyncConcat(exports.suggest_mentions = [])
 //var publish         = plugs.first(exports.sbot_publish = [])
 //var message_content = plugs.first(exports.message_content = [])
@@ -298,7 +298,7 @@ exports.create = function (api) {
       else delete nextMeta.channel
 
       if (msg.value.private) {
-        var selfId = require('../keys').id
+        var selfId = require('../../keys').id
         var recps = content.recps
         if (recps) nextMeta.recps = recps
         else nextMeta.recps = [msg.value.author, selfId]

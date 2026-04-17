@@ -4,7 +4,7 @@ var pull          = require('pull-stream')
 var hyperfile     = require('hyperfile')
 var hypercrop     = require('hypercrop')
 var hyperlightbox = require('hyperlightbox')
-var self_id       = require('../keys').id
+var self_id       = require('../../keys').id
 
 exports.needs = {
   avatar_image:      'first',

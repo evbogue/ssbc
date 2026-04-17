@@ -3,9 +3,9 @@ var Cat = require('pull-cat')
 var sort = require('ssb-sort')
 var ref = require('ssb-ref')
 var h = require('hyperscript')
-var u = require('../util')
-var Scroller = require('../scroller')
-var self_id = require('../keys').id
+var u = require('../../util')
+var Scroller = require('../../scroller')
+var self_id = require('../../keys').id
 
 function once (cont) {
   var ended = false
@@ -21,7 +21,7 @@ function once (cont) {
   }
 }
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //
 //var message_render = plugs.first(exports.message_render = [])
 //var message_name = plugs.first(exports.message_name = [])

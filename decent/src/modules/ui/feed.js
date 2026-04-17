@@ -1,10 +1,10 @@
 var ref = require('ssb-ref')
-var Scroller = require('../scroller')
+var Scroller = require('../../scroller')
 var h = require('hyperscript')
 var pull = require('pull-stream')
-var u = require('../util')
+var u = require('../../util')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var sbot_user_feed = plugs.first(exports.sbot_user_feed = [])
 //var message_render = plugs.first(exports.message_render = [])
 //var avatar_profile = plugs.first(exports.avatar_profile = [])

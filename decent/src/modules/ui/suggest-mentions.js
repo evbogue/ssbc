@@ -3,10 +3,10 @@ function isImage (filename) {
   return /\.(gif|jpg|png|svg)$/i.test(filename)
 }
 
-//var sbot_links2 = require('../plugs').first(exports.sbot_links2 = [])
-//var blob_url = require('../plugs').first(exports.blob_url = [])
-//var signified = require('../plugs').first(exports.signified = [])
-//var builtin_tabs = require('../plugs').map(exports.builtin_tabs = [])
+//var sbot_links2 = require('../../wire').first(exports.sbot_links2 = [])
+//var blob_url = require('../../wire').first(exports.blob_url = [])
+//var signified = require('../../wire').first(exports.signified = [])
+//var builtin_tabs = require('../../wire').map(exports.builtin_tabs = [])
 
 exports.needs = {
   sbot_links2: 'first',

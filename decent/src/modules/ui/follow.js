@@ -1,8 +1,8 @@
 var h = require('hyperscript')
-var u = require('../util')
+var u = require('../../util')
 var pull = require('pull-stream')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var avatar = plugs.first(exports.avatar = [])
 //var avatar_name = plugs.first(exports.avatar_name = [])
 //var avatar_link = plugs.first(exports.avatar_link = [])
@@ -59,7 +59,7 @@ exports.create = function (api) {
     var state = h('label')
     var label = h('span')
 
-    var self_id = require('../keys').id
+    var self_id = require('../../keys').id
     api.follower_of(self_id, id, function (err, f) {
       you_follow = f
       update()

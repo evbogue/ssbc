@@ -1,9 +1,9 @@
 var h = require('hyperscript')
 var pull = require('pull-stream')
-var Scroller = require('../scroller')
-var keys = require('../keys')
+var Scroller = require('../../scroller')
+var keys = require('../../keys')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var message_render = plugs.first(exports.message_render = [])
 //var message_compose = plugs.first(exports.message_compose = [])
 //var sbot_log = plugs.first(exports.sbot_log = [])

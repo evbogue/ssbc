@@ -1,7 +1,7 @@
 'use strict'
 var h = require('hyperscript')
 var pull = require('pull-stream')
-var selfId = require('../keys').id
+var selfId = require('../../keys').id
 
 exports.needs = {
   avatar_name:     'first',

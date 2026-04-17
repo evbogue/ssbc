@@ -4,7 +4,7 @@ var h = require('hyperscript')
 var suggest = require('suggest-box')
 var pull = require('pull-stream')
 
-//var plugs = require('../plugs')
+//var plugs = require('../../wire')
 //var sbot_query = plugs.first(exports.sbot_query = [])
 //var sbot_links2 = plugs.first(exports.sbot_links2 = [])
 //var suggest_search = plugs.asyncConcat(exports.suggest_search = [])
