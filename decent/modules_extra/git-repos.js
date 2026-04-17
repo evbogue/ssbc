@@ -6,7 +6,6 @@ var human = require('human-time')
 exports.needs = {
   sbot_messagesByType: 'first',
   sbot_links:          'first',
-  sbot_publish:        'first',
   avatar_name:         'first',
   avatar_image:        'first',
   message_compose:     'first'

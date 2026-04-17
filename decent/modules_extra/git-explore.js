@@ -83,7 +83,9 @@ exports.create = function (api) {
 
       // Fetch open issues/PRs
       pull(
-        api.sbot_messagesByType({type: 'issue', reverse: true, limit: 10}),
+        api.sbot_messagesByType({type: 'issue', reverse: true, limit: 50}),
+        pull.filter(function (msg) { return msg.value.content.open !== false }),
+        pull.take(10),
         pull.drain(function (msg) {
           var c = msg.value.content
           openWork.appendChild(h('div.git-forge-list-item',

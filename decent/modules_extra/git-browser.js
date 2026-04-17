@@ -232,11 +232,11 @@ exports.create = function (api) {
 
       var refs     = (data && data.refs)    || []
       var defaultRef = 'HEAD'
-      var symHead = (data && data.symrefs && data.symrefs.find(r => r.name === 'HEAD'))
+      var symHead = (data && data.symrefs && data.symrefs.filter(function (r) { return r.name === 'HEAD' })[0])
       if (symHead && symHead.ref) {
         defaultRef = symHead.ref.replace(/^refs\/heads\//, '')
       } else {
-        var firstHead = refs.find(r => /^refs\/heads\/(.+)$/.test(r.name))
+        var firstHead = refs.filter(function (r) { return /^refs\/heads\/(.+)$/.test(r.name) })[0]
         if (firstHead) defaultRef = firstHead.name.replace(/^refs\/heads\//, '')
       }
 
@@ -623,13 +623,14 @@ exports.create = function (api) {
         ))
       }, function (err) {
         if (err) console.error(err)
-        if (count === 0) list.innerHTML = h('div.git-forge-list-empty', 'No ' + (isPR ? 'pull requests' : 'issues') + ' found.')
+        if (count === 0) { list.innerHTML = ''; list.appendChild(h('div.git-forge-list-empty', 'No ' + (isPR ? 'pull requests' : 'issues') + ' found.')) }
       })
     )
   }
 
   function renderActivityScreen(repoId, container) {
-    container.innerHTML = h('div.git-forge-list-empty', 'Fetching mesh activity…')
+    container.innerHTML = ''
+    container.appendChild(h('div.git-forge-list-empty', 'Fetching mesh activity…'))
     
     var count = 0
     pull(
@@ -663,7 +664,7 @@ exports.create = function (api) {
         ))
       }, function (err) {
         if (err) console.error(err)
-        if (count === 0) container.innerHTML = h('div.git-forge-list-empty', 'No mesh activity recorded for this repo yet.')
+        if (count === 0) { container.innerHTML = ''; container.appendChild(h('div.git-forge-list-empty', 'No mesh activity recorded for this repo yet.')) }
       })
     )
   }
@@ -704,8 +705,8 @@ exports.create = function (api) {
       var parts = route.split('/')
       if (parts.length < 2) return
 
-      var repoId
-      try { repoId = decodeURIComponent(parts[1]) } catch (_) { return }
+      var repoId = parts[1]
+      if (!repoId) return
 
       var sub = parts[2]
       var content = h('div')
