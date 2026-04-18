@@ -159,6 +159,9 @@ For repo-current documentation, start with:
 
 - `docs/overview.md`
 - `docs/architecture.md`
+- `docs/cli.md`
+- `docs/api.md`
+- `docs/frontend.md`
 
 Archived scuttlebot reference docs are also served locally at `/docs`, but the files in `docs/` are the primary source of truth for how this repository works now.
 
