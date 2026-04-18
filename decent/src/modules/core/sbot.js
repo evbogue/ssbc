@@ -37,6 +37,7 @@ module.exports = {
 
   create: function (api) {
     let sbot = null
+    const remote = require('../../config')().remote
 
     const rec = Reconnect(function (isConn) {
       function notify (value) {
@@ -47,13 +48,18 @@ module.exports = {
       createClient(keys, {
         // muxrpc manifest describing the sbot RPC surface; required at connect time
         manifest: require('../../manifest.json'),
-        remote:   require('../../config')().remote,
+        remote:   remote,
         caps:     config.caps
       }, function (err, _sbot) {
-        if (err) return notify(err)
+        if (err) {
+          console.error('Decent remote connect failed:', remote || '(no remote configured)', err.message || err)
+          return notify(err)
+        }
         sbot = _sbot
+        console.log('Decent remote connected:', remote || '(no remote configured)')
         sbot.on('closed', function () {
           sbot = null
+          console.warn('Decent remote closed:', remote || '(no remote configured)')
           notify(new Error('closed'))
         })
         notify()

@@ -16,7 +16,7 @@ module.exports = {
           return
         }
 
-        dot.classList.add('error')
+        dot.classList.remove('error')
         dot.title = 'Connected'
       },
       menu: function () {
@@ -25,6 +25,5 @@ module.exports = {
     }
   }
 }
-
 
 
