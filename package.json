@@ -1,11 +1,11 @@
 {
-  "name": "ssb-server",
-  "description": "network protocol layer for secure-scuttlebutt",
+  "name": "ssbc",
+  "description": "Secure-Scuttlebot Classic: a modernized SSB server with the Decent web UI and git-over-SSB",
   "version": "16.0.1",
-  "homepage": "https://github.com/ssbc/ssb-server",
+  "homepage": "https://github.com/evbogue/ssbc",
   "repository": {
     "type": "git",
-    "url": "git://github.com/ssbc/ssb-server.git"
+    "url": "git+https://github.com/evbogue/ssbc.git"
   },
   "bin": {
     "sbot": "./bin.js",
@@ -15,7 +15,7 @@
     "node": ">=22.5"
   },
   "scripts": {
-    "start": "node bin start",
+    "start": "node bin.js start",
     "build:web": "node decent/scripts/style.js && mkdir -p decent/build && browserify decent/src/main.js | indexhtmlify --title \"Decent SSB\" > decent/build/index.html && node decent/scripts/postprocess-index.js",
     "sync:scuttlebot-docs": "bash scripts/sync-scuttlebot-docs.sh",
     "prepublishOnly": "npm test",

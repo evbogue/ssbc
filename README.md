@@ -47,7 +47,7 @@ This installs all dependencies and makes the `sbot` / `ssb-server` commands avai
 
 ```bash
 npm start
-# equivalent to: node bin start
+# equivalent to: node bin.js start
 ```
 
 Output:
@@ -62,10 +62,10 @@ Leave this terminal open. Run all other commands in a **separate terminal**.
 ### 2. Use the CLI
 
 ```bash
-node bin whoami          # your public key
-node bin gossip.peers    # connected peers
-node bin help            # list all commands
-node bin help <command>  # detail on a specific command
+node bin.js whoami          # your public key
+node bin.js gossip.peers    # connected peers
+node bin.js help            # list all commands
+node bin.js help <command>  # detail on a specific command
 ```
 
 ### 3. Connect to the Network
@@ -73,14 +73,14 @@ node bin help <command>  # detail on a specific command
 To receive messages from others, accept an invite code from a pub:
 
 ```bash
-node bin invite.accept "PASTE_INVITE_CODE_HERE"
+node bin.js invite.accept "PASTE_INVITE_CODE_HERE"
 ```
 
 ### 4. Create Invites
 
 ```bash
-node bin invite.create 1   # single-use invite
-node bin invite.create 5   # multi-use invite
+node bin.js invite.create 1   # single-use invite
+node bin.js invite.create 5   # multi-use invite
 ```
 
 ### 5. Config overrides
@@ -88,8 +88,8 @@ node bin invite.create 5   # multi-use invite
 Pass config overrides after `--`:
 
 ```bash
-node bin start -- --port 9009 --ws.port 9989
-node bin whoami -- --port 9009
+node bin.js start -- --port 9009 --ws.port 9989
+node bin.js whoami -- --port 9009
 ```
 
 ---
@@ -142,7 +142,7 @@ The server exposes a git smart HTTP remote on the same port as the Decent UI (de
 ### Create a repo
 
 ```bash
-node bin git.create my-project
+node bin.js git.create my-project
 # → "http://127.0.0.1:8888/git/%25<id>.sha256"
 ```
 

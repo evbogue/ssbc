@@ -109,7 +109,7 @@ Typical frontend work looks like:
 ```bash
 npm install
 npm run build:web
-node bin.js start
+npm start
 ```
 
 Then open the UI in the browser and verify behavior there.

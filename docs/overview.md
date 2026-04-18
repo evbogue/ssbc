@@ -83,7 +83,7 @@ These are useful reference material, but they are not the primary source of trut
 
 A normal local run looks like this:
 
-1. start the server with `node bin.js start`
+1. start the server with `npm start` or `node bin.js start`
 2. open Decent in the browser
 3. connect through websocket/browser-safe access
 4. read and publish messages from the local node

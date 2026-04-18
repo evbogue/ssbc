@@ -180,7 +180,7 @@ The server must be running before the browser app can connect.
 - `npm test` – run the full test suite (`node test/*.js`).
 - `npm run test:pretty` – run tests with `tap-spec` output.
 - `npm run coverage` – generate coverage via `nyc` (outputs `coverage/`).
-- `npm start` – run the CLI locally (`node bin start`), equivalent to `ssb-server start`
+- `npm start` – run the CLI locally (`node bin.js start`), equivalent to `ssb-server start`
   when installed globally.
 - `npm run build:web` – rebuild the Decent frontend bundle.
 
