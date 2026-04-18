@@ -706,6 +706,11 @@ exports.create = function (api) {
       if (parts.length < 2) return
 
       var repoId = parts[1]
+      try {
+        repoId = decodeURIComponent(repoId)
+      } catch (err) {
+        return
+      }
       if (!repoId) return
 
       var sub = parts[2]
