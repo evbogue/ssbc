@@ -9,6 +9,30 @@ A Secure Scuttlebutt (SSB) social client called **Decent**, running as a Node.js
 with a browser-based frontend.  The server (`bin.js`, `plugins/`) speaks the SSB protocol;
 the frontend (`decent/`) is a browserified single-page app.
 
+## Project thesis and tone
+
+This repo's thesis is narrow and concrete: `ssbc` is a modern continuation of the
+classic SSB model.  It preserves the useful classic behavior on a modern Node.js stack,
+ships with the Decent web client, and includes git-over-SSB as a real proof of capability.
+
+For README, docs, and in-project copy:
+
+- Prefer defensible claims about the software's current behavior, scope, and goals.
+- Define "classic" in concrete terms like signed feeds, replication, blobs, invites,
+  local data ownership, and familiar `sbot` / `ssb-server` workflows.
+- Treat git-over-SSB as an important demonstration of the model, not as a gimmick.
+- Do **not** turn project docs into manifesto copy, movement rhetoric, or sweeping claims
+  about "solving social media".
+- If a sentence cannot be grounded in the repo, runtime behavior, or explicit project
+  intent, it probably does not belong in the README or docs.
+
+Important boundary:
+
+- Any stronger or more personal claims about SSB, the social web, or the state of the
+  ecosystem may be made by Everett Bogue in his own comments or posts.
+- Those stronger claims should **not** be imported into the README, docs, or project copy
+  unless Ev explicitly asks for that in the current conversation.
+
 ## Development Best Practices
 
 How Ev runs development in this repo.  These rules are not optional — follow them every
