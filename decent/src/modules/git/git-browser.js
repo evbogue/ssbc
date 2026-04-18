@@ -22,6 +22,8 @@ exports.gives = {
 }
 
 exports.create = function (api) {
+  var refsCache = {}
+  var repoNames = {}
 
   function fetchJson(url, cb) {
     var xhr = new XMLHttpRequest()
@@ -47,8 +49,58 @@ exports.create = function (api) {
     return '#' + r
   }
 
+  function shortRefName(ref) {
+    return (ref || '').replace(/^refs\/(heads|tags)\//, '')
+  }
+
+  function getDefaultRef(data) {
+    var refs = (data && data.refs) || []
+    var symHead = (data && data.symrefs && data.symrefs.filter(function (r) {
+      return r.name === 'HEAD'
+    })[0])
+    if (symHead && symHead.ref) return shortRefName(symHead.ref)
+
+    var firstHead = refs.filter(function (r) {
+      return /^refs\/heads\/(.+)$/.test(r.name)
+    })[0]
+
+    return firstHead ? shortRefName(firstHead.name) : 'HEAD'
+  }
+
+  function getRepoRefs(repoId, cb) {
+    if (refsCache[repoId] && refsCache[repoId].status === 'ready') {
+      return cb(null, refsCache[repoId].data)
+    }
+
+    if (refsCache[repoId] && refsCache[repoId].status === 'error') {
+      return cb(refsCache[repoId].error)
+    }
+
+    if (refsCache[repoId] && refsCache[repoId].status === 'loading') {
+      refsCache[repoId].waiters.push(cb)
+      return
+    }
+
+    refsCache[repoId] = {status: 'loading', waiters: [cb]}
+    fetchJson(gitApiUrl(repoId, 'refs'), function (err, data) {
+      var waiters = refsCache[repoId].waiters
+      if (err) {
+        refsCache[repoId] = {status: 'error', error: err}
+        waiters.forEach(function (waiter) { waiter(err) })
+        return
+      }
+
+      refsCache[repoId] = {status: 'ready', data: data}
+      waiters.forEach(function (waiter) { waiter(null, data) })
+    })
+  }
+
+  function getRepoName(repoId) {
+    return repoNames[repoId] || 'repo'
+  }
+
   function breadcrumbs(repoId, ref, pathParts) {
-    var crumbs = [h('a', {href: gitBrowseRoute(repoId)}, 'repo')]
+    var crumbs = [h('a', {href: gitBrowseRoute(repoId)}, getRepoName(repoId))]
     crumbs.push(h('span.git-bc-sep', ' / '))
     crumbs.push(h('a', {href: gitBrowseRoute(repoId, 'tree', ref, [])}, ref))
     for (var i = 0; i < pathParts.length; i++) {
@@ -78,6 +130,238 @@ exports.create = function (api) {
     )
   }
 
+  function makeRefTarget(repoId, screen, ref, pathParts) {
+    if (screen === 'blob') return gitBrowseRoute(repoId, 'blob', ref, pathParts)
+    if (screen === 'tree') return gitBrowseRoute(repoId, 'tree', ref, pathParts)
+    if (screen === 'log') return gitBrowseRoute(repoId, 'log', ref, [])
+    if (screen === 'commit') return gitBrowseRoute(repoId, 'log', ref, [])
+    return gitBrowseRoute(repoId, 'tree', ref, [])
+  }
+
+  function renderRefPicker(repoId, opts) {
+    var picker = h('div.git-ref-picker')
+    var button = h('button.git-ref-picker-button', {
+      type: 'button',
+      disabled: true,
+      title: 'Loading refs…'
+    }, h('span.git-ref-picker-icon', '⎇'), ' ', opts.ref || 'HEAD')
+    var popover = h('div.git-ref-picker-popover')
+    var state = {
+      kind: 'branches',
+      query: '',
+      items: [],
+      index: 0,
+      open: false,
+      refs: null,
+      defaultRef: opts.ref || 'HEAD',
+      disposeOutside: null
+    }
+
+    function closePopover() {
+      if (!state.open) return
+      state.open = false
+      picker.classList.remove('is-open')
+      popover.innerHTML = ''
+      if (state.disposeOutside) {
+        document.removeEventListener('click', state.disposeOutside, true)
+        state.disposeOutside = null
+      }
+    }
+
+    function navigateToRef(ref) {
+      window.location.hash = makeRefTarget(repoId, opts.screen, ref, opts.pathParts || [])
+    }
+
+    function getVisibleItems() {
+      var refs = (state.refs && state.refs.refs) || []
+      var query = state.query.toLowerCase()
+      var prefix = state.kind === 'tags' ? /^refs\/tags\// : /^refs\/heads\//
+      var items = refs.filter(function (entry) {
+        return prefix.test(entry.name)
+      }).map(function (entry) {
+        var name = shortRefName(entry.name)
+        return {
+          name: name,
+          isDefault: state.kind === 'branches' && name === state.defaultRef
+        }
+      })
+
+      items.sort(function (a, b) {
+        if (a.isDefault && !b.isDefault) return -1
+        if (!a.isDefault && b.isDefault) return 1
+        return a.name.localeCompare(b.name)
+      })
+
+      if (!query) return items
+      return items.filter(function (item) {
+        return item.name.toLowerCase().indexOf(query) !== -1
+      })
+    }
+
+    function renderPopover() {
+      var input
+      var list
+
+      state.items = getVisibleItems()
+      if (state.index >= state.items.length) state.index = 0
+
+      popover.innerHTML = ''
+      popover.appendChild(h('div.git-ref-picker-tabs',
+        h('button.git-ref-picker-tab', {
+          type: 'button',
+          className: state.kind === 'branches' ? 'active' : '',
+          onclick: function () {
+            state.kind = 'branches'
+            state.index = 0
+            renderPopover()
+          }
+        }, 'Branches'),
+        h('button.git-ref-picker-tab', {
+          type: 'button',
+          className: state.kind === 'tags' ? 'active' : '',
+          onclick: function () {
+            state.kind = 'tags'
+            state.index = 0
+            renderPopover()
+          }
+        }, 'Tags')
+      ))
+
+      input = h('input.git-ref-picker-search', {
+        type: 'text',
+        placeholder: state.kind === 'tags' ? 'Filter tags…' : 'Filter branches…',
+        value: state.query,
+        oninput: function () {
+          state.query = this.value
+          state.index = 0
+          renderPopover()
+          if (popover.querySelector('.git-ref-picker-search')) {
+            popover.querySelector('.git-ref-picker-search').focus()
+            popover.querySelector('.git-ref-picker-search').setSelectionRange(state.query.length, state.query.length)
+          }
+        },
+        onkeydown: function (ev) {
+          if (ev.key === 'Escape') {
+            ev.preventDefault()
+            closePopover()
+            button.focus()
+          } else if (ev.key === 'ArrowDown') {
+            ev.preventDefault()
+            if (state.items.length) {
+              state.index = Math.min(state.items.length - 1, state.index + 1)
+              renderPopover()
+            }
+          } else if (ev.key === 'ArrowUp') {
+            ev.preventDefault()
+            if (state.items.length) {
+              state.index = Math.max(0, state.index - 1)
+              renderPopover()
+            }
+          } else if (ev.key === 'Enter') {
+            ev.preventDefault()
+            if (state.items[0]) navigateToRef(state.items[state.index] ? state.items[state.index].name : state.items[0].name)
+          }
+        }
+      })
+
+      popover.appendChild(input)
+      list = h('div.git-ref-picker-list')
+
+      if (!state.items.length) {
+        list.appendChild(h('div.git-ref-picker-empty', 'No matches'))
+      } else {
+        state.items.forEach(function (item, index) {
+          list.appendChild(h('button.git-ref-picker-item', {
+            type: 'button',
+            className: index === state.index ? 'active' : '',
+            onclick: function () {
+              navigateToRef(item.name)
+            },
+            onmouseenter: function () {
+              state.index = index
+            }
+          },
+          h('span.git-ref-picker-item-name', item.name),
+          item.isDefault ? h('span.git-ref-picker-item-meta', 'default') : null
+          ))
+        })
+      }
+
+      popover.appendChild(list)
+      setTimeout(function () {
+        var search = popover.querySelector('.git-ref-picker-search')
+        if (search) search.focus()
+      }, 0)
+    }
+
+    button.onclick = function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      if (button.disabled) return
+      if (state.open) {
+        closePopover()
+        return
+      }
+
+      state.open = true
+      picker.classList.add('is-open')
+      renderPopover()
+      state.disposeOutside = function (event) {
+        if (!picker.contains(event.target)) closePopover()
+      }
+      document.addEventListener('click', state.disposeOutside, true)
+    }
+
+    picker.appendChild(button)
+    picker.appendChild(popover)
+
+    getRepoRefs(repoId, function (err, data) {
+      if (err) {
+        button.disabled = true
+        button.title = 'refs unavailable'
+        button.textContent = '⎇ ' + (opts.ref || 'HEAD')
+        picker.classList.add('is-disabled')
+        return
+      }
+
+      state.refs = data
+      state.defaultRef = getDefaultRef(data)
+      button.disabled = false
+      button.title = 'Switch branch or tag'
+      button.textContent = '⎇ ' + (opts.ref || state.defaultRef)
+    })
+
+    return picker
+  }
+
+  function renderRepoSubheader(repoId, opts) {
+    var ref = opts.ref || 'HEAD'
+    var crumbs = breadcrumbs(repoId, ref, opts.pathParts || [])
+    var right = h('div.git-repo-subheader-right', crumbs)
+    var root = h('div.git-repo-subheader',
+      h('div.git-repo-subheader-left',
+        renderRefPicker(repoId, opts)
+      ),
+      right
+    )
+
+    if (opts.hint) {
+      right.insertBefore(h('div.git-repo-subheader-hint', opts.hint), crumbs)
+    }
+
+    if (!opts.ref) {
+      getRepoRefs(repoId, function (err, data) {
+        if (err) return
+        right.replaceChild(
+          breadcrumbs(repoId, getDefaultRef(data), opts.pathParts || []),
+          crumbs
+        )
+      })
+    }
+
+    return root
+  }
+
   function layout(repoId, sub, container) {
     var header = h('div.git-forge-header', 'Loading repo info…')
     var wrapper = h('div.git-forge-layout', header, h('div.git-forge-container', container))
@@ -91,6 +375,7 @@ exports.create = function (api) {
 
       var name = (msg && msg.content && msg.content.name) || repoId.substr(0, 10) + '…'
       var author = msg.author
+      repoNames[repoId] = name
 
       var tabs = [
         h('a.git-forge-tab', {
@@ -136,38 +421,6 @@ exports.create = function (api) {
     return wrapper
   }
 
-  function renderSidebar(repoId, ref, currentPathParts) {
-    var sidebar = h('div.git-forge-sidebar', 
-      h('div.git-sidebar-header', 'Files'),
-      h('div.git-sidebar-tree', 'Loading…')
-    )
-    var treeEl = sidebar.querySelector('.git-sidebar-tree')
-
-    fetchJson(gitApiUrl(repoId, 'tree/' + encodeURIComponent(ref)), function (err, data) {
-      if (err) { treeEl.textContent = 'Error loading tree'; return }
-      treeEl.innerHTML = ''
-      var entries = (data && data.entries) || []
-      
-      entries.forEach(function (e) {
-        var href = e.isDir
-          ? gitBrowseRoute(repoId, 'tree', ref, [e.name])
-          : gitBrowseRoute(repoId, 'blob', ref, [e.name])
-        
-        var isActive = currentPathParts && currentPathParts[0] === e.name
-        
-        treeEl.appendChild(h('a.git-sidebar-item', {
-          href: href,
-          className: isActive ? 'active' : ''
-        }, 
-          h('span.git-sidebar-icon', e.isDir ? '📁' : '📄'),
-          e.name
-        ))
-      })
-    })
-
-    return sidebar
-  }
-
   function renderCommitRow(repoId, c) {
     var author = c && c.author ? c.author : {}
     var sha1 = (c && c.sha1) || ''
@@ -185,13 +438,16 @@ exports.create = function (api) {
     })
 
     return h('div.git-commit',
-      h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
-        h('code.git-sha', sha1.substr(0, 7))),
-      h('span.git-commit-title', ' ' + (c.title || '')),
-      status,
-      h('span.git-commit-meta',
-        ' — ', author.name || '',
-        date ? [', ', human(date)] : ''))
+      h('div.git-commit-row',
+        h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
+          h('code.git-sha', sha1.substr(0, 7))),
+        h('a.git-commit-title', {href: gitBrowseRoute(repoId, 'commit', sha1)}, c.title || '(no title)'),
+        status
+      ),
+      h('div.git-commit-byline',
+        h('span.git-commit-author', author.name || ''),
+        date ? h('span', human(date)) : null
+      ))
   }
 
   function renderLog(repoId, commits) {
@@ -227,21 +483,27 @@ exports.create = function (api) {
   function renderRepoScreen(repoId, container) {
     container.textContent = 'Loading…'
 
-    fetchJson(gitApiUrl(repoId, 'refs'), function (err, data) {
+    getRepoRefs(repoId, function (err, data) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
 
-      var refs     = (data && data.refs)    || []
-      var defaultRef = 'HEAD'
-      var symHead = (data && data.symrefs && data.symrefs.filter(function (r) { return r.name === 'HEAD' })[0])
-      if (symHead && symHead.ref) {
-        defaultRef = symHead.ref.replace(/^refs\/heads\//, '')
-      } else {
-        var firstHead = refs.filter(function (r) { return /^refs\/heads\/(.+)$/.test(r.name) })[0]
-        if (firstHead) defaultRef = firstHead.name.replace(/^refs\/heads\//, '')
-      }
+      var defaultRef = getDefaultRef(data)
+      var cloneText = 'git clone ' + window.location.origin + '/git/' + encodeURIComponent(repoId)
 
       var logEl  = h('div', 'Loading log…')
       var readmeEl = h('div')
+      var copyBtn = h('button.git-forge-copy-btn', {
+        type: 'button',
+        onclick: function () {
+          var btn = this
+          navigator.clipboard.writeText(cloneText).then(function () {
+            var original = btn.textContent
+            btn.textContent = 'Copied'
+            setTimeout(function () {
+              btn.textContent = original
+            }, 1000)
+          })
+        }
+      }, 'Copy')
 
       fetchJson(gitApiUrl(repoId, 'log/' + encodeURIComponent(defaultRef)), function (err, logData) {
         logEl.innerHTML = ''
@@ -261,42 +523,27 @@ exports.create = function (api) {
 
       container.innerHTML = ''
       var main = h('div.git-forge-main',
-        renderSidebar(repoId, defaultRef, []),
         h('div.git-forge-content',
           h('div.git-browser',
+            renderRepoSubheader(repoId, {
+              screen: 'repo',
+              ref: defaultRef,
+              pathParts: []
+            }),
             h('div.git-forge-repo-meta',
-              h('span.git-forge-repo-meta-item', h('strong', 'Default Branch: '), h('span.git-branch-badge', defaultRef)),
-              h('span.git-forge-repo-meta-item', h('strong', 'Clone locally: '), h('code.git-clone-input', 'git clone ' + window.location.origin + '/git/' + encodeURIComponent(repoId)))
+              h('div.git-forge-repo-meta-item',
+                h('strong', 'Clone locally:'),
+                h('code.git-clone-input', cloneText),
+                copyBtn
+              )
             ),
             readmeEl,
             h('h4.git-section-title', 'Latest Activity'),
             logEl
-          )
-        )
+          ))
       )
       container.appendChild(main)
     })
-  }
-
-  function renderBranchBar(repoId, currentRef) {
-    var bar = h('div.git-branch-bar')
-    fetchJson(gitApiUrl(repoId, 'refs'), function (err, data) {
-      if (err) return
-      var refs = ((data && data.refs) || []).filter(function (r) {
-        return /^refs\/heads\//.test(r.name)
-      })
-      if (!refs.length) return
-      bar.appendChild(h('span.git-label', 'Branch: '))
-      refs.slice(0, 10).forEach(function (r) {
-        var branch = r.name.replace(/^refs\/heads\//, '')
-        var active = branch === currentRef
-        bar.appendChild(h('a' + (active ? '.git-branch-badge.git-branch-active' : '.git-branch-badge'), {
-          href: gitBrowseRoute(repoId, 'tree', branch, [])
-        }, branch))
-        bar.appendChild(document.createTextNode(' '))
-      })
-    })
-    return bar
   }
 
   function renderTreeScreen(repoId, ref, pathParts, container) {
@@ -305,25 +552,31 @@ exports.create = function (api) {
       (pathParts.length ? '/' + pathParts.join('/') : '')
     fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
-      var entries = (data && data.entries) || []
+      var entries = ((data && data.entries) || []).slice().sort(function (a, b) {
+        if (a.isDir && !b.isDir) return -1
+        if (!a.isDir && b.isDir) return 1
+        return a.name.localeCompare(b.name)
+      })
       var rows = entries.map(function (e) {
-        var icon  = e.isDir ? '📁' : '📄'
+        var icon  = e.isDir ? 'folder' : 'description'
         var href  = e.isDir
           ? gitBrowseRoute(repoId, 'tree', ref, pathParts.concat([e.name]))
           : gitBrowseRoute(repoId, 'blob', ref, pathParts.concat([e.name]))
         return h('tr',
-          h('td.git-tree-icon', icon),
+          h('td.git-tree-icon', h('span.material-symbols-outlined', icon)),
           h('td.git-tree-name', h('a', {href: href}, e.name)),
           h('td.git-tree-meta', ' '))
       })
       
       container.innerHTML = ''
       var main = h('div.git-forge-main',
-        renderSidebar(repoId, ref, pathParts),
         h('div.git-forge-content',
           h('div.git-browser',
-            renderBranchBar(repoId, ref),
-            breadcrumbs(repoId, ref, pathParts),
+            renderRepoSubheader(repoId, {
+              screen: 'tree',
+              ref: ref,
+              pathParts: pathParts
+            }),
             h('table.git-tree-table', h('tbody', rows))
           )
         )
@@ -345,10 +598,13 @@ exports.create = function (api) {
     if (IMAGE_EXTS.test(fileName)) {
       container.innerHTML = ''
       var main = h('div.git-forge-main',
-        renderSidebar(repoId, ref, pathParts),
         h('div.git-forge-content',
           h('div.git-browser',
-            breadcrumbs(repoId, ref, pathParts),
+            renderRepoSubheader(repoId, {
+              screen: 'blob',
+              ref: ref,
+              pathParts: pathParts
+            }),
             h('div.git-image-view',
               h('img.git-blob-image', {
                 src: rawBlobUrl(repoId, ref, pathParts),
@@ -384,10 +640,13 @@ exports.create = function (api) {
 
       container.innerHTML = ''
       var main = h('div.git-forge-main',
-        renderSidebar(repoId, ref, pathParts),
         h('div.git-forge-content',
           h('div.git-browser',
-            breadcrumbs(repoId, ref, pathParts),
+            renderRepoSubheader(repoId, {
+              screen: 'blob',
+              ref: ref,
+              pathParts: pathParts
+            }),
             contentEl
           )
         )
@@ -507,21 +766,29 @@ exports.create = function (api) {
       }
 
       container.innerHTML = ''
-      container.appendChild(h('div.git-browser',
-        h('h4.git-section-title', c.title || ''),
-        h('div.git-commit-meta',
-          h('code.git-sha', sha1.substr(0, 7)),
-          ' by ', (c.author && c.author.name) || '',
-          date ? [' · ', human(date)] : '',
-          c.parents && c.parents.length
-            ? [' · parent: ', h('a', {
-                href: gitBrowseRoute(repoId, 'commit', c.parents[0])
-              }, c.parents[0].substr(0, 7))]
-            : ''
-        ),
-        c.body ? h('pre.git-commit-body', c.body) : null,
-        h('h4.git-section-title', 'Changes'),
-        diffEl
+      container.appendChild(h('div.git-forge-main',
+        h('div.git-forge-content',
+          h('div.git-browser',
+            renderRepoSubheader(repoId, {
+              screen: 'commit',
+              pathParts: [],
+              hint: 'viewing: commit'
+            }),
+            h('h4.git-section-title', c.title || ''),
+            h('div.git-commit-meta',
+              h('code.git-sha', sha1.substr(0, 7)),
+              ' by ', (c.author && c.author.name) || '',
+              date ? [' · ', human(date)] : '',
+              c.parents && c.parents.length
+                ? [' · parent: ', h('a', {
+                    href: gitBrowseRoute(repoId, 'commit', c.parents[0])
+                  }, c.parents[0].substr(0, 7))]
+                : ''
+            ),
+            c.body ? h('pre.git-commit-body', c.body) : null,
+            h('h4.git-section-title', 'Changes'),
+            diffEl
+          ))
       ))
     }
 
@@ -737,11 +1004,24 @@ exports.create = function (api) {
         fetchJson(gitApiUrl(repoId, 'log/' + encodeURIComponent(logRef)), function (err, data) {
           content.innerHTML = ''
           if (err) {
-            content.appendChild(h('div.git-browser', h('em', 'Error: ' + err.message)))
+            content.appendChild(h('div.git-forge-main',
+              h('div.git-forge-content',
+                h('div.git-browser', h('em', 'Error: ' + err.message))
+              )
+            ))
           } else {
-            content.appendChild(h('div.git-browser',
-              h('h4.git-section-title', 'Log: ', h('span.git-branch-badge', logRef)),
-              renderLog(repoId, (data && data.commits) || [])
+            content.appendChild(h('div.git-forge-main',
+              h('div.git-forge-content',
+                h('div.git-browser',
+                  renderRepoSubheader(repoId, {
+                    screen: 'log',
+                    ref: logRef === 'HEAD' ? null : logRef,
+                    pathParts: [],
+                    hint: 'viewing: log'
+                  }),
+                  renderLog(repoId, (data && data.commits) || [])
+                )
+              )
             ))
           }
         })

@@ -950,8 +950,16 @@ function parseJsonRoute(req) {
   if (parts[0] === 'log'    && parts.length >= 2) return { repoId, sub: 'log',    ref:  parts.slice(1).join('/') }
   if (parts[0] === 'commit' && parts.length === 2) return { repoId, sub: 'commit', sha1: parts[1] }
   if (parts[0] === 'diff'   && parts.length === 2) return { repoId, sub: 'diff',   sha1: parts[1] }
-  if (parts[0] === 'tree'   && parts.length >= 2) return { repoId, sub: 'tree',   ref:  parts[1], path: parts.slice(2) }
-  if (parts[0] === 'blob'   && parts.length >= 3) return { repoId, sub: 'blob',   ref:  parts[1], path: parts.slice(2) }
+  if (parts[0] === 'tree'   && parts.length >= 2) {
+    let ref
+    try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
+    return { repoId, sub: 'tree', ref: ref, path: parts.slice(2) }
+  }
+  if (parts[0] === 'blob'   && parts.length >= 3) {
+    let ref
+    try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
+    return { repoId, sub: 'blob', ref: ref, path: parts.slice(2) }
+  }
 
   return null
 }
