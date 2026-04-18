@@ -74,6 +74,70 @@ if (fs.existsSync(manifestPathForHelp)) {
 
 const helpCatalog = cliHelp.createCatalog(manifestForHelp)
 const helpFlags   = ['--help', '-h']
+let appLockPath = null
+
+function tryRemove(filePath) {
+  try { fs.unlinkSync(filePath) } catch (_) {}
+}
+
+function isLivePid(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
+function acquireAppLock(configPath) {
+  fs.mkdirSync(configPath, { recursive: true })
+  const lockPath = path.join(configPath, 'server.lock')
+
+  function createLock() {
+    const fd = fs.openSync(lockPath, 'wx')
+    fs.writeFileSync(fd, String(process.pid))
+    fs.closeSync(fd)
+    return lockPath
+  }
+
+  try {
+    return createLock()
+  } catch (err) {
+    if (!err || err.code !== 'EEXIST') throw err
+
+    let existingPid = null
+    try {
+      existingPid = Number(String(fs.readFileSync(lockPath, 'utf8')).trim())
+    } catch (_) {}
+
+    if (isLivePid(existingPid)) {
+      const msg = existingPid
+        ? 'another ssbc process is already using ' + configPath + ' (pid ' + existingPid + ')'
+        : 'another ssbc process is already using ' + configPath
+      throw new Error(msg)
+    }
+
+    tryRemove(lockPath)
+    return createLock()
+  }
+}
+
+function releaseAppLock() {
+  if (!appLockPath) return
+  tryRemove(appLockPath)
+  appLockPath = null
+}
+
+process.once('exit', releaseAppLock)
+process.once('SIGINT', function () {
+  releaseAppLock()
+  process.exit(130)
+})
+process.once('SIGTERM', function () {
+  releaseAppLock()
+  process.exit(143)
+})
 
 function printCliHelp() {
   const name = packageJson.name || 'ssb-server'
@@ -181,6 +245,7 @@ if (argv[0] === 'server') {
 }
 
 if (argv[0] === 'start') {
+  appLockPath = acquireAppLock(config.path)
   console.log(packageJson.name, packageJson.version, config.path, 'logging.level:' + config.logging.level)
   console.log('my key ID:', config.keys.public)
 

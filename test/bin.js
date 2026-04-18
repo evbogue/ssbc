@@ -274,3 +274,61 @@ test('ssb-server client should work without options', (t) => {
     end()
   })
 })
+
+test('second start against the same app dir fails before plugin init', (t) => {
+  const dir = '/tmp/ssb-server-locktest_' + Date.now()
+  fs.mkdirSync(dir, { recursive: true })
+
+  const first = spawn(process.execPath, [
+    join(__dirname, '../bin.js'),
+    'start',
+    '--host=127.0.0.1',
+    '--port=0',
+    '--decent.port=0',
+    '--path', dir
+  ], {
+    env: Object.assign({}, process.env, { ssb_appname: 'test' })
+  })
+
+  children.push(first)
+  first.stdout.pipe(process.stdout)
+  first.stderr.pipe(process.stderr)
+
+  let started = false
+  let launchBuffer = ''
+
+  function finish(err) {
+    first.kill('SIGKILL')
+    if (err) t.fail(err.message || String(err))
+    t.end()
+  }
+
+  first.stdout.on('data', (chunk) => {
+    launchBuffer += chunk.toString()
+    if (launchBuffer.indexOf('Decent launched at ') === -1 || started) return
+    started = true
+
+    const second = spawn(process.execPath, [
+      join(__dirname, '../bin.js'),
+      'start',
+      '--host=127.0.0.1',
+      '--port=0',
+      '--decent.port=0',
+      '--path', dir
+    ], {
+      env: Object.assign({}, process.env, { ssb_appname: 'test' })
+    })
+
+    let stderr = ''
+    second.stderr.on('data', (chunk) => { stderr += chunk.toString() })
+    second.on('exit', (code) => {
+      t.equal(code, 1, 'second process exits with error')
+      t.ok(/another ssbc process is already using/.test(stderr), 'second process reports app-dir lock clearly')
+      finish()
+    })
+  })
+
+  first.on('exit', () => {
+    if (!started) finish(new Error('first process exited before lock test ran'))
+  })
+})
