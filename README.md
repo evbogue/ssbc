@@ -1,25 +1,18 @@
 # Secure-Scuttlebot Classic
 
-`ssbc` is a modern continuation of the classic Secure Scuttlebutt model.
+Secure Scuttlebutt is a peer-to-peer protocol built on signed, append-only personal logs.
+Your feed lives on your own computer. Messages gossip between nodes over the network.
+There is no central server and no algorithmic feed.
 
-It preserves the parts that still matter in practice:
+`ssbc` keeps alive what Dominic Tarr, Paul Frazee, Charles Lehner, and Everett Bogue built.
+Dominic designed the SSB protocol, wrote scuttlebot — the server at the heart of this repo —
+and originated Patchbay; Paul created Patchwork, the original SSB desktop client; Charles built
+git-ssb; and Everett forked Patchbay into Decent in 2016. The project was abandoned in 2024.
+This is the continuation.
 
-- signed append-only personal feeds
-- peer-to-peer replication
-- blob storage and file sharing
-- invite-based network access
-- local ownership of data and identity
+Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
 
-This repository combines an SSB server, a built-in browser client called Decent, and a git-over-SSB workflow.
-The goal is not to re-imagine the protocol. The goal is to keep the useful classic behavior working on a modern Node.js stack.
-
-### Classic rationale
-
-Classic SSB clients stopped keeping pace with modern Node.js. `ssbc` exists to preserve the original operating model in a form that still runs, still syncs, and still exposes familiar `sbot` / `ssb-server` workflows.
-
-Decent is included as the built-in local web client, and the git-over-SSB support remains part of the project because it demonstrates that the signed, replicated SSB model is useful for more than social posts.
-
-This repo is maintained by Everett Bogue. Stronger personal arguments for why SSB matters may appear in Everett's own posts and comments, but the README and project docs should stay grounded in the software's actual behavior and scope.
+<!-- screenshot: docs/img/feed.png -->
 
 ---
 
