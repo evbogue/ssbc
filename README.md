@@ -167,16 +167,32 @@ Override host/port in `~/.ssb/config`:
 
 ---
 
-## Current Docs
+## Architecture
 
-For repo-current documentation, start with:
+`ssbc` is a SQLite-backed message store connected to a secret-stack RPC surface, with a WebSocket bridge for browser clients, a git-over-HTTP plugin, and the Decent frontend served from the same port. The pieces are documented separately:
 
-- `docs/overview.md`
-- `docs/architecture.md`
-- `docs/cli.md`
-- `docs/api.md`
-- `docs/frontend.md`
+- [`docs/overview.md`](docs/overview.md) — what the pieces are
+- [`docs/architecture.md`](docs/architecture.md) — how they fit together
+- [`docs/api.md`](docs/api.md) — RPC surface and message shapes
+- [`docs/cli.md`](docs/cli.md) — full command reference
+- [`docs/frontend.md`](docs/frontend.md) — Decent internals
+- [`docs/http-replication.md`](docs/http-replication.md) — replication protocol
 
-Archived scuttlebot reference docs are also served locally at `/docs`, but the files in `docs/` are the primary source of truth for how this repository works now.
+Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8888/docs` but `docs/` is the primary source of truth for how this repo works now.
+
+---
+
+## What changed from classic scuttlebot
+
+- `node:sqlite` replaces flume and all native dependencies — no more build failures on modern Node
+- Message storage is SQLite-backed; the flume indexes are gone
+- HTTP replication is available alongside the classic muxrpc transport
+- The `sbot` / `ssb-server` CLI and most classic plugin commands are preserved
+
+---
+
+## Contributing and license
+
+See [`AGENTS.md`](AGENTS.md) for development conventions.
 
 MIT
