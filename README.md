@@ -21,9 +21,9 @@ Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
 - Post and read a social feed stored on your own computer
 - Follow people and build a social graph that syncs across peers
 - Send end-to-end encrypted private messages
-- Share files through the network as blobs
+- Share files through the network
 - Host git repositories on your SSB node — no GitHub required
-- Join networks by accepting an invite code from a pub (a public SSB node that helps peers find each other)
+- Connect to the wider network through pubs (always-on public nodes)
 
 ---
 
@@ -63,20 +63,17 @@ Decent launched at http://127.0.0.1:8989/
 
 Leave this terminal open. Run all other commands in a **separate terminal**.
 
-### 2. Use the CLI
+### 2. Open Decent
+
+With the server running, open **http://127.0.0.1:8989/** in your browser. That's it.
+
+### 3. Explore the CLI (optional)
 
 ```bash
 node bin.js whoami          # your public key
 node bin.js gossip.peers    # connected peers
 node bin.js help            # list all commands
 node bin.js help <command>  # detail on a specific command
-```
-
-### 3. Create Invites
-
-```bash
-node bin.js invite.create 1   # single-use invite
-node bin.js invite.create 5   # multi-use invite
 ```
 
 ---
@@ -91,13 +88,14 @@ This is what makes SSB different from federated or centralized networks. Your fe
 
 A **pub** is an always-on SSB node with a public IP address. Pubs exist to help nodes find each other — when you accept a pub invite, the pub follows you and you follow it back, and your node uses that connection to exchange messages with the broader network. Pubs do not control the network. They are just well-connected peers that happen to stay online. If a pub disappears, your feed and your social graph survive on every node that has them.
 
-To join the network, accept an invite code from a pub:
+If you are running a pub and want to connect nodes, you can issue and accept invites from the CLI:
 
 ```bash
-node bin.js invite.accept "PASTE_INVITE_CODE_HERE"
+node bin.js invite.create 1          # single-use invite
+node bin.js invite.accept "CODE"     # accept an invite from another pub
 ```
 
-`decent.evbogue.com` is one public node you can request an invite from.
+`decent.evbogue.com` is one public node running on the network.
 
 ---
 
@@ -142,8 +140,6 @@ npm run build:web
 Build output: `decent/build/index.html`, `decent/build/style.css`
 
 ### Access
-
-With the server running, open **http://127.0.0.1:8989/**
 
 Archived Scuttlebot documentation is also served at:
 
