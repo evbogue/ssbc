@@ -87,15 +87,6 @@ node bin.js invite.create 1   # single-use invite
 node bin.js invite.create 5   # multi-use invite
 ```
 
-### 5. Config overrides
-
-Pass config overrides after `--`:
-
-```bash
-node bin.js start -- --port 9009 --ws.port 9989
-node bin.js whoami -- --port 9009
-```
-
 ---
 
 ## Git over SSB
@@ -133,7 +124,6 @@ The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.j
 ### Build
 
 ```bash
-npm install
 npm run build:web
 ```
 
@@ -154,7 +144,13 @@ Those docs are served from `docs/scuttlebot.io/`. Their vendored source lives in
 npm run sync:scuttlebot-docs
 ```
 
-Override host/port in `~/.ssb/config`:
+To run on a different port, pass overrides after `--`:
+
+```bash
+node bin.js start -- --port 9009 --ws.port 9989
+```
+
+Or set them permanently in `~/.ssb/config`:
 
 ```json
 {
