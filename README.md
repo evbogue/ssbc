@@ -16,6 +16,17 @@ Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
 
 ---
 
+## What you can do
+
+- Post and read a social feed stored on your own computer
+- Follow people and build a social graph that syncs across peers
+- Send end-to-end encrypted private messages
+- Share files through the network as blobs
+- Host git repositories on your SSB node — no GitHub required
+- Join networks by accepting an invite code from a pub
+
+---
+
 ## Requirements
 
 - **Node.js ≥ 22.5** (uses `node:sqlite` built-in)
