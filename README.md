@@ -58,7 +58,7 @@ Output:
 ```
 ssb-server <version> <path> logging.level:<level>
 my key ID: <@yourPublicKey>
-Decent launched at http://127.0.0.1:8888/
+Decent launched at http://127.0.0.1:8989/
 ```
 
 Leave this terminal open. Run all other commands in a **separate terminal**.
@@ -119,7 +119,7 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 
 ## Web UI (Decent)
 
-The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.js` on port `8888`.
+The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.js`. Decent and the WebSocket transport share a single port — defaulting to `8989`.
 
 ### Build
 
@@ -131,11 +131,11 @@ Build output: `decent/build/index.html`, `decent/build/style.css`
 
 ### Access
 
-With the server running, open **http://127.0.0.1:8888/**
+With the server running, open **http://127.0.0.1:8989/**
 
 Archived Scuttlebot documentation is also served at:
 
-- **http://127.0.0.1:8888/docs**
+- **http://127.0.0.1:8989/docs**
 
 Those docs are served from `docs/scuttlebot.io/`. Their vendored source lives in
 `vendor/scuttlebot.io/`, and you can resync generated output with:
@@ -144,18 +144,17 @@ Those docs are served from `docs/scuttlebot.io/`. Their vendored source lives in
 npm run sync:scuttlebot-docs
 ```
 
-To run on a different port, pass overrides after `--`:
+To run on a different port, pass `--ws.port` after `--` — Decent and the WebSocket share it:
 
 ```bash
-node bin.js start -- --port 9009 --ws.port 9989
+node bin.js start -- --ws.port 8888
 ```
 
-Or set them permanently in `~/.ssb/config`:
+Or set it permanently in `~/.ssb/config`:
 
 ```json
 {
-  "decent": {
-    "host": "127.0.0.1",
+  "ws": {
     "port": 8888
   }
 }
