@@ -336,7 +336,8 @@ exports.create = function (api) {
 
   function renderRepoSubheader(repoId, opts) {
     var ref = opts.ref || 'HEAD'
-    var crumbs = breadcrumbs(repoId, ref, opts.pathParts || [])
+    var pathParts = opts.pathParts || []
+    var crumbs = pathParts.length ? breadcrumbs(repoId, ref, pathParts) : null
     var right = h('div.git-repo-subheader-right', crumbs)
     var root = h('div.git-repo-subheader',
       h('div.git-repo-subheader-left',
@@ -349,11 +350,11 @@ exports.create = function (api) {
       right.insertBefore(h('div.git-repo-subheader-hint', opts.hint), crumbs)
     }
 
-    if (!opts.ref) {
+    if (!opts.ref && pathParts.length) {
       getRepoRefs(repoId, function (err, data) {
         if (err) return
         right.replaceChild(
-          breadcrumbs(repoId, getDefaultRef(data), opts.pathParts || []),
+          breadcrumbs(repoId, getDefaultRef(data), pathParts),
           crumbs
         )
       })
@@ -377,34 +378,26 @@ exports.create = function (api) {
       var author = msg.author
       repoNames[repoId] = name
 
+      function tabIcon(name) {
+        return h('span.git-forge-tab-icon.material-symbols-outlined', name)
+      }
+
+      function tab(active, route, icon, label) {
+        return h('a.git-forge-tab' + (active ? '.active' : ''),
+          {href: route},
+          tabIcon(icon), ' ' + label)
+      }
+
       var tabs = [
-        h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId),
-          className: (!sub || sub === 'tree' || sub === 'blob') ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '📄'), ' Code'),
-        h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId, 'log'),
-          className: (sub === 'log' || sub === 'commit') ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '🕒'), ' Commits'),
-        h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId, 'issues'),
-          className: sub === 'issues' ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '⊙'), ' Issues'),
-        h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId, 'pulls'),
-          className: sub === 'pulls' ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '⇅'), ' Pull Requests'),
-        h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId, 'activity'),
-          className: sub === 'activity' ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '📈'), ' Activity')
+        tab(!sub || sub === 'tree' || sub === 'blob', gitBrowseRoute(repoId),             'code',       'Code'),
+        tab(sub === 'log' || sub === 'commit',       gitBrowseRoute(repoId, 'log'),       'history',    'Commits'),
+        tab(sub === 'issues',                         gitBrowseRoute(repoId, 'issues'),    'error',      'Issues'),
+        tab(sub === 'pulls',                          gitBrowseRoute(repoId, 'pulls'),     'merge_type', 'Pull Requests'),
+        tab(sub === 'activity',                       gitBrowseRoute(repoId, 'activity'),  'timeline',   'Activity')
       ]
 
       if (author === selfId) {
-        tabs.push(h('a.git-forge-tab', {
-          href: gitBrowseRoute(repoId, 'settings'),
-          className: sub === 'settings' ? 'active' : ''
-        }, h('span.git-forge-tab-icon', '⚙'), ' Settings'))
+        tabs.push(tab(sub === 'settings', gitBrowseRoute(repoId, 'settings'), 'settings', 'Settings'))
       }
 
       header.appendChild(h('div',
@@ -421,33 +414,43 @@ exports.create = function (api) {
     return wrapper
   }
 
-  function renderCommitRow(repoId, c) {
-    var author = c && c.author ? c.author : {}
-    var sha1 = (c && c.sha1) || ''
-    var date = author.date ? new Date(author.date) : null
-    
-    var status = h('span.git-mesh-status', '...')
-    fetchJson(gitApiUrl(repoId, 'commit/' + sha1), function (err) {
-      if (err) {
-        status.textContent = 'Syncing'
-        status.className = 'git-mesh-status remote'
-      } else {
-        status.textContent = 'Local'
-        status.className = 'git-mesh-status local'
-      }
-    })
+  var COAUTHOR_RE = /^\s*co-authored-by:\s*(.+?)\s*<[^>]+>\s*$/i
 
-    return h('div.git-commit',
-      h('div.git-commit-row',
-        h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
-          h('code.git-sha', sha1.substr(0, 7))),
-        h('a.git-commit-title', {href: gitBrowseRoute(repoId, 'commit', sha1)}, c.title || '(no title)'),
-        status
-      ),
-      h('div.git-commit-byline',
-        h('span.git-commit-author', author.name || ''),
-        date ? h('span', human(date)) : null
-      ))
+  function collectAuthors(c) {
+    var author = c && c.author ? c.author : {}
+    var names = []
+    var seen = {}
+    function add(name) {
+      if (!name) return
+      var key = name.toLowerCase()
+      if (seen[key]) return
+      seen[key] = true
+      names.push(name)
+    }
+    add(author.name)
+    var body = (c && c.body) || ''
+    body.split(/\r?\n/).forEach(function (line) {
+      var m = line.match(COAUTHOR_RE)
+      if (m) add(m[1])
+    })
+    return names
+  }
+
+  function renderCommitRow(repoId, c) {
+    var sha1 = (c && c.sha1) || ''
+    var author = c && c.author ? c.author : {}
+    var date = author.date ? new Date(author.date) : null
+    var authors = collectAuthors(c)
+
+    return h('div.git-log-row',
+      h('a', {href: gitBrowseRoute(repoId, 'commit', sha1)},
+        h('code.git-sha', sha1.substr(0, 7))),
+      h('a.git-log-title', {href: gitBrowseRoute(repoId, 'commit', sha1)}, c.title || '(no title)'),
+      authors.length
+        ? h('span.git-log-authors', {title: authors.join(', ')}, authors.join(', '))
+        : null,
+      date ? h('span.git-log-time', {title: date.toISOString()}, human(date)) : null
+    )
   }
 
   function renderLog(repoId, commits) {
@@ -480,70 +483,116 @@ exports.create = function (api) {
     tryNext()
   }
 
-  function renderRepoScreen(repoId, container) {
-    container.textContent = 'Loading…'
+  // Clone URL lives inside a popover (GitHub-style) so the toolbar stays tidy.
+  // One click on the button → reveals the URL + a copy action.
+  function renderCloneButton(repoId) {
+    var wrapper = h('div.git-clone-button')
+    var cloneUrl = window.location.origin + '/git/' + encodeURIComponent(repoId)
+    var cloneText = 'git clone ' + cloneUrl
 
-    getRepoRefs(repoId, function (err, data) {
-      if (err) { container.textContent = 'Error: ' + err.message; return }
-
-      var defaultRef = getDefaultRef(data)
-      var cloneText = 'git clone ' + window.location.origin + '/git/' + encodeURIComponent(repoId)
-
-      var logEl  = h('div', 'Loading log…')
-      var readmeEl = h('div')
-      var copyBtn = h('button.git-forge-copy-btn', {
-        type: 'button',
-        onclick: function () {
-          var btn = this
-          navigator.clipboard.writeText(cloneText).then(function () {
-            var original = btn.textContent
-            btn.textContent = 'Copied'
-            setTimeout(function () {
-              btn.textContent = original
-            }, 1000)
-          })
-        }
-      }, 'Copy')
-
-      fetchJson(gitApiUrl(repoId, 'log/' + encodeURIComponent(defaultRef)), function (err, logData) {
-        logEl.innerHTML = ''
-        if (err) {
-          logEl.appendChild(h('em', 'Could not load log'))
-        } else {
-          logEl.appendChild(renderLog(repoId, (logData && logData.commits) || []))
-        }
+    var copyIcon = h('span.material-symbols-outlined', 'content_copy')
+    var copyBtn = h('button.git-clone-popover-copy', {
+      type: 'button',
+      title: 'Copy clone command',
+      'aria-label': 'Copy clone command'
+    }, copyIcon)
+    copyBtn.addEventListener('click', function () {
+      navigator.clipboard.writeText(cloneText).then(function () {
+        copyIcon.textContent = 'check'
+        setTimeout(function () { copyIcon.textContent = 'content_copy' }, 1000)
       })
-
-      fetchReadme(repoId, defaultRef, function (err, content) {
-        if (content) {
-          readmeEl.className = 'git-readme'
-          readmeEl.appendChild(renderReadme(content))
-        }
-      })
-
-      container.innerHTML = ''
-      var main = h('div.git-forge-main',
-        h('div.git-forge-content',
-          h('div.git-browser',
-            renderRepoSubheader(repoId, {
-              screen: 'repo',
-              ref: defaultRef,
-              pathParts: []
-            }),
-            h('div.git-forge-repo-meta',
-              h('div.git-forge-repo-meta-item',
-                h('strong', 'Clone locally:'),
-                h('code.git-clone-input', cloneText),
-                copyBtn
-              )
-            ),
-            readmeEl,
-            h('h4.git-section-title', 'Latest Activity'),
-            logEl
-          ))
-      )
-      container.appendChild(main)
     })
+
+    var input = h('input.git-clone-popover-input', {
+      type: 'text',
+      readonly: true,
+      value: cloneUrl,
+      spellcheck: 'false',
+      onclick: function () { this.select() }
+    })
+
+    var popover = h('div.git-clone-popover',
+      h('label.git-clone-popover-label', 'Clone with HTTP'),
+      h('div.git-clone-popover-row', input, copyBtn))
+
+    var trigger = h('button.git-clone-button-trigger', {
+      type: 'button',
+      'aria-expanded': 'false'
+    },
+      h('span.material-symbols-outlined.git-clone-button-icon', 'content_copy'),
+      h('span.git-clone-button-label', 'Clone'),
+      h('span.material-symbols-outlined.git-clone-caret', 'arrow_drop_down'))
+
+    var disposeOutside = null
+    function close() {
+      if (!wrapper.classList.contains('is-open')) return
+      wrapper.classList.remove('is-open')
+      trigger.setAttribute('aria-expanded', 'false')
+      if (disposeOutside) {
+        document.removeEventListener('click', disposeOutside, true)
+        disposeOutside = null
+      }
+    }
+    function open() {
+      wrapper.classList.add('is-open')
+      trigger.setAttribute('aria-expanded', 'true')
+      setTimeout(function () { input.focus(); input.select() }, 0)
+      disposeOutside = function (ev) {
+        if (!wrapper.contains(ev.target)) close()
+      }
+      document.addEventListener('click', disposeOutside, true)
+    }
+
+    trigger.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      if (wrapper.classList.contains('is-open')) close()
+      else open()
+    })
+
+    popover.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') { close(); trigger.focus() }
+    })
+
+    wrapper.appendChild(trigger)
+    wrapper.appendChild(popover)
+    return wrapper
+  }
+
+  function renderRepoToolbar(repoId, ref) {
+    return h('div.git-forge-toolbar',
+      h('div.git-forge-toolbar-left',
+        renderRefPicker(repoId, {screen: 'tree', ref: ref, pathParts: []})),
+      h('div.git-forge-toolbar-right',
+        renderCloneButton(repoId)))
+  }
+
+  // Branch-wide "latest commit" banner. Uses the first entry of `log/<ref>`.
+  // TODO: per-directory last-commit requires a log-per-path endpoint on git-server.
+  function renderLatestCommitBanner(repoId, ref) {
+    var banner = h('div.git-tree-latest-commit')
+    fetchJson(gitApiUrl(repoId, 'log/' + encodeURIComponent(ref)), function (err, data) {
+      if (err) return
+      var c = data && data.commits && data.commits[0]
+      if (!c) return
+      var sha1 = c.sha1 || ''
+      var author = c.author || {}
+      var date = author.date ? new Date(author.date) : null
+      banner.appendChild(h('a.git-tree-latest-sha',
+        {href: gitBrowseRoute(repoId, 'commit', sha1)},
+        h('code.git-sha', sha1.substr(0, 7))))
+      banner.appendChild(h('a.git-tree-latest-title',
+        {href: gitBrowseRoute(repoId, 'commit', sha1), title: c.title || ''},
+        c.title || '(no title)'))
+      if (author.name) {
+        banner.appendChild(h('span.git-tree-latest-author', author.name))
+      }
+      if (date) {
+        banner.appendChild(h('span.git-tree-latest-time',
+          {title: date.toISOString()}, human(date)))
+      }
+    })
+    return banner
   }
 
   function renderTreeScreen(repoId, ref, pathParts, container) {
@@ -567,29 +616,212 @@ exports.create = function (api) {
           h('td.git-tree-name', h('a', {href: href}, e.name)),
           h('td.git-tree-meta', ' '))
       })
-      
+
+      var atRoot = pathParts.length === 0
+      var browser = h('div.git-browser')
+
+      if (atRoot) {
+        browser.appendChild(renderRepoToolbar(repoId, ref))
+        browser.appendChild(h('div.git-forge-home-card',
+          renderLatestCommitBanner(repoId, ref),
+          h('table.git-tree-table', h('tbody', rows))))
+      } else {
+        browser.appendChild(renderRepoSubheader(repoId, {
+          screen: 'tree',
+          ref: ref,
+          pathParts: pathParts
+        }))
+        browser.appendChild(renderLatestCommitBanner(repoId, ref))
+        browser.appendChild(h('table.git-tree-table', h('tbody', rows)))
+      }
+
+      if (atRoot) {
+        var readmeEl = h('div')
+        fetchReadme(repoId, ref, function (err, content) {
+          if (content) {
+            readmeEl.className = 'git-readme'
+            readmeEl.appendChild(renderReadme(content))
+          }
+        })
+        browser.appendChild(readmeEl)
+      }
+
       container.innerHTML = ''
-      var main = h('div.git-forge-main',
-        h('div.git-forge-content',
-          h('div.git-browser',
-            renderRepoSubheader(repoId, {
-              screen: 'tree',
-              ref: ref,
-              pathParts: pathParts
-            }),
-            h('table.git-tree-table', h('tbody', rows))
-          )
-        )
-      )
-      container.appendChild(main)
+      container.appendChild(h('div.git-forge-main',
+        h('div.git-forge-content', browser)
+      ))
     })
   }
 
   var IMAGE_EXTS = /\.(png|jpg|jpeg|gif|svg|webp|ico|bmp)$/i
 
+  // Line-range selection for blob views lives in the document's `?lines=`
+  // query param (the route itself is hash-based, so we can't use `#L12-20`).
+  // Format: `?lines=N` or `?lines=N-M`. Updated via history.replaceState so
+  // the SPA router (which listens on hashchange) stays quiet.
+  function parseLinesParam() {
+    var m = (window.location.search || '').match(/[?&]lines=(\d+)(?:-(\d+))?/)
+    if (!m) return null
+    var a = parseInt(m[1], 10)
+    var b = m[2] ? parseInt(m[2], 10) : a
+    if (!a) return null
+    return { start: Math.min(a, b), end: Math.max(a, b) }
+  }
+
+  function writeLinesParam(range) {
+    var search = (window.location.search || '').replace(/([?&])lines=[^&]*(&|$)/, function (_, pre, post) {
+      return post === '&' ? pre : pre === '?' ? '' : ''
+    })
+    if (range) {
+      var value = range.start === range.end
+        ? String(range.start)
+        : range.start + '-' + range.end
+      search = search ? search + '&lines=' + value : '?lines=' + value
+    }
+    var url = window.location.pathname + search + window.location.hash
+    window.history.replaceState(null, '', url)
+  }
+
+  function applyLineHighlight(pre, range) {
+    var lines = pre.querySelectorAll('.git-blob-line')
+    for (var i = 0; i < lines.length; i++) {
+      var n = parseInt(lines[i].getAttribute('data-line'), 10)
+      lines[i].classList.toggle('is-highlighted',
+        !!(range && n >= range.start && n <= range.end))
+    }
+  }
+
+  function scrollToLine(pre, n) {
+    var el = pre.querySelector('#L' + n)
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ block: 'center' })
+    }
+  }
+
+  function renderHighlightedBlob(content, fileName) {
+    var pre = h('pre.git-blob-content.git-highlighted.git-blob-pane')
+    var lines = highlight.intoLines(content, fileName)
+
+    // A trailing newline produces an extra empty line at the end; drop it so
+    // line count matches editor expectations.
+    if (lines.length > 1 && lines[lines.length - 1].length === 0) {
+      lines.pop()
+    }
+
+    var currentAnchor = null  // last clicked line, used as shift-click pivot
+
+    lines.forEach(function (nodes, i) {
+      var n = i + 1
+      var code = h('code.git-blob-line-code')
+      nodes.forEach(function (node) { code.appendChild(node) })
+      var lineNo = h('a.git-blob-line-no', {
+        href: '?lines=' + n + (window.location.hash || ''),
+        'data-line': String(n),
+        title: 'Shift-click to select range'
+      }, String(n))
+      lineNo.addEventListener('click', function (ev) {
+        ev.preventDefault()
+        var range
+        if (ev.shiftKey && currentAnchor != null) {
+          range = { start: Math.min(currentAnchor, n), end: Math.max(currentAnchor, n) }
+        } else {
+          currentAnchor = n
+          range = { start: n, end: n }
+        }
+        writeLinesParam(range)
+        applyLineHighlight(pre, range)
+      })
+      var row = h('div.git-blob-line', {
+        id: 'L' + n,
+        'data-line': String(n)
+      }, lineNo, code)
+      pre.appendChild(row)
+    })
+
+    var range = parseLinesParam()
+    if (range) {
+      currentAnchor = range.start
+      // Apply after the element is in the DOM so scrollIntoView has a layout.
+      setTimeout(function () {
+        applyLineHighlight(pre, range)
+        scrollToLine(pre, range.start)
+      }, 0)
+    }
+
+    return pre
+  }
+
   function rawBlobUrl(repoId, ref, pathParts) {
     return window.location.origin + '/git/' + encodeURIComponent(repoId) +
       '/raw/' + encodeURIComponent(ref) + '/' + pathParts.map(encodeURIComponent).join('/')
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return n + ' B'
+    var kb = n / 1024
+    if (kb < 100) return kb.toFixed(1) + ' KB'
+    if (kb < 1024) return Math.round(kb) + ' KB'
+    return (kb / 1024).toFixed(1) + ' MB'
+  }
+
+  function byteSize(content) {
+    if (typeof TextEncoder !== 'undefined') {
+      return new TextEncoder().encode(content).length
+    }
+    return unescape(encodeURIComponent(content)).length
+  }
+
+  function renderBlobActionRow(repoId, ref, pathParts, opts) {
+    var isImage = opts.variant === 'image'
+    var rawHref = rawBlobUrl(repoId, ref, pathParts)
+    var meta = null
+
+    if (opts.withMeta && !isImage) {
+      meta = h('div.git-blob-meta',
+        opts.lineCount + ' lines · ' + formatBytes(opts.byteSize))
+    }
+
+    var rawBtn = h('a.git-blob-action', {
+      href: rawHref,
+      target: '_blank',
+      rel: 'noopener'
+    },
+    h('span.material-symbols-outlined', 'open_in_new'),
+    h('span.git-blob-action-label', 'Raw'))
+
+    var copyIcon = h('span.material-symbols-outlined', 'content_copy')
+    var copyLabel = h('span.git-blob-action-label', 'Copy path')
+    var copyReset = null
+    var copyBtn = h('button.git-blob-action', {type: 'button'},
+      copyIcon,
+      copyLabel)
+    copyBtn.addEventListener('click', function () {
+      var clipboard = navigator.clipboard
+      if (!clipboard || !clipboard.writeText) return
+      clipboard.writeText(pathParts.join('/')).then(function () {
+        if (copyReset) clearTimeout(copyReset)
+        copyBtn.classList.add('is-copied')
+        copyIcon.textContent = 'check'
+        copyLabel.textContent = 'Copied'
+        copyReset = setTimeout(function () {
+          copyBtn.classList.remove('is-copied')
+          copyIcon.textContent = 'content_copy'
+          copyLabel.textContent = 'Copy path'
+          copyReset = null
+        }, 1200)
+      }, function () {
+        copyBtn.classList.remove('is-copied')
+        copyIcon.textContent = 'content_copy'
+        copyLabel.textContent = 'Copy path'
+      })
+    })
+
+    var buttons = [rawBtn]
+    buttons.push(copyBtn)
+
+    return h('div.git-blob-actions',
+      meta,
+      h('div.git-blob-actions-buttons', buttons))
   }
 
   function renderBlobScreen(repoId, ref, pathParts, container) {
@@ -598,14 +830,18 @@ exports.create = function (api) {
     if (IMAGE_EXTS.test(fileName)) {
       container.innerHTML = ''
       var main = h('div.git-forge-main',
-        h('div.git-forge-content',
+          h('div.git-forge-content',
           h('div.git-browser',
             renderRepoSubheader(repoId, {
               screen: 'blob',
               ref: ref,
               pathParts: pathParts
             }),
-            h('div.git-image-view',
+            renderBlobActionRow(repoId, ref, pathParts, {
+              variant: 'image',
+              withMeta: false
+            }),
+            h('div.git-image-view.git-blob-pane',
               h('img.git-blob-image', {
                 src: rawBlobUrl(repoId, ref, pathParts),
                 alt: fileName
@@ -623,19 +859,18 @@ exports.create = function (api) {
     fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
       if (err) { container.textContent = 'Error: ' + err.message; return }
       var isMarkdown = /\.(md|markdown)$/i.test(fileName)
+      var content = data.content || ''
+      var lineCount = content ? content.split('\n').length : 0
+      var size = byteSize(content)
       var contentEl
 
       if (isMarkdown) {
-        contentEl = h('div.git-readme')
+        contentEl = h('div.git-readme.git-blob-pane.git-blob-readme')
         var md = null
-        try { md = api.markdown({text: data.content}) } catch (_) {}
-        contentEl.appendChild(md || h('pre.git-blob-content', data.content))
+        try { md = api.markdown({text: content}) } catch (_) {}
+        contentEl.appendChild(md || h('pre.git-blob-content', content))
       } else {
-        var pre = h('pre.git-blob-content.git-highlighted')
-        var code = h('code')
-        code.innerHTML = highlight(data.content || '', fileName)
-        pre.appendChild(code)
-        contentEl = pre
+        contentEl = renderHighlightedBlob(content, fileName)
       }
 
       container.innerHTML = ''
@@ -646,6 +881,12 @@ exports.create = function (api) {
               screen: 'blob',
               ref: ref,
               pathParts: pathParts
+            }),
+            renderBlobActionRow(repoId, ref, pathParts, {
+              variant: isMarkdown ? 'markdown' : 'text',
+              withMeta: true,
+              lineCount: lineCount,
+              byteSize: size
             }),
             contentEl
           )
@@ -667,7 +908,7 @@ exports.create = function (api) {
     } else {
       var rows = []
       file.hunks.forEach(function (hunk) {
-        rows.push(h('tr.git-diff-hunk-header', h('td', {colspan: '4'}, '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@')))
+        rows.push(h('tr.git-diff-hunk-header', h('td', {colSpan: 4}, '@@ -' + hunk.oldStart + ' +' + hunk.newStart + ' @@')))
         
         hunk.lines.forEach(function (line) {
           var cls = 'git-diff-line git-diff-line-' + line.type
@@ -690,7 +931,7 @@ exports.create = function (api) {
           if (commentsMap && commentsMap[lineKey]) {
             commentsMap[lineKey].forEach(function (link) {
               var lc = link.value.content
-              rows.push(h('tr.git-diff-inline-comment-row', h('td', {colspan: 4},
+              rows.push(h('tr.git-diff-inline-comment-row', h('td', {colSpan: 4},
                 h('div.git-diff-inline-comment',
                   h('div.git-diff-inline-comment-header',
                     h('strong', api.avatar_name(link.value.author)),
@@ -704,7 +945,7 @@ exports.create = function (api) {
 
           addCommentBtn.onclick = function () {
             var composerWrap = h('div.git-diff-inline-compose')
-            var composerRow = h('tr.git-diff-inline-comment-row', h('td', {colspan: 4}, composerWrap))
+            var composerRow = h('tr.git-diff-inline-comment-row', h('td', {colSpan: 4}, composerWrap))
             lineRow.parentNode.insertBefore(composerRow, lineRow.nextSibling)
             
             composerWrap.appendChild(api.message_compose(
@@ -714,7 +955,7 @@ exports.create = function (api) {
                 if (err) { alert(err); composerRow.remove(); return }
                 if (!msg) { composerRow.remove(); return }
                 var lc = msg.value.content
-                var newComment = h('tr.git-diff-inline-comment-row', h('td', {colspan: 4},
+                var newComment = h('tr.git-diff-inline-comment-row', h('td', {colSpan: 4},
                   h('div.git-diff-inline-comment',
                     h('div.git-diff-inline-comment-header',
                       h('strong', api.avatar_name(msg.value.author)),
@@ -771,8 +1012,7 @@ exports.create = function (api) {
           h('div.git-browser',
             renderRepoSubheader(repoId, {
               screen: 'commit',
-              pathParts: [],
-              hint: 'viewing: commit'
+              pathParts: []
             }),
             h('h4.git-section-title', c.title || ''),
             h('div.git-commit-meta',
@@ -898,40 +1138,25 @@ exports.create = function (api) {
   function renderActivityScreen(repoId, container) {
     container.innerHTML = ''
     container.appendChild(h('div.git-forge-list-empty', 'Fetching mesh activity…'))
-    
+
     var count = 0
     pull(
       api.sbot_links({dest: repoId, values: true, reverse: true}),
       pull.filter(function (link) {
-        var t = link.value.content.type
-        return ['git-update', 'git-comment', 'issue', 'pull-request'].indexOf(t) !== -1
+        return link && link.value && link.value.content && link.value.content.type
       }),
       pull.drain(function (link) {
+        var rendered = api.message_render(link)
+        if (!rendered) return
         if (count === 0) container.innerHTML = ''
         count++
-
-        var c = link.value.content
-        var type = c.type === 'git-update' ? 'push' : (c.type === 'git-comment' ? 'comment' : 'issue')
-        var author = link.value.author
-        var date = new Date(link.value.timestamp)
-        
-        var summary = ''
-        if (c.type === 'git-update') summary = 'pushed new commits'
-        else if (c.type === 'git-comment') summary = 'commented on code'
-        else if (c.type === 'issue') summary = 'opened an issue'
-        else if (c.type === 'pull-request') summary = 'opened a pull request'
-
-        container.appendChild(h('div.git-forge-activity-item', {className: type},
-          h('div',
-            h('strong', api.avatar_name(author)),
-            ' ' + summary + ' ',
-            h('span.git-forge-list-item-meta', human(date))
-          ),
-          h('div.git-forge-list-item-meta', h('small', '#' + link.key.substr(1, 10)))
-        ))
+        container.appendChild(rendered)
       }, function (err) {
         if (err) console.error(err)
-        if (count === 0) { container.innerHTML = ''; container.appendChild(h('div.git-forge-list-empty', 'No mesh activity recorded for this repo yet.')) }
+        if (count === 0) {
+          container.innerHTML = ''
+          container.appendChild(h('div.git-forge-list-empty', 'No mesh activity recorded for this repo yet.'))
+        }
       })
     )
   }
@@ -987,7 +1212,11 @@ exports.create = function (api) {
       )
 
       if (!sub) {
-        renderRepoScreen(repoId, content)
+        content.textContent = 'Loading…'
+        getRepoRefs(repoId, function (err, data) {
+          if (err) { content.textContent = 'Error: ' + err.message; return }
+          renderTreeScreen(repoId, getDefaultRef(data), [], content)
+        })
       } else if (sub === 'tree') {
         var treeRef   = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
         var treePath  = parts.slice(4).map(decodeURIComponent)
@@ -1016,8 +1245,7 @@ exports.create = function (api) {
                   renderRepoSubheader(repoId, {
                     screen: 'log',
                     ref: logRef === 'HEAD' ? null : logRef,
-                    pathParts: [],
-                    hint: 'viewing: log'
+                    pathParts: []
                   }),
                   renderLog(repoId, (data && data.commits) || [])
                 )

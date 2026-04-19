@@ -621,6 +621,7 @@ function handleJsonLog(sbot, repoId, ref, res) {
             cb(null, {
               sha1,
               title: commit.title || '',
+              body:  commit.body  || '',
               author: {
                 name:  commit.author.name  || '',
                 email: commit.author.email || '',
@@ -947,7 +948,11 @@ function parseJsonRoute(req) {
   if (rest === 'refs') return { repoId, sub: 'refs' }
 
   const parts = rest.split('/')
-  if (parts[0] === 'log'    && parts.length >= 2) return { repoId, sub: 'log',    ref:  parts.slice(1).join('/') }
+  if (parts[0] === 'log'    && parts.length >= 2) {
+    let ref = parts.slice(1).join('/')
+    try { ref = decodeURIComponent(ref) } catch (_) {}
+    return { repoId, sub: 'log', ref: ref }
+  }
   if (parts[0] === 'commit' && parts.length === 2) return { repoId, sub: 'commit', sha1: parts[1] }
   if (parts[0] === 'diff'   && parts.length === 2) return { repoId, sub: 'diff',   sha1: parts[1] }
   if (parts[0] === 'tree'   && parts.length >= 2) {

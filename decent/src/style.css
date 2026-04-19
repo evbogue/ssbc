@@ -292,6 +292,7 @@ textarea {
 .message-card .actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 2px;
 }
 
@@ -312,6 +313,16 @@ textarea {
 
 .action-btn:hover {
   background: rgba(0, 0, 0, 0.06);
+}
+
+.action-btn--active {
+  color: #1967d2;
+  background: rgba(25, 103, 210, 0.12);
+}
+
+.action-btn--active:hover {
+  color: #1967d2;
+  background: rgba(25, 103, 210, 0.18);
 }
 
 .action-btn .action-icon {
@@ -365,6 +376,81 @@ textarea {
 
 .action-btn--reacted:hover {
   background: rgba(249, 24, 128, 0.18);
+}
+
+.git-message-action-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.git-message-action-group--open {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.git-message-compose {
+  flex: 1 0 100%;
+  margin-top: 6px;
+  padding: 12px;
+  border: 1px solid var(--soft-border, #d8dee4);
+  border-radius: 12px;
+  background: #f7f9fb;
+}
+
+.git-message-compose__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.git-message-compose__title {
+  font-size: 0.95em;
+}
+
+.git-message-compose__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #536471;
+  cursor: pointer;
+}
+
+.git-message-compose__close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.git-message-compose__close .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.git-pr-compose__branches {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.git-message-compose__result {
+  flex: 1 0 100%;
+  margin-top: 6px;
+  font-size: 0.88em;
+  color: #536471;
+}
+
+.git-repo-message-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
 }
 
 .reaction-emoji {
@@ -1040,15 +1126,22 @@ textarea {
 .git-clone-input {
   font-family: monospace;
   font-size: 0.82em;
-  background: #f0f0f0;
-  border: 1px solid #d0d0d0;
-  border-radius: 3px;
-  padding: 2px 6px;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 8px 10px;
   user-select: all;
-  flex: 1 1 420px;
+  display: block;
+  margin: 0;
+  flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere;
-  white-space: normal;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.git-clone-command {
+  color: #1f2328;
+  font-weight: 600;
 }
 
 .git-refs {
@@ -1069,57 +1162,62 @@ textarea {
   font-style: italic;
 }
 
-.git-commits {
-  margin: 8px 0 0 0;
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
-  background: #fff;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.git-commit {
-  display: block;
-  padding: 12px 16px;
-  border-bottom: 1px solid #d8dee4;
-  font-size: 0.9em;
-}
-
-.git-commit:last-child {
-  border-bottom: none;
-}
-
 .git-commit-row {
+  margin: 4px 0 0 0;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
-.git-commit-title {
-  flex: 1;
-  color: #333;
-  text-decoration: none;
+.git-commit-byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #656d76;
+  font-size: 0.9em;
 }
 
-.git-commit-title:hover {
+.git-log-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #d8dee4;
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.git-log-row:last-child {
+  border-bottom: none;
+}
+
+.git-log-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #333;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-log-title:hover {
   color: #0969da;
   text-decoration: underline;
 }
 
-.git-commit-byline {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+.git-log-authors,
+.git-log-time {
   flex-shrink: 0;
   font-size: 0.85em;
   color: #656d76;
-  margin-top: 6px;
 }
 
-.git-commit-author {
-  color: #555;
+.git-log-authors {
+  max-width: 30%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .git-commit-stats {
@@ -1137,12 +1235,9 @@ textarea {
 }
 
 .git-commit-body-preview {
-  margin-left: 1.8em;
-  color: #666;
-  font-size: 0.88em;
+  margin: 2px 0 0 0;
   line-height: 1.4;
   white-space: pre-wrap;
-  font-style: italic;
 }
 
 .git-commits-more {
@@ -1414,12 +1509,82 @@ textarea {
   background: #f8f8f8;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
+  margin: 0 0 12px 0;
   padding: 12px;
   font-family: monospace;
   font-size: 0.82em;
   overflow-x: auto;
   white-space: pre;
   tab-size: 4;
+}
+
+.git-blob-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 16px;
+  border: 1px solid #d0d7de;
+  border-bottom: none;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background: #f6f8fa;
+  font-size: 0.88em;
+}
+
+.git-blob-meta {
+  color: #656d76;
+}
+
+.git-blob-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.git-blob-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #24292f;
+  font-size: 0.88em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.git-blob-action:hover {
+  background: #f3f4f6;
+}
+
+.git-blob-action.is-disabled,
+.git-blob-action:disabled {
+  color: #8c959f;
+  background: #f6f8fa;
+  cursor: default;
+}
+
+.git-blob-action .material-symbols-outlined {
+  font-size: 1.1em;
+}
+
+.git-blob-pane {
+  margin-top: 0;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.git-blob-readme {
+  margin-top: 0;
 }
 
 .git-readme {
@@ -1608,18 +1773,59 @@ textarea {
 }
 
 /* ── Syntax highlighting ────────────────────────────────────────────────── */
+/* Light palette lives under `.token.*` at the bottom of this file. */
 
 .git-highlighted {
-  background: #1e1e2e;
-  color: #cdd6f4;
-  border-color: #313244;
+  background: #f6f8fa;
+  color: #24292f;
+  border: 1px solid #d0d7de;
+  padding: 0;
+  margin: 0;
 }
 
-.git-highlighted .hl-keyword  { color: #cba6f7; font-weight: 600; }
-.git-highlighted .hl-string   { color: #a6e3a1; }
-.git-highlighted .hl-comment  { color: #6c7086; font-style: italic; }
-.git-highlighted .hl-number   { color: #fab387; }
-.git-highlighted .hl-punct    { color: #89dceb; }
+.git-blob-line {
+  display: flex;
+  align-items: flex-start;
+  min-height: 1.45em;
+  padding: 0 12px 0 0;
+}
+
+.git-blob-line-no {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  padding: 0 12px 0 8px;
+  text-align: right;
+  color: #8c959f;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.git-blob-line-no:hover {
+  color: #0969da;
+}
+
+.git-blob-line-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre;
+  font-family: inherit;
+}
+
+.git-blob-line.is-highlighted {
+  background: #fff8c5;
+}
+
+.git-blob-line.is-highlighted .git-blob-line-no {
+  color: #57606a;
+  background: #fae17d;
+}
+
+.git-blob-line:target {
+  background: #fff8c5;
+}
 
 /* ── Image viewer ───────────────────────────────────────────────────────── */
 
@@ -2315,6 +2521,8 @@ textarea {
 
 .git-forge-tab-icon {
   opacity: 0.7;
+  font-size: 1.1em;
+  vertical-align: -3px;
 }
 
 .git-forge-container {
@@ -2371,6 +2579,50 @@ textarea {
 
 .git-tree-table tr:hover {
   background-color: #f6f8fa;
+}
+
+.git-tree-latest-commit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  font-size: 0.88em;
+  color: #57606a;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.git-tree-latest-commit:empty {
+  display: none;
+}
+
+.git-tree-latest-sha {
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.git-tree-latest-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #1f2328;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-tree-latest-title:hover {
+  color: #0969da;
+  text-decoration: underline;
+}
+
+.git-tree-latest-author,
+.git-tree-latest-time {
+  flex-shrink: 0;
+  color: #57606a;
 }
 
 
@@ -2439,35 +2691,146 @@ textarea {
   padding: 0 32px 32px 32px;
 }
 
-.git-forge-repo-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
-  font-size: 0.85em;
-  color: #57606a;
-}
+/* ── Repo code-home toolbar & clone popover ───────────────────────────── */
 
-.git-forge-repo-meta-item {
+.git-forge-toolbar {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
-.git-forge-copy-btn {
+.git-forge-toolbar-left,
+.git-forge-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.git-clone-button {
+  position: relative;
+}
+
+.git-clone-button-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 12px;
   border: 1px solid #d0d7de;
   border-radius: 6px;
   background: #f6f8fa;
   color: #1f2328;
-  padding: 4px 10px;
-  font-size: 0.82em;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 500;
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.git-clone-button-trigger:hover {
+  background: #eef2f6;
+}
+
+.git-clone-button.is-open .git-clone-button-trigger {
+  background: #eef2f6;
+  border-color: #afb8c1;
+}
+
+.git-clone-button-icon {
+  font-size: 1.05em;
+}
+
+.git-clone-caret {
+  font-size: 1.2em;
+  margin-left: 2px;
+  color: #57606a;
+}
+
+.git-clone-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: min(420px, calc(100vw - 40px));
+  padding: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(140, 149, 159, 0.2);
+  z-index: 20;
+  display: none;
+}
+
+.git-clone-button.is-open .git-clone-popover {
+  display: block;
+}
+
+.git-clone-popover-label {
+  display: block;
+  font-size: 0.75em;
+  color: #57606a;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   font-weight: 600;
+}
+
+.git-clone-popover-row {
+  display: flex;
+  gap: 6px;
+}
+
+.git-clone-popover-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  background: #f6f8fa;
+  color: #24292f;
+}
+
+.git-clone-popover-copy {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #1f2328;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
-.git-forge-copy-btn:hover {
+.git-clone-popover-copy:hover {
   background: #eef2f6;
+}
+
+/* Composite card: latest-commit banner + tree table share one outer border. */
+.git-forge-home-card {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.git-forge-home-card .git-tree-latest-commit {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #d0d7de;
+  margin: 0;
+  background: #f6f8fa;
+}
+
+.git-forge-home-card .git-tree-table {
+  border: none;
+  border-radius: 0;
 }
 
 
@@ -2666,31 +3029,6 @@ tr:hover .git-diff-add-comment-btn {
 .git-forge-activity-item.comment::before { border-color: #0969da; background: #ddf4ff; }
 .git-forge-activity-item.issue::before { border-color: #9a6700; background: #fff8c5; }
 
-.git-mesh-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75em;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #f6f8fa;
-  border: 1px solid #d0d7de;
-  color: #57606a;
-  flex-shrink: 0;
-}
-
-.git-mesh-status.local {
-  background: #dafbe1;
-  border-color: #1a7f37;
-  color: #1a7f37;
-}
-
-.git-mesh-status.remote {
-  background: #fff8c5;
-  border-color: #9a6700;
-  color: #9a6700;
-}
-
 .git-network-forks {
   display: flex;
   flex-wrap: wrap;
@@ -2712,9 +3050,11 @@ tr:hover .git-diff-add-comment-btn {
 
 /* ── Git Forge Final Polish ────────────────────────────────────────────── */
 
+.scroller__wrapper:has(> .git-forge-layout) {
+  max-width: 1120px;
+}
+
 .git-forge-layout {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  border-radius: 8px;
   background: #fff;
   min-height: 80vh;
 }

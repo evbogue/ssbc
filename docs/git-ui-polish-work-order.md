@@ -1,8 +1,34 @@
 # Work Order: Git forge UI polish
 
-**Status:** Partially shipped (see Session log below)
+**Status:** Tasks 1–3 essentially shipped. Only Option-B per-path last-commit columns remain, tracked separately.
 
-## Session log — 2026-04-19
+## Session log — 2026-04-19 (late)
+
+The remaining Task 3 gaps closed, plus a GitHub-style refactor of the repo home landed:
+
+- **Tree latest-commit banner (Task 3, Option A).** `renderLatestCommitBanner` fetches `log/<ref>`, takes `commits[0]`, renders short sha · subject · author · relative time above the tree table. Shown on every tree view (root + subdirs). Server-side one-liner: `plugins/git-server.js` now URL-decodes the ref in the `log/` route so refs with slashes work, and also surfaces commit `body` in the log response.
+- **Blob line numbers and `?lines=N` anchors (Task 3).** `highlight.js` exposes a new `intoLines()` that uses `Prism.tokenize` directly and flattens the token tree into per-source-line DOM — handles multi-line tokens (block comments, template literals, docstrings) without losing highlighting. `renderHighlightedBlob` in `git-browser.js` builds one `<div class="git-blob-line" id="L<N>">` per line with a gutter `<a>`. Click a line number → `?lines=5`, shift-click → `?lines=5-20`. Selection lives in the document's query string (not the hash, since the route is hash-based); updated via `history.replaceState` so the SPA router stays quiet. Reload preserves the highlight and scrolls to the first selected line.
+- **Syntax-highlight palette fixed (Task 3).** Root cause: `.git-highlighted` was stomping the whole blob with a dark `#1e1e2e` background so the light GitHub-ish `.token.*` palette at `style.css:2993` was landing on a dark backdrop — the "low contrast" the original WO flagged. Swapped to `#f6f8fa` / `#24292f` so the existing light palette reads correctly. Also removed dead `.hl-*` rules (Prism emits `.token.*`, those never matched anything).
+- **Repo code-home refactor — GitHub-style toolbar + composite card.**
+  - New `renderRepoToolbar(repoId, ref)` replaces the repo-home subheader. Ref picker on the left, clone button on the right.
+  - Clone URL is now hidden behind a `[⎘ Clone ▾]` button that opens a popover containing a read-only URL input (auto-selected on open) and a copy-to-clipboard button. Matches GitHub's "Code" dropdown pattern. One click away, no longer competes for attention on every page load.
+  - New `.git-forge-home-card` fuses the latest-commit banner and the tree table into a single bordered rounded container — children lose their own borders/radii and share the outer frame.
+  - **Tree subdirs / blob / log / commit** are unchanged: they keep `renderRepoSubheader` with breadcrumbs. The toolbar + composite card are home-only.
+  - Removed the now-unused `renderCloneCard` helper and its `.git-clone-card*` / `.git-forge-copy-btn` CSS. `.git-clone-input` stays — it's still used by `git.js` and `git-repos.js`.
+
+### Status of Tasks 1–3 after this session
+
+- **Task 1** — ✅ done. Clone URL is accessible via the popover; Copy button lives there with a transient check-mark confirm.
+- **Task 2** — ✅ done (before this session). Full ref picker with popover, Branches/Tags tabs, text filter, keyboard nav; no 10-ref cap. Sidebar removed everywhere.
+- **Task 3** — ✅ substantially done.
+  - Tree file icons: Material Symbols (`folder` / `description`).
+  - Tree latest-commit banner: shipped (Option A).
+  - Blob line numbers + `?lines=N`: shipped.
+  - Syntax-highlight palette: fixed.
+  - Markdown heading anchors: still open (low priority).
+  - **Per-path last-commit columns (Option B) still open** — requires a new `log-per-path/<ref>/<dir>` server endpoint; deferred to a follow-up work order.
+
+### Session log — 2026-04-19 (earlier)
 
 Follow-on work landed after the initial polish pass:
 
@@ -10,17 +36,6 @@ Follow-on work landed after the initial polish pass:
 - **History / Blame intentionally hidden.** We initially mocked these as disabled controls, then removed them from the row until the server exposes path-history and blame endpoints. The follow-up requirements are documented in `docs/git-blob-action-row-work-order.md`.
 - **Blob pane styling integrated with the current UX.** The blob action row and content pane now render as one unit rather than two competing bordered boxes.
 - **Push messages now expose pull-request creation in the action bar.** `git-update` SSB push messages render a compact Material-symbol `merge_type` button in the message action/reaction row. Clicking it resolves the repo and opens the inline pull-request composer from the push message itself.
-
-### Still open from Tasks 1–3 after 2026-04-19
-
-- **Task 1**: repo-home clone-row Copy button still missing.
-- **Task 2**: real ref picker (popover with search, Branches/Tags tabs, no 10-ref cap) not built. Sidebar removal and shared forge-width work already landed.
-- **Task 3**:
-  - Blob action row is done.
-  - Tree latest-commit banner is still missing.
-  - Blob line numbers / `?lines=N` anchors are still missing.
-  - Tree file icons are still emoji unless changed in a later session.
-  - Light syntax-highlight palette still needs explicit verification against the current blob views.
 
 ## Session log — 2026-04-18
 
