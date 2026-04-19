@@ -98,6 +98,34 @@ node bin.js whoami -- --port 9009
 
 ---
 
+## Git over SSB
+
+Your git repositories live in your SSB log. Anyone who follows you can clone them.
+No GitHub, no GitLab, no server to admin — just your node and the network.
+
+<!-- screenshot: docs/img/git-forge.png -->
+
+### Create a repo
+
+```bash
+node bin.js git.create my-project
+# → "http://127.0.0.1:8888/git/%25<id>.sha256"
+```
+
+### Use it as a git remote
+
+```bash
+git remote add ssb http://127.0.0.1:8888/git/%25<id>.sha256
+git push ssb main
+git clone http://127.0.0.1:8888/git/%25<id>.sha256
+```
+
+Standard git operations (push, fetch, clone, branches) all work against this remote. The repo URL contains the SSB message ID of the `git-repo` message — share it with others on the network and they can clone it once their node has the blobs.
+
+Decent includes a git-forge UI for browsing repos, branches, and commits in the browser.
+
+---
+
 ## Web UI (Decent)
 
 The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.js` on port `8888`.
@@ -136,29 +164,6 @@ Override host/port in `~/.ssb/config`:
   }
 }
 ```
-
----
-
-## Git Smart HTTP Server
-
-The server exposes a git smart HTTP remote on the same port as the Decent UI (default `8888`). Git objects are stored as SSB blobs; ref state is tracked in signed SSB messages.
-
-### Create a repo
-
-```bash
-node bin.js git.create my-project
-# → "http://127.0.0.1:8888/git/%25<id>.sha256"
-```
-
-### Use it as a git remote
-
-```bash
-git remote add ssb http://127.0.0.1:8888/git/%25<id>.sha256
-git push ssb main
-git clone http://127.0.0.1:8888/git/%25<id>.sha256
-```
-
-Standard git operations (push, fetch, clone, branches) all work against this remote. The repo URL contains the SSB message ID of the `git-repo` message — share it with others on the network and they can clone it once their node has the blobs.
 
 ---
 
