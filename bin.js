@@ -263,7 +263,7 @@ if (argv[0] === 'start') {
     .use(require('./plugins/invite'))
     .use(require('./plugins/git-server'))
     .use(require('./plugins/decent-ui'))
-    .use(require('ssb-local'))
+    .use(require('./lib/vendor/ssb-local'))
     .use(require('./lib/vendor/ssb-logging'))
     .use(require('ssb-query'))
     .use(require('ssb-links'))
