@@ -13,9 +13,9 @@ These must be done or decided before the README overhaul.
 
 Add `docs/img/.gitkeep` so the directory is tracked. Screenshots captured during the README overhaul live here.
 
-### 1b. Confirm the live demo at ssb.evbogue.com
+### 1b. Confirm the live demo at decent.evbogue.com
 
-Open `https://ssb.evbogue.com/` in a private window and record what a first-time visitor actually sees:
+Open `https://decent.evbogue.com/` in a private window and record what a first-time visitor actually sees:
 - Does it land on a usable Decent feed, or a login/invite wall?
 - Is there a public invite code worth linking from the README?
 - Is there enough feed activity that screenshots from the live instance are richer than a fresh local node?
@@ -59,7 +59,7 @@ Both readers should feel welcome.
 **1. Hero**
 - One-line tagline in human terms.
 - Two or three sentences on what SSB is: an append-only log of signed messages, gossiped between peers, stored on each user's own computer. No central server, no algorithmic feed.
-- Call-to-action link to `https://ssb.evbogue.com/` based on the confirmed demo flow from Part 1b.
+- Call-to-action link to `https://decent.evbogue.com/` based on the confirmed demo flow from Part 1b.
 - One screenshot: `docs/img/feed.png` — Decent feed view, a few posts visible.
 
 **2. Why ssbc exists**
@@ -97,7 +97,7 @@ Three-command path:
 - `npm start`
 - Open the local Decent URL printed at startup (usually `http://127.0.0.1:8989/`)
 
-One short paragraph on joining the network: `node bin.js invite.accept "<code>"`. Mention `ssb.evbogue.com` as one public node for invites; avoid hard-coding an invite that will expire. Push detailed CLI usage to `docs/cli.md`.
+One short paragraph on joining the network: `node bin.js invite.accept "<code>"`. Mention `decent.evbogue.com` as one public node for invites; avoid hard-coding an invite that will expire. Push detailed CLI usage to `docs/cli.md`.
 
 **6. Using Decent**
 - What it is: the built-in browser client, served by `plugins/decent-ui.js`.
@@ -206,7 +206,7 @@ Create `docs/docs-maintenance.md` explaining:
 When the user's feed and follow graph are empty, show a "Welcome to Decent" panel in place of the blank feed with 2–3 concrete next steps:
 1. Set a display name and avatar (link to profile editor)
 2. Write a first post (link to compose)
-3. Accept an invite code to join a network (short explanation + pointer to `ssb.evbogue.com`)
+3. Accept an invite code to join a network (short explanation + pointer to `decent.evbogue.com`)
 
 If possible, expose invite-acceptance in the UI so newcomers do not have to drop to the CLI. Keep scope tight — a clean empty state plus a visible invite field is enough.
 
@@ -225,7 +225,7 @@ If possible, expose invite-acceptance in the UI so newcomers do not have to drop
 ## Done when
 
 - [ ] `docs/img/` exists and is tracked
-- [ ] Live demo flow at `ssb.evbogue.com` is confirmed and documented
+- [ ] Live demo flow at `decent.evbogue.com` is confirmed and documented
 - [ ] `README.md` follows the nine-section order above with all sections present
 - [ ] Three screenshots in `docs/img/` render correctly in the README
 - [ ] All README internal links resolve
