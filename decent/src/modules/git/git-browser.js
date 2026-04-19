@@ -402,8 +402,10 @@ exports.create = function (api) {
 
       header.appendChild(h('div',
         h('div.git-forge-repo-title',
-          h('span', api.avatar_image(author, 'thumbnail')),
-          h('span', api.avatar_name(author)),
+          h('a', {href: '#' + author},
+            h('span', api.avatar_image(author, 'thumbnail')),
+            h('span', api.avatar_name(author))
+          ),
           h('span.git-forge-sep', ' / '),
           h('a', {href: gitBrowseRoute(repoId)}, h('strong', name))
         ),
@@ -459,11 +461,45 @@ exports.create = function (api) {
     }))
   }
 
+  function slugifyHeading(text) {
+    return String(text || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  }
+
+  function addHeadingAnchors(root) {
+    if (!root || !root.querySelectorAll) return
+    var headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6')
+    var used = {}
+    for (var i = 0; i < headings.length; i++) {
+      var heading = headings[i]
+      if (heading.id) continue
+      var base = slugifyHeading(heading.textContent)
+      if (!base) continue
+      var slug = base
+      var n = 1
+      while (used[slug]) { slug = base + '-' + (++n) }
+      used[slug] = true
+      heading.id = slug
+      heading.classList.add('git-md-heading')
+      var link = h('a.git-md-heading-anchor', {
+        href: '#' + slug,
+        'aria-label': 'Permalink to ' + heading.textContent,
+        title: 'Permalink'
+      }, '#')
+      heading.insertBefore(link, heading.firstChild)
+    }
+  }
+
   function renderReadme(content) {
     var div = h('div.git-readme-content')
     try {
       var md = api.markdown({text: content})
-      if (md) { div.appendChild(md); return div }
+      if (md) { addHeadingAnchors(md); div.appendChild(md); return div }
     } catch (_) {}
     div.appendChild(h('pre', content))
     return div
@@ -868,6 +904,7 @@ exports.create = function (api) {
         contentEl = h('div.git-readme.git-blob-pane.git-blob-readme')
         var md = null
         try { md = api.markdown({text: content}) } catch (_) {}
+        if (md) addHeadingAnchors(md)
         contentEl.appendChild(md || h('pre.git-blob-content', content))
       } else {
         contentEl = renderHighlightedBlob(content, fileName)

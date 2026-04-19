@@ -1606,6 +1606,29 @@ textarea {
   margin-bottom: 0.4em;
 }
 
+.git-md-heading {
+  scroll-margin-top: 80px;
+}
+
+.git-md-heading-anchor {
+  display: inline-block;
+  margin-right: 0.35em;
+  color: #8b949e;
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 80ms ease-in;
+  font-weight: normal;
+}
+
+.git-md-heading:hover .git-md-heading-anchor,
+.git-md-heading-anchor:focus {
+  opacity: 1;
+}
+
+.git-md-heading-anchor:hover {
+  text-decoration: underline;
+}
+
 .git-readme-content pre,
 .git-readme-content code {
   font-family: monospace;
@@ -3062,6 +3085,12 @@ tr:hover .git-diff-add-comment-btn {
 .git-forge-repo-title {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
+}
+
+.git-forge-repo-title > a:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .git-forge-tab {
