@@ -121,7 +121,7 @@ git push ssb main
 git clone http://127.0.0.1:8989/git/%25<id>.sha256
 ```
 
-Standard git operations (push, fetch, clone, branches) all work against this remote. The repo URL contains the SSB message ID of the `git-repo` message — share it with others on the network and they can clone it once their node has the blobs.
+Standard git operations (push, fetch, clone, branches) all work against this remote. The repo URL contains the SSB message ID of the `git-repo` message — share it with others on the network and they can clone it once it has replicated to their node.
 
 Decent includes a git-forge UI for browsing repos, branches, and commits in the browser.
 
@@ -131,7 +131,9 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 
 The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.js`. Decent and the WebSocket transport share a single port — defaulting to `8989`.
 
-### Build
+### Rebuilding the frontend
+
+The built frontend is committed to the repo — you do not need to rebuild it to run `ssbc`. If you are making changes to the Decent source in `decent/`, rebuild with:
 
 ```bash
 npm run build:web
@@ -139,7 +141,7 @@ npm run build:web
 
 Build output: `decent/build/index.html`, `decent/build/style.css`
 
-### Access
+### Local docs
 
 Archived Scuttlebot documentation is also served at:
 
