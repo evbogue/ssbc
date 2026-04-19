@@ -23,7 +23,7 @@ Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
 - Send end-to-end encrypted private messages
 - Share files through the network as blobs
 - Host git repositories on your SSB node — no GitHub required
-- Join networks by accepting an invite code from a pub
+- Join networks by accepting an invite code from a pub (a public SSB node that helps peers find each other)
 
 ---
 
@@ -38,10 +38,10 @@ Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
 ## Installation
 
 ```bash
+git clone https://github.com/evbogue/ssbc.git
+cd ssbc
 npm install
 ```
-
-This installs all dependencies and makes the `sbot` / `ssb-server` commands available within the project.
 
 ---
 
@@ -72,20 +72,32 @@ node bin.js help            # list all commands
 node bin.js help <command>  # detail on a specific command
 ```
 
-### 3. Connect to the Network
-
-To receive messages from others, accept an invite code from a pub:
-
-```bash
-node bin.js invite.accept "PASTE_INVITE_CODE_HERE"
-```
-
-### 4. Create Invites
+### 3. Create Invites
 
 ```bash
 node bin.js invite.create 1   # single-use invite
 node bin.js invite.create 5   # multi-use invite
 ```
+
+---
+
+## Pubs, gossip, and replication
+
+Secure Scuttlebutt is a gossip protocol. When two nodes connect, they compare what each has and exchange what the other is missing — no central server decides what gets shared or in what order. Follow enough people and their messages find their way to you through the network, peer to peer.
+
+The thing being replicated is an append-only log. Every message you publish is signed with your private key and references the previous message in your feed, forming a cryptographic chain. You cannot insert, delete, or modify a past message without breaking the chain. Anyone who has your feed can verify every message in it. No one can forge your identity or rewrite your history.
+
+This is what makes SSB different from federated or centralized networks. Your feed is yours — it exists on every node that has replicated it. Even if this server goes offline, your messages survive on your followers' nodes.
+
+A **pub** is an always-on SSB node with a public IP address. Pubs exist to help nodes find each other — when you accept a pub invite, the pub follows you and you follow it back, and your node uses that connection to exchange messages with the broader network. Pubs do not control the network. They are just well-connected peers that happen to stay online. If a pub disappears, your feed and your social graph survive on every node that has them.
+
+To join the network, accept an invite code from a pub:
+
+```bash
+node bin.js invite.accept "PASTE_INVITE_CODE_HERE"
+```
+
+`decent.evbogue.com` is one public node you can request an invite from.
 
 ---
 
@@ -100,15 +112,15 @@ No GitHub, no GitLab, no server to admin — just your node and the network.
 
 ```bash
 node bin.js git.create my-project
-# → "http://127.0.0.1:8888/git/%25<id>.sha256"
+# → "http://127.0.0.1:8989/git/%25<id>.sha256"
 ```
 
 ### Use it as a git remote
 
 ```bash
-git remote add ssb http://127.0.0.1:8888/git/%25<id>.sha256
+git remote add ssb http://127.0.0.1:8989/git/%25<id>.sha256
 git push ssb main
-git clone http://127.0.0.1:8888/git/%25<id>.sha256
+git clone http://127.0.0.1:8989/git/%25<id>.sha256
 ```
 
 Standard git operations (push, fetch, clone, branches) all work against this remote. The repo URL contains the SSB message ID of the `git-repo` message — share it with others on the network and they can clone it once their node has the blobs.
@@ -173,7 +185,7 @@ Or set it permanently in `~/.ssb/config`:
 - [`docs/frontend.md`](docs/frontend.md) — Decent internals
 - [`docs/http-replication.md`](docs/http-replication.md) — replication protocol
 
-Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8888/docs` but `docs/` is the primary source of truth for how this repo works now.
+Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8989/docs` but `docs/` is the primary source of truth for how this repo works now.
 
 ---
 
