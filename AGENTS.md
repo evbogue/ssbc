@@ -413,6 +413,13 @@ their own events.  Use this pattern for any future clickable card.
 All existing modules in `decent/src/modules/**` use old-style `var` and CommonJS.  Match the
 surrounding style — do not introduce `const`/`let` or arrow functions into these files.
 
+### Git repo tabs on mobile
+
+The git repo browser tabs in `decent/src/modules/git/git-browser.js` should render as
+`icon + span.git-forge-tab-label` so CSS can hide only the label on narrow screens.
+On mobile, prefer icon-only tabs that all remain visible over horizontally scrollable tabs
+or compressed multi-line labels.
+
 ---
 
 ## git-ssb workflow

@@ -384,8 +384,13 @@ exports.create = function (api) {
 
       function tab(active, route, icon, label) {
         return h('a.git-forge-tab' + (active ? '.active' : ''),
-          {href: route},
-          tabIcon(icon), ' ' + label)
+          {
+            href: route,
+            'aria-label': label,
+            title: label
+          },
+          tabIcon(icon),
+          h('span.git-forge-tab-label', label))
       }
 
       var tabs = [

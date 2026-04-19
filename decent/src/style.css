@@ -2531,6 +2531,10 @@ textarea {
   gap: 6px;
 }
 
+.git-forge-tab-label {
+  white-space: nowrap;
+}
+
 .git-forge-tab:hover {
   background: #eaeef2;
 }
@@ -2697,6 +2701,10 @@ textarea {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.git-forge-tab-label {
+  white-space: nowrap;
 }
 
 .git-forge-tab:hover {
@@ -3156,6 +3164,26 @@ tr:hover .git-diff-add-comment-btn {
 
   .git-ref-picker-popover {
     width: min(320px, calc(100vw - 48px));
+  }
+}
+
+@media (max-width: 640px) {
+  .git-forge-tabs {
+    gap: 4px;
+  }
+
+  .git-forge-tab {
+    justify-content: center;
+    padding: 8px 10px;
+  }
+
+  .git-forge-tab-label {
+    display: none;
+  }
+
+  .git-forge-tab-icon {
+    margin: 0;
+    opacity: 0.9;
   }
 }
 
