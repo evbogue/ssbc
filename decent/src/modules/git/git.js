@@ -177,15 +177,27 @@ exports.create = function (api) {
     }
   }
 
-  function issueForm(msg, contentEl) {
-    var form = h('form',
-      h('strong', 'New Issue:'),
+  function issueForm(msg, opts) {
+    opts = opts || {}
+    var form = h('form.git-message-compose.git-issue-compose',
+      h('div.git-message-compose__header',
+        h('strong.git-message-compose__title', 'New Issue'),
+        opts.onCancel ? h('button.git-message-compose__close', {
+          type: 'button',
+          title: 'Close form',
+          onclick: function (e) {
+            e.preventDefault()
+            opts.onCancel()
+          }
+        }, h('span.material-symbols-outlined', 'close')) : null
+      ),
       api.message_compose(
         {type: 'issue', project: msg.key},
         function (value) { return value },
         function (err, issue) {
           if(err) return alert(err)
           if(!issue) return
+          if (opts.onCreated) return opts.onCreated(issue)
           var title = issue.value.content.text
           if(title.length > 70) title = title.substr(0, 70) + '…'
           form.appendChild(h('div',
@@ -195,6 +207,75 @@ exports.create = function (api) {
       )
     )
     return form
+  }
+
+  function newIssueAction(msg) {
+    var open = false
+    var form = null
+    var result = null
+    var label = h('span', 'New issue')
+    var button = h('button.action-btn.action-btn--git-issue', {
+      type: 'button',
+      title: 'Open issue form',
+      'aria-expanded': 'false',
+      onclick: function (e) {
+        e.preventDefault()
+        if (open) close()
+        else openForm()
+      }
+    },
+    h('span.material-symbols-outlined.action-icon', 'add_comment'),
+    label)
+
+    var group = h('div.git-message-action-group', button)
+
+    function clearResult() {
+      if (result && result.parentNode === group) group.removeChild(result)
+      result = null
+    }
+
+    function renderResult(issue) {
+      var title = issue.value.content.text
+      if(title.length > 70) title = title.substr(0, 70) + '…'
+      clearResult()
+      result = h('div.git-message-compose__result',
+        'Opened ',
+        h('a', {href: '#'+issue.key}, title)
+      )
+      group.appendChild(result)
+    }
+
+    function close() {
+      open = false
+      group.classList.remove('git-message-action-group--open')
+      button.classList.remove('action-btn--active')
+      button.setAttribute('aria-expanded', 'false')
+      button.title = 'Open issue form'
+      label.textContent = 'New issue'
+      if (form && form.parentNode === group) group.removeChild(form)
+    }
+
+    function openForm() {
+      open = true
+      clearResult()
+      group.classList.add('git-message-action-group--open')
+      button.classList.add('action-btn--active')
+      button.setAttribute('aria-expanded', 'true')
+      button.title = 'Close issue form'
+      label.textContent = 'Close issue'
+      if (!form) {
+        form = issueForm(msg, {
+          onCancel: close,
+          onCreated: function (issue) {
+            close()
+            renderResult(issue)
+          }
+        })
+      }
+      group.appendChild(form)
+    }
+
+    return group
   }
 
   function branchMenu(msg, full) {
@@ -219,26 +300,24 @@ exports.create = function (api) {
     })
   }
 
-  function newPullRequestButton(msg) {
-    return h('div', [
-      h('a', {
-        href: '#',
-        onclick: function (e) {
-          e.preventDefault()
-          this.parentNode.replaceChild(pullRequestForm(msg), this)
-        }},
-        'New Pull Request…'
-      )
-    ])
-  }
-
-  function pullRequestForm(msg) {
+  function pullRequestForm(msg, opts) {
+    opts = opts || {}
     var headRepoInput
     var headBranchInput = branchMenu()
     var branchInput = branchMenu(msg)
-    var form = h('form',
-      h('strong', 'New Pull Request:'),
-      h('div',
+    var form = h('form.git-message-compose.git-pr-compose',
+      h('div.git-message-compose__header',
+        h('strong.git-message-compose__title', 'New Pull Request'),
+        opts.onCancel ? h('button.git-message-compose__close', {
+          type: 'button',
+          title: 'Close form',
+          onclick: function (e) {
+            e.preventDefault()
+            opts.onCancel()
+          }
+        }, h('span.material-symbols-outlined', 'close')) : null
+      ),
+      h('div.git-pr-compose__branches',
         'from ',
         headRepoInput = combobox({
           style: {'max-width': '26ex'},
@@ -281,6 +360,7 @@ exports.create = function (api) {
         function (err, issue) {
           if(err) return alert(err)
           if(!issue) return
+          if (opts.onCreated) return opts.onCreated(issue)
           var title = issue.value.content.text
           if(title.length > 70) title = title.substr(0, 70) + '…'
           form.appendChild(h('div',
@@ -290,6 +370,102 @@ exports.create = function (api) {
       )
     )
     return form
+  }
+
+  function newPullRequestAction(msg) {
+    var open = false
+    var form = null
+    var result = null
+    var repoMsg = msg.value.content.type === 'git-repo' ? msg : null
+    var button = h('button.action-btn.action-btn--git-pr', {
+      type: 'button',
+      title: 'Open pull request form',
+      'aria-label': 'Open pull request form',
+      'aria-expanded': 'false',
+      onclick: function (e) {
+        e.preventDefault()
+        if (open) close()
+        else openForm()
+      }
+    },
+    h('span.material-symbols-outlined.action-icon', 'merge_type'))
+
+    var group = h('div.git-message-action-group', button)
+
+    function clearResult() {
+      if (result && result.parentNode === group) group.removeChild(result)
+      result = null
+    }
+
+    function renderResult(issue) {
+      var title = issue.value.content.text
+      if(title.length > 70) title = title.substr(0, 70) + '…'
+      clearResult()
+      result = h('div.git-message-compose__result',
+        'Opened ',
+        h('a', {href: '#'+issue.key}, title)
+      )
+      group.appendChild(result)
+    }
+
+    function close() {
+      open = false
+      group.classList.remove('git-message-action-group--open')
+      button.classList.remove('action-btn--active')
+      button.setAttribute('aria-expanded', 'false')
+      button.title = 'Open pull request form'
+      button.setAttribute('aria-label', 'Open pull request form')
+      if (form && form.parentNode === group) group.removeChild(form)
+    }
+
+    function openResolvedForm(resolvedMsg) {
+      repoMsg = resolvedMsg
+      open = true
+      clearResult()
+      group.classList.add('git-message-action-group--open')
+      button.classList.add('action-btn--active')
+      button.setAttribute('aria-expanded', 'true')
+      button.title = 'Close pull request form'
+      button.setAttribute('aria-label', 'Close pull request form')
+      if (!form) {
+        form = pullRequestForm(repoMsg, {
+          onCancel: close,
+          onCreated: function (issue) {
+            close()
+            renderResult(issue)
+          }
+        })
+      }
+      group.appendChild(form)
+    }
+
+    function openForm() {
+      if (repoMsg) return openResolvedForm(repoMsg)
+
+      var repoId = msg.value.content.repo
+      if (!repoId) return
+
+      button.disabled = true
+      button.title = 'Loading pull request form…'
+      button.setAttribute('aria-label', 'Loading pull request form')
+      api.sbot_get(repoId, function (err, value) {
+        button.disabled = false
+        if (err) {
+          console.error(err)
+          button.title = 'Open pull request form'
+          button.setAttribute('aria-label', 'Open pull request form')
+          return
+        }
+        if (!value) {
+          button.title = 'Open pull request form'
+          button.setAttribute('aria-label', 'Open pull request form')
+          return
+        }
+        openResolvedForm({key: repoId, value: value})
+      })
+    }
+
+    return group
   }
 
 
@@ -368,11 +544,9 @@ exports.create = function (api) {
             h('table',
               forksT = tableRows(h('tr',
                 h('th', 'forks'))))),
-          h('div', h('a', {href: '#', onclick: function (e) {
-            e.preventDefault()
-            this.parentNode.replaceChild(issueForm(msg), this)
-          }}, 'New Issue…')),
-          newPullRequestButton.call(this, msg)
+          h('div.git-repo-message-actions',
+            newIssueAction(msg),
+            newPullRequestAction(msg))
         )
 
         pull(getRefs(msg), pull.drain(function (ref) {
@@ -496,17 +670,19 @@ exports.create = function (api) {
               (commit.body.trim().length > 300 ? '…' : '')
             : null
 
-          return h('div.git-commit',
-            h('div.git-commit-row',
+          return [
+            h('p.git-commit-row',
               h('a', {href: browseHref}, h('code.git-sha', commit.sha1.substr(0, 7))),
+              ' ',
               commit.title ? h('span.git-commit-title', commit.title) : null,
+              ' ',
               h('span.git-commit-byline',
                 authorName ? h('span.git-commit-author', authorName) : null,
                 statsEl
               )
             ),
-            bodyText ? h('div.git-commit-body-preview', bodyText) : null
-          )
+            bodyText ? h('p.git-commit-body-preview', bodyText) : null
+          ]
         }
 
         var repoId = c.repo
@@ -522,24 +698,21 @@ exports.create = function (api) {
               branchHref
                 ? h('a.git-branch-badge', {href: branchHref}, shortName)
                 : h('span.git-branch-badge', shortName),
-              rev
-                ? h('code.git-sha', rev.substr(0, 7))
-                : h('em.git-ref-deleted', 'deleted'))
+              rev ? null : h('em.git-ref-deleted', 'deleted'))
           })) : null,
           Array.isArray(c.commits) ? [
-            h('div.git-commits',
-              c.commits.map(function (commit) {
-                return renderUpdateCommit(commit, repoId)
-              }),
-              c.commits_more > 0 ? (function () {
-                var firstRef = Object.keys(c.refs || {})
-                  .filter(function (r) { return /^refs\/heads\//.test(r) })[0]
-                var branch = firstRef ? shortRefName(firstRef) : 'HEAD'
-                var logHref = '#git/' + encodeURIComponent(repoId) +
-                  '/log/' + encodeURIComponent(branch)
-                return h('div.git-commit.git-commits-more',
-                  h('a', {href: logHref}, '+ ' + c.commits_more + ' more…'))
-              }()) : null)
+            c.commits.map(function (commit) {
+              return renderUpdateCommit(commit, repoId)
+            }),
+            c.commits_more > 0 ? (function () {
+              var firstRef = Object.keys(c.refs || {})
+                .filter(function (r) { return /^refs\/heads\//.test(r) })[0]
+              var branch = firstRef ? shortRefName(firstRef) : 'HEAD'
+              var logHref = '#git/' + encodeURIComponent(repoId) +
+                '/log/' + encodeURIComponent(branch)
+              return h('p.git-commits-more',
+                h('a', {href: logHref}, '+ ' + c.commits_more + ' more…'))
+            }()) : null
           ] : null,
           Array.isArray(c.issues) ? c.issues.map(function (issue) {
             if (issue.merged === true)
@@ -548,8 +721,7 @@ exports.create = function (api) {
             if (issue.open === false)
               return h('p', 'Closed ', api.message_link(issue.link), ' in ',
                 h('code.git-sha', issue.object), ' ', h('q', issue.label))
-          }) : null,
-          newPullRequestButton.call(this, msg)
+          }) : null
         ]
       }
 
@@ -612,6 +784,7 @@ exports.create = function (api) {
 
     message_action: function (msg, sbot) {
       var c = msg.value.content
+      if (c.type === 'git-update') return newPullRequestAction(msg)
       if(c.type === 'issue' || c.type === 'pull-request') {
         var isOpen
         var a = h('a', {href: '#', onclick: function (e) {
@@ -645,5 +818,3 @@ exports.create = function (api) {
     }
   }
 }
-
-
