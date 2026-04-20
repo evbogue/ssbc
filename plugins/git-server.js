@@ -216,6 +216,14 @@ function publishReceivePackUpdate(repo, updates, idxStream, packStream, objectId
   let idxLink
   let finished = false
 
+  function isNoOp(currentByName) {
+    return updates.every(u => {
+      const current = currentByName[u.name]
+      if (u.new === null) return !current
+      return current === u.new
+    })
+  }
+
   function complete(err) {
     if (finished) return
     if (err) {
@@ -224,6 +232,19 @@ function publishReceivePackUpdate(repo, updates, idxStream, packStream, objectId
     }
     if (!packLink || !idxLink) return
 
+    pull(repo.refs(), pull.collect((refsErr, currentRefs) => {
+      if (refsErr) return cb(refsErr)
+      const currentByName = {}
+      currentRefs.forEach(r => { currentByName[r.name] = r.hash })
+      if (isNoOp(currentByName)) {
+        console.error('git-server: push is already up-to-date; skipping publish')
+        return cb(null)
+      }
+      buildAndPublish()
+    }))
+  }
+
+  function buildAndPublish() {
     const msg = {
       type: 'git-update',
       recps: repo.recps,

@@ -69,11 +69,20 @@ session unless Ev says otherwise in the current conversation.
 This repo has two remotes and pushes should always go to **both**:
 
 - `origin` — GitHub (public source of truth)
-- `ssb` — git-ssb (dogfooding; the Decent app surfaces these pushes in the feed)
+- `ssb` — git-over-HTTP via our own sbot (dogfooding; Decent surfaces these pushes in the feed)
 
 ```bash
-PATH="$PATH:$(pwd)/node_modules/.bin" git push origin HEAD && \
-PATH="$PATH:$(pwd)/node_modules/.bin" git push ssb HEAD
+git push origin HEAD && git push ssb HEAD
+```
+
+The `ssb` remote must be an HTTP URL served by our running sbot
+(`http://127.0.0.1:8989/git/%25<repo-id>.sha256`), not an `ssb://` URL. The
+`ssb://` scheme uses the legacy `git-remote-ssb` helper from `ssb-git-repo`,
+which we no longer use — it bypasses `plugins/git-server.js` and its guards
+(e.g. the no-op-push suppressor). If you see an `ssb://` remote, rewrite it:
+
+```bash
+git remote set-url ssb "http://127.0.0.1:8989/git/%25<repo-id>.sha256"
 ```
 
 Rules:
@@ -422,19 +431,27 @@ or compressed multi-line labels.
 
 ---
 
-## git-ssb workflow
+## git-over-HTTP workflow
+
+We push git through our own sbot's HTTP server (`plugins/git-server.js`), not
+through the legacy `git-ssb` / `git-remote-ssb` (`ssb-git-repo`) helper. The
+HTTP path is what `plugins/git-server.js` serves, what tests cover, and where
+guards like the no-op-push suppressor live.
 
 ```bash
-# Create a new repo (after deleting .ssb database, the old remote is stale)
-git remote remove ssb
-./node_modules/.bin/git-ssb create ssb <repo-name>
+# Create a new repo — sbot must be running
+node bin.js git.create <repo-name>
+# → prints an http://127.0.0.1:8989/git/%25<id>.sha256 URL
 
-# Push (git-remote-ssb must be in PATH)
-PATH="$PATH:$(pwd)/node_modules/.bin" git push ssb HEAD:main
+# Add as a remote
+git remote add ssb "http://127.0.0.1:8989/git/%25<id>.sha256"
+
+# Push normally — no PATH hack needed
+git push ssb HEAD:main
 ```
 
-The git HTTP server at `http://127.0.0.1:8888/git/<encoded-hash>/` serves repos via
-the smart protocol and is tested working.
+If you inherit a clone with an `ssb://` remote, rewrite it to the HTTP form
+before pushing (see the Pushing section above).
 
 See [Development Best Practices → Pushing](#pushing--always-both-remotes) for the
 always-push-to-both-remotes rule.
