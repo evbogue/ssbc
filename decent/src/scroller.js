@@ -6,10 +6,11 @@ var isVisible = require('is-visible').isVisible
 
 var next = 'undefined' === typeof setImmediate ? setTimeout : setImmediate
 
-function isBottom (scroller, buffer) {
+function isBottom (scroller) {
   var rect = scroller.getBoundingClientRect()
   var topmax = scroller.scrollTopMax || (scroller.scrollHeight - rect.height)
-  return scroller.scrollTop >= +((topmax) - (buffer || 0))
+  var buffer = Math.max(400, rect.height * 0.5)
+  return scroller.scrollTop >= topmax - buffer
 }
 
 function isTop (scroller, buffer) {
