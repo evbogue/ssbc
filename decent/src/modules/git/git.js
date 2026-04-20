@@ -686,6 +686,43 @@ exports.create = function (api) {
         }
 
         var repoId = c.repo
+        var commitsHolder = h('div.git-commits-holder')
+        var refsObj = c.refs || {}
+        var firstHeadRef = Object.keys(refsObj)
+          .filter(function (r) { return /^refs\/heads\//.test(r) && refsObj[r] })[0]
+        var firstLiveRef = firstHeadRef ||
+          Object.keys(refsObj).filter(function (r) { return refsObj[r] })[0]
+        if (firstLiveRef) loadCommitsForRef(firstLiveRef)
+
+        function loadCommitsForRef(refName) {
+          var newSha = refsObj[refName]
+          var url = window.location.origin + '/git/' +
+            encodeURIComponent(repoId) + '/json/log/' + encodeURIComponent(newSha)
+          var xhr = new XMLHttpRequest()
+          xhr.open('GET', url)
+          xhr.onload = function () {
+            if (xhr.status !== 200) return
+            var data
+            try { data = JSON.parse(xhr.responseText) } catch (_) { return }
+            if (!data || !Array.isArray(data.commits) || !data.commits.length) return
+            var limit = 5
+            data.commits.slice(0, limit).forEach(function (commit) {
+              var rendered = renderUpdateCommit(commit, repoId)
+              if (Array.isArray(rendered))
+                rendered.forEach(function (el) { if (el) commitsHolder.appendChild(el) })
+              else if (rendered) commitsHolder.appendChild(rendered)
+            })
+            if (data.commits.length > limit) {
+              var branch = shortRefName(refName)
+              var logHref = '#git/' + encodeURIComponent(repoId) +
+                '/log/' + encodeURIComponent(branch)
+              commitsHolder.appendChild(h('p.git-commits-more',
+                h('a', {href: logHref}, '+ more commits…')))
+            }
+          }
+          xhr.send()
+        }
+
         return [
           h('p', 'pushed to ', repoLink(repoId)),
           c.refs ? h('div.git-refs', Object.keys(c.refs).map(function (ref) {
@@ -700,20 +737,7 @@ exports.create = function (api) {
                 : h('span.git-branch-badge', shortName),
               rev ? null : h('em.git-ref-deleted', 'deleted'))
           })) : null,
-          Array.isArray(c.commits) ? [
-            c.commits.map(function (commit) {
-              return renderUpdateCommit(commit, repoId)
-            }),
-            c.commits_more > 0 ? (function () {
-              var firstRef = Object.keys(c.refs || {})
-                .filter(function (r) { return /^refs\/heads\//.test(r) })[0]
-              var branch = firstRef ? shortRefName(firstRef) : 'HEAD'
-              var logHref = '#git/' + encodeURIComponent(repoId) +
-                '/log/' + encodeURIComponent(branch)
-              return h('p.git-commits-more',
-                h('a', {href: logHref}, '+ ' + c.commits_more + ' more…'))
-            }()) : null
-          ] : null,
+          commitsHolder,
           Array.isArray(c.issues) ? c.issues.map(function (issue) {
             if (issue.merged === true)
               return h('p', 'Merged ', api.message_link(issue.link), ' in ',
