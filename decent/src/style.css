@@ -604,6 +604,42 @@ textarea {
   text-align: center;
 }
 
+/* ── Short-text reaction input (Stage 6) ──────────────────────────────────── */
+.reaction-picker__footer {
+  flex-shrink: 0;
+  border-top: 1px solid #e1e8ed;
+  background: #f7f9fa;
+}
+
+.reaction-picker__text {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 0.85em;
+  outline: none;
+  border-radius: 0 0 12px 12px;
+  box-sizing: border-box;
+}
+
+.reaction-picker__text:focus {
+  background: #fff;
+}
+
+.reaction-picker__text--invalid {
+  animation: reaction-text-shake 0.3s ease;
+}
+
+@keyframes reaction-text-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-picker__text--invalid { animation: none; outline: 1px solid #e0245e; }
+}
+
 .emoji-grid {
   display: flex;
   flex-wrap: wrap;

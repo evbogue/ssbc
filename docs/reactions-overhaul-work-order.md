@@ -1,6 +1,19 @@
 # Work Order: Reactions overhaul
 
-**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips), 4 (who-reacted popover), 5 (content-aware picker suggestions) implemented + browser-verified 2026-05-28. Stages 6–7 open.
+**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips), 4 (who-reacted popover), 5 (content-aware picker suggestions), 6 (short-text reactions) implemented + browser-verified 2026-05-28. Stage 7 open.
+
+## Session log — 2026-05-28 (Stage 6 — short-text reactions)
+
+Users can now react with arbitrary ≤8-char text (`+1`, `lol`, `this`…), not just emoji. All in `decent/src/modules/ui/like.js` + `style.css`.
+
+**What landed:**
+- A text input (`.reaction-picker__text`, placeholder "or react with text…", `maxLength` 8) in a new `.reaction-picker__footer` **below** the emoji grid. Enter publishes a vote with `reason: <trimmed value>` via the existing `reactAndClose` path (adds to recents, closes picker/tray), then clears the field.
+- **UI validation:** the trimmed value must be 1–8 chars. Empty/whitespace-only or (defensively) >8 is rejected with a one-shot shake animation (`--invalid` class, re-triggered each time) and never reaches the publish path — it does **not** lean on the downstream `reason.length<=8 → ❤️` fallback. `maxLength` also caps typing at 8.
+- No new aggregation/render code needed: a text `reason` is the same shape as an emoji `reason`, so `aggregateReactions` keys on it and chips render it automatically — including Stage 3 avatar faces and the Stage 4 popover. Recents already stored arbitrary strings, so text round-trips through "Recently used".
+
+**Deviations:** none. `.reaction-chip__emoji` renders short Latin text legibly at 16px, so the spec's optional `.reaction-chip__text` monospace branch was not needed.
+
+**Verified in-browser** (preview :8989): picker footer input present below the grid with `maxLength=8` and the right placeholder. Whitespace-only Enter → `--invalid` shake applied and the cache vote count stayed flat (no publish). A text reaction's render path was confirmed by injecting a synthetic `+1` `reason:1,value:1` vote into `window.CACHE` (browser-only, not published to the log) and dispatching `decent:vote-changed`: a `+1` chip appeared, text rendered at 16px, and — being a single reactor — it correctly showed the Stage 3 avatar. Removing the synthetic entry + re-dispatching cleared the chip. No console errors. (I deliberately did not publish a real text vote, to avoid a permanent feed entry; the publish wiring is the already-verified `castVote` path, only the input/validation is new and was tested live.)
 
 ## Session log — 2026-05-28 (Stage 5 — content-aware picker suggestions)
 

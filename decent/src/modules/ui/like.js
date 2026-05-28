@@ -790,7 +790,36 @@ exports.create = function (api) {
         }
       })
       pickerBodyEl = h('div.reaction-picker__body')
-      pickerEl = h('div.reaction-picker', pickerSearchInput, pickerBodyEl)
+      // Short-text reactions (Stage 6): react with an arbitrary ≤8-char reason
+      // (+1, lol, this…). The vote schema's `reason` field already carries it,
+      // and aggregation keys on `reason`, so a text reaction flows through the
+      // exact same chip path as an emoji one. Enter publishes; empty/over-8
+      // input is rejected in the UI (a shake) and never reaches the publish path
+      // — maxlength caps typing at 8, and we re-validate the trimmed value.
+      var textInput = h('input.reaction-picker__text', {
+        type:         'text',
+        placeholder:  'or react with text…',
+        maxLength:    8,
+        autocomplete: 'off',
+        onkeydown: function (e) {
+          if (e.key !== 'Enter') return
+          e.preventDefault()
+          var val = this.value.trim()
+          if (val.length < 1 || val.length > 8) {
+            this.classList.remove('reaction-picker__text--invalid')
+            void this.offsetWidth
+            this.classList.add('reaction-picker__text--invalid')
+            return
+          }
+          this.value = ''
+          reactAndClose(val)
+        }
+      })
+      pickerEl = h('div.reaction-picker',
+        pickerSearchInput,
+        pickerBodyEl,
+        h('div.reaction-picker__footer', textInput)
+      )
       reactionGroup.appendChild(pickerEl)
     }
 
