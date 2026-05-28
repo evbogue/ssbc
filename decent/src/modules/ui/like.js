@@ -138,6 +138,36 @@ function addToRecents (emoji) {
   } catch (e) {}
 }
 
+// Content-aware suggestions (Stage 5): tokenise a post's text and match whole
+// tokens against EMOJI_KEYWORDS. Whole-token matching (not substring) avoids
+// false hits like "ok" inside "look". Emoji are ranked by how many matched
+// keywords include them, ties broken by the earliest matching token's position.
+// Returns up to 5 emoji. Caller gates this to type:'post' messages.
+function suggestEmoji (text) {
+  if (!text || typeof text !== 'string') return []
+  var tokens = text.toLowerCase()
+    .replace(/[`*_>#~\[\]()]/g, ' ')
+    .split(/[^a-z0-9+]+/)
+    .filter(Boolean)
+  var tokenPos = {}
+  tokens.forEach(function (t, i) { if (!(t in tokenPos)) tokenPos[t] = i })
+
+  var score = {}
+  var firstPos = {}
+  for (var kw in EMOJI_KEYWORDS) {
+    if (!(kw in tokenPos)) continue
+    var pos = tokenPos[kw]
+    EMOJI_KEYWORDS[kw].forEach(function (e) {
+      score[e] = (score[e] || 0) + 1
+      if (firstPos[e] === undefined || pos < firstPos[e]) firstPos[e] = pos
+    })
+  }
+  return Object.keys(score).sort(function (a, b) {
+    if (score[b] !== score[a]) return score[b] - score[a]
+    return firstPos[a] - firstPos[b]
+  }).slice(0, 5)
+}
+
 // Shared helper: walk the cache and return { counts, myReactions } for a msg key.
 // Multi-reaction model (Slack/Discord-style): each (author, emoji) pair is a
 // distinct reaction. Deduped per (author, emoji) by most-recent timestamp —
@@ -691,6 +721,22 @@ exports.create = function (api) {
           )
         }
         return
+      }
+
+      // Content-aware suggestions, above Recently used. Post-type only — other
+      // message kinds (git-update, repost, vote) have no text worth matching.
+      var suggestions = msg.value.content.type === 'post'
+        ? suggestEmoji(msg.value.content.text)
+        : []
+      if (suggestions.length) {
+        var sGrid = h('div.emoji-grid')
+        suggestions.forEach(function (e) { sGrid.appendChild(makePickerBtn(e)) })
+        pickerBodyEl.appendChild(
+          h('div.reaction-picker__section',
+            h('div.reaction-picker__label', 'For this post'),
+            sGrid
+          )
+        )
       }
 
       var recents = getRecents()

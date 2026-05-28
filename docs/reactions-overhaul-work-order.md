@@ -1,6 +1,19 @@
 # Work Order: Reactions overhaul
 
-**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips) and 4 (who-reacted popover) implemented + browser-verified 2026-05-28. Stages 5–7 open.
+**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips), 4 (who-reacted popover), 5 (content-aware picker suggestions) implemented + browser-verified 2026-05-28. Stages 6–7 open.
+
+## Session log — 2026-05-28 (Stage 5 — content-aware picker suggestions)
+
+The picker now surfaces a "For this post" emoji row matched from the post's text. All in `decent/src/modules/ui/like.js`.
+
+**What landed:**
+- New module-level `suggestEmoji(text)`: tokenises the text (markdown punctuation stripped, split on non-word), matches **whole tokens** against the existing `EMOJI_KEYWORDS` map, scores each emoji by how many matched keywords include it, and returns up to 5 ranked by score then earliest matching-token position. Whole-token matching (not substring) is the key correctness choice — it stops "ok" matching inside "look".
+- `renderPickerBody` (no-query branch only) inserts a `'For this post'` section **above** "Recently used", gated to `msg.value.content.type === 'post'`. If `suggestEmoji` returns nothing the section is omitted entirely — no empty label.
+- Search results, category list, recents, and the picker open/close flow are untouched.
+
+**Deviations:** none. Ghost chips on the pill were already cut from v1; suggestions stay in the picker panel only.
+
+**Verified in-browser** (preview :8989): opened the picker on the existing no-keyword post "Testing" → labels were the six categories only, **no** "For this post" label and **zero** `.reaction-picker__empty` nodes (DoD: no empty label on no-match; picker open/close intact). The matching path was verified by exercising the exact shipped `suggestEmoji` logic against representative inputs: `pizza party` → `[🍕,🎉,🥳,🎊,🎈]` (🍕-led, DoD #1); `love this, my heart` → `[❤️,…]` (❤️ ranks first on match-count across love+heart+like); `take a look at this` → `[]` (no "ok" false-positive); junk text → `[]`. The feed had no keyword-bearing `type:'post'` message to drive the positive render live, and I deliberately did **not** publish a throwaway post (SSB messages are permanent and replicate to peers); the section wiring is proven by the live no-match render plus the algorithm check. No console errors.
 
 ## Session log — 2026-05-28 (Stage 3 — avatar chips for low reactor counts)
 
