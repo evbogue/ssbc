@@ -1,6 +1,23 @@
 # Work Order: Reactions overhaul
 
-**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28, browser-verification pending. Stages 3–7 open.
+**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stage 4 (who-reacted popover) implemented + browser-verified 2026-05-28. Stage 3 (avatar chips) and Stages 5–7 open.
+
+## Session log — 2026-05-28 (Stage 4 — who-reacted popover)
+
+Hover-intent / long-press a chip now opens a panel listing everyone who reacted with that emoji. All in `decent/src/modules/ui/like.js` `message_reactions` + `style.css`.
+
+**What landed:**
+- `aggregateReactions` now also returns `reactors[emoji] = [{author, ts}]` sorted newest-first (added before this stage's commit). `renderChips` stashes it in `lastReactors` so the popover reads current data without re-aggregating.
+- **One popover node per pill**, reused across chips (`buildPopoverOnce` appends it to `.reaction-pill`, which is now `position: relative`). `fillPopover(emoji)` renders a header (`emoji count`) plus one row per reactor: `api.avatar(author, 'tiny')` (image + profile-linked name) + `human(new Date(ts))` relative time.
+- **Triggers:** desktop hover-intent 500ms (gated on `(pointer: fine)`); touch long-press 400ms; keyboard `Shift+Enter` on a focused chip toggles the popover. Plain Enter/click still toggles the vote (and closes any open popover first). Escape and outside-click close it.
+- **Rebuild safety:** `pill.innerHTML = ''` in `renderChips` detaches the popover, so on any signature change we `closePopover()` and null `popoverEl` before rebuilding chips — no stale popover dangling over fresh chips.
+- CSS: `.reaction-popover*` reuses the `.reaction-picker` panel look (rounded, shadow, scale/opacity open transition), centred over the chip via JS-set `left` + `translateX(-50%)`. Added `.avatar--tiny` (20px round).
+
+**Deviations from spec:** none material. Spec said "popover anchored above the chip" — implemented as anchored above the pill, centred on the hovered chip's x. Hover-intent collision with the heart tray (spec item 4): heart lives in a separate `.reaction-group`, chips in `.reaction-pill`; verified no double-open in practice.
+
+**Verified in-browser** (preview on :8989, real feed with existing reactions): hovering the `😮` chip on a post opened the popover with header `😮 2` and two rows (@G7hpDEgp5 "14 minutes ago", @D5swWlrxr "1 month ago"), avatars rendered, names link to profiles. Escape closed it. No console errors. Click-to-toggle still works.
+
+**Not done:** Stage 3 (avatar chips for ≤5 reactors) was skipped — Stage 4 was the explicit ask ("show on hover who made the reactions"). The `reactors` data Stage 3 needs is already in place if/when it's picked up.
 
 ## Session log — 2026-05-28 (Stage 1.7 — consolidate vote subscriptions)
 

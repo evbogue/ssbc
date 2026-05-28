@@ -1,9 +1,11 @@
 'use strict'
 var h = require('hyperscript')
 var pull = require('pull-stream')
+var human = require('human-time')
 var selfId = require('../../keys').id
 
 exports.needs = {
+  avatar:       'first',
   avatar_name:  'first',
   publish:      'first',
   message_link: 'first',
@@ -167,14 +169,20 @@ function aggregateReactions (cache, msgKey) {
 
   var counts = {}
   var myReactions = {}
+  var reactors = {}
   for (var kk in userEmojiVotes) {
     var uv = userEmojiVotes[kk]
     if (uv.value > 0) {
       counts[uv.emoji] = (counts[uv.emoji] || 0) + 1
       if (uv.author === selfId) myReactions[uv.emoji] = true
+      ;(reactors[uv.emoji] || (reactors[uv.emoji] = [])).push({ author: uv.author, ts: uv.ts })
     }
   }
-  return { counts: counts, myReactions: myReactions }
+  // Each emoji's reactors, most recent first — drives the who-reacted popover.
+  for (var em in reactors) {
+    reactors[em].sort(function (a, b) { return b.ts - a.ts })
+  }
+  return { counts: counts, myReactions: myReactions, reactors: reactors }
 }
 
 // Optimistic-update helpers. Synthesise a vote entry into window.CACHE so the
@@ -360,6 +368,105 @@ exports.create = function (api) {
     var pill = h('div.reaction-pill')
     var chipEls = {}
     var lastSig = null
+    var lastReactors = {} // emoji -> [ { author, ts } ], newest first
+
+    // ── Who-reacted popover (Stage 4) ─────────────────────────────────────────
+    // Hover-intent / long-press a chip → a panel listing everyone who reacted
+    // with that emoji (avatar + linked name + relative time). One popover node
+    // per pill, reused across chips. Reuses the .reaction-picker panel look.
+    var popoverEl   = null
+    var popoverEmoji = null
+    var hoverTimer  = null
+    var pressTimer  = null
+    var popOutsideFn = null
+    var popEscFn     = null
+
+    function buildPopoverOnce () {
+      if (popoverEl) return
+      popoverEl = h('div.reaction-popover')
+      pill.appendChild(popoverEl)
+    }
+
+    function fillPopover (emoji) {
+      popoverEl.innerHTML = ''
+      var list = lastReactors[emoji] || []
+      popoverEl.appendChild(
+        h('div.reaction-popover__head', emoji + ' ' + list.length)
+      )
+      list.forEach(function (r) {
+        popoverEl.appendChild(
+          h('div.reaction-popover__row',
+            api.avatar(r.author, 'tiny'),
+            h('span.reaction-popover__time', r.ts ? human(new Date(r.ts)) : '')
+          )
+        )
+      })
+      if (!list.length) {
+        popoverEl.appendChild(h('div.reaction-popover__row', 'No reactions'))
+      }
+    }
+
+    function openPopover (emoji, chipEl) {
+      buildPopoverOnce()
+      popoverEmoji = emoji
+      fillPopover(emoji)
+      // Anchor above the hovered chip, centred on it.
+      popoverEl.style.left = (chipEl.offsetLeft + chipEl.offsetWidth / 2) + 'px'
+      popoverEl.style.bottom = 'calc(100% + 8px)'
+      requestAnimationFrame(function () {
+        if (popoverEl) popoverEl.classList.add('reaction-popover--open')
+      })
+      if (!popOutsideFn) {
+        popOutsideFn = function (e) {
+          if (!pill.contains(e.target)) closePopover()
+        }
+        popEscFn = function (e) { if (e.key === 'Escape') closePopover() }
+        document.addEventListener('click', popOutsideFn, true)
+        document.addEventListener('keydown', popEscFn)
+      }
+    }
+
+    function closePopover () {
+      clearTimeout(hoverTimer)
+      clearTimeout(pressTimer)
+      popoverEmoji = null
+      if (popoverEl) popoverEl.classList.remove('reaction-popover--open')
+      if (popOutsideFn) {
+        document.removeEventListener('click', popOutsideFn, true)
+        document.removeEventListener('keydown', popEscFn)
+        popOutsideFn = null
+        popEscFn = null
+      }
+    }
+
+    var hasFinePointer = typeof window !== 'undefined' &&
+      window.matchMedia && window.matchMedia('(pointer: fine)').matches
+
+    function wireChipHover (chip, emoji) {
+      if (hasFinePointer) {
+        chip.addEventListener('mouseenter', function () {
+          clearTimeout(hoverTimer)
+          hoverTimer = setTimeout(function () { openPopover(emoji, chip) }, 500)
+        })
+        chip.addEventListener('mouseleave', function () {
+          clearTimeout(hoverTimer)
+        })
+      }
+      chip.addEventListener('touchstart', function () {
+        clearTimeout(pressTimer)
+        pressTimer = setTimeout(function () { openPopover(emoji, chip) }, 400)
+      }, { passive: true })
+      chip.addEventListener('touchend', function () { clearTimeout(pressTimer) }, { passive: true })
+      chip.addEventListener('touchmove', function () { clearTimeout(pressTimer) }, { passive: true })
+      // Shift+Enter opens the popover; plain Enter toggles (native button click).
+      chip.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.shiftKey) {
+          e.preventDefault()
+          if (popoverEmoji === emoji) closePopover()
+          else openPopover(emoji, chip)
+        }
+      })
+    }
 
     // popEmoji: when set, fire a one-shot pop on that chip. The signature guard
     // means the real vote arriving (same counts as the optimistic one) reuses
@@ -369,6 +476,7 @@ exports.create = function (api) {
       var agg = aggregateReactions(getCache(), msg.key)
       var counts = agg.counts
       var myReactions = agg.myReactions
+      lastReactors = agg.reactors
       var emojis = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] })
       var sig = emojis.map(function (e) {
         return e + ':' + counts[e] + ':' + (myReactions[e] ? 1 : 0)
@@ -376,6 +484,10 @@ exports.create = function (api) {
 
       if (sig !== lastSig) {
         lastSig = sig
+        // innerHTML wipe also detaches the popover node — drop our reference and
+        // close it so a stale popover can't dangle over rebuilt chips.
+        if (popoverEmoji) closePopover()
+        popoverEl = null
         pill.innerHTML = ''
         chipEls = {}
         emojis.forEach(function (emoji) {
@@ -388,12 +500,14 @@ exports.create = function (api) {
               onclick: function (e) {
                 e.preventDefault()
                 e.stopPropagation()
+                closePopover()
                 castVote(msg, emoji, isActive)
               }
             },
             h('span.reaction-chip__emoji', emoji),
             h('span.reaction-chip__count', String(counts[emoji]))
           )
+          wireChipHover(chip, emoji)
           chipEls[emoji] = chip
           pill.appendChild(chip)
         })
