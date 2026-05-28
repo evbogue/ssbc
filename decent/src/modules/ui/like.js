@@ -4,17 +4,17 @@ var pull = require('pull-stream')
 var selfId = require('../../keys').id
 
 exports.needs = {
-  avatar_name:     'first',
-  message_confirm: 'first',
-  message_link:    'first',
-  sbot_links:      'first'
+  avatar_name:  'first',
+  publish:      'first',
+  message_link: 'first',
+  sbot_links:   'first'
 }
 
 exports.gives = {
   message_content:      true,
   message_content_mini: true,
-  message_meta:         true,
-  message_action:       true
+  message_action:       true,
+  message_reactions:    true
 }
 
 // Keep the inline action row compact; the full picker opens on hover/long-press
@@ -135,11 +135,202 @@ function addToRecents (emoji) {
   } catch (e) {}
 }
 
+// Shared helper: walk the cache and return { counts, myReactions } for a msg key.
+// Multi-reaction model (Slack/Discord-style): each (author, emoji) pair is a
+// distinct reaction. Deduped per (author, emoji) by most-recent timestamp —
+// so toggling an emoji off via value:0 correctly removes it from counts.
+function aggregateReactions (cache, msgKey) {
+  var userEmojiVotes = {}
+  for (var k in cache) {
+    var cached = cache[k]
+    var c = cached && cached.content
+    if (!c || c.type !== 'vote') continue
+
+    var voteLink, voteValue, voteEmoji
+    if (typeof c.vote === 'string') {
+      voteLink = c.vote; voteValue = 1; voteEmoji = '❤️'
+    } else if (c.vote && typeof c.vote === 'object') {
+      voteLink  = c.vote.link
+      voteValue = c.vote.value || 0
+      voteEmoji = ((c.vote.reason || c.vote.expression) && (c.vote.reason || c.vote.expression).length <= 8)
+        ? (c.vote.reason || c.vote.expression) : '❤️'
+    } else { continue }
+
+    if (voteLink !== msgKey) continue
+
+    var aut = cached.author
+    var ts  = cached.timestamp || 0
+    var key = aut + '|' + voteEmoji
+    if (!userEmojiVotes[key] || ts > userEmojiVotes[key].ts)
+      userEmojiVotes[key] = { author: aut, emoji: voteEmoji, value: voteValue, ts: ts }
+  }
+
+  var counts = {}
+  var myReactions = {}
+  for (var kk in userEmojiVotes) {
+    var uv = userEmojiVotes[kk]
+    if (uv.value > 0) {
+      counts[uv.emoji] = (counts[uv.emoji] || 0) + 1
+      if (uv.author === selfId) myReactions[uv.emoji] = true
+    }
+  }
+  return { counts: counts, myReactions: myReactions }
+}
+
+// Optimistic-update helpers. Synthesise a vote entry into window.CACHE so the
+// aggregator picks it up instantly, then broadcast a window event so every
+// renderer (pill chips, heart button, tray buttons, open picker) refreshes in
+// lockstep. Real vote arriving via sbot_log later has a newer timestamp and
+// wins the per-(author, emoji) dedup — zero flicker on replace.
+// detail.emoji/detail.reacted are set only when a self-click activates a
+// reaction, so renderers can fire a one-shot pop on exactly that emoji.
+// Peer-vote arrivals and rollbacks fire without them (no pop).
+function fireVoteChanged (msgKey, detail) {
+  if (typeof window === 'undefined') return
+  var d = { msgKey: msgKey }
+  if (detail) { d.emoji = detail.emoji; d.reacted = detail.reacted }
+  var ev
+  try {
+    ev = new CustomEvent('decent:vote-changed', { detail: d })
+  } catch (err) {
+    ev = document.createEvent('CustomEvent')
+    ev.initCustomEvent('decent:vote-changed', false, false, d)
+  }
+  window.dispatchEvent(ev)
+}
+
+function applyOptimistic (msgKey, voteContent, authorId) {
+  if (typeof window === 'undefined') return null
+  var cache = window.CACHE = window.CACHE || {}
+  var v = voteContent.vote || {}
+  var emoji = (v.reason && v.reason.length <= 8) ? v.reason : '❤️'
+  var tempKey = '%optimistic:' + msgKey + ':' + (v.reason || '') + ':' + Date.now() + ':' + Math.random()
+  cache[tempKey] = {
+    author:    authorId,
+    timestamp: Date.now(),
+    content:   voteContent
+  }
+  fireVoteChanged(msgKey, { emoji: emoji, reacted: (v.value || 0) > 0 })
+  return tempKey
+}
+
+// One-shot pop: restart the keyframe even if the class lingers, and self-clean.
+function popEl (el) {
+  if (!el) return
+  el.classList.remove('reaction-pop-anim')
+  void el.offsetWidth
+  el.classList.add('reaction-pop-anim')
+  el.addEventListener('animationend', function handler () {
+    el.classList.remove('reaction-pop-anim')
+    el.removeEventListener('animationend', handler)
+  })
+}
+
+function rollbackOptimistic (tempKey, msgKey) {
+  if (typeof window === 'undefined' || !window.CACHE || !tempKey) return
+  delete window.CACHE[tempKey]
+  fireVoteChanged(msgKey)
+}
+
 exports.create = function (api) {
   var x = {}
 
   function getCache () {
     return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
+  }
+
+  // Single publish path for every reaction surface (chips, heart, tray, picker).
+  // isActive = the viewer currently has this reaction → clicking removes it.
+  // Publishes directly via api.publish — a reaction is a one-tap action, so it
+  // skips the message_confirm Publish/Cancel lightbox that composing uses
+  // (otherwise the optimistic update + pop are hidden behind a modal and every
+  // reaction takes two clicks).
+  function castVote (msg, emoji, isActive) {
+    var vote = { type: 'vote', vote: { link: msg.key, value: isActive ? 0 : 1, reason: emoji } }
+    if (msg.value.content.recps) {
+      vote.recps = msg.value.content.recps.map(function (r) {
+        return r && typeof r !== 'string' ? r.link : r
+      })
+      vote.private = true
+    }
+    var tempKey = applyOptimistic(msg.key, vote, selfId)
+    api.publish(vote, function (err, published) {
+      if (err || !published) rollbackOptimistic(tempKey, msg.key)
+    })
+  }
+
+  // ── Shared vote pub/sub (Stage 1.7) ──────────────────────────────────────
+  // Previously every rendered post attached its own `decent:vote-changed`
+  // window listener AND opened its own live `sbot_links` stream — both leaked
+  // unboundedly under infinite scroll, and each reaction fanned out across all
+  // of them. Consolidated to ONE window listener + ONE live stream for the
+  // whole feed. Posts register a render callback keyed by msg.key and hand over
+  // their root node; dispatch drops any callback whose node has detached, so
+  // the registry doesn't grow as posts scroll out.
+  var voteSubs = Object.create(null) // msgKey -> [ { el, fn } ]
+
+  function subscribeVote (msgKey, el, fn) {
+    var list = voteSubs[msgKey] || (voteSubs[msgKey] = [])
+    list.push({ el: el, fn: fn })
+  }
+
+  function dispatchVote (detail) {
+    var list = voteSubs[detail.msgKey]
+    if (!list) return
+    for (var i = list.length - 1; i >= 0; i--) {
+      var sub = list[i]
+      if (sub.el && typeof document !== 'undefined' && !document.contains(sub.el)) {
+        list.splice(i, 1) // node gone — drop the dead subscription
+        continue
+      }
+      sub.fn(detail)
+    }
+    if (!list.length) delete voteSubs[detail.msgKey]
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('decent:vote-changed', function (ev) {
+      if (ev && ev.detail) dispatchVote(ev.detail)
+    })
+  }
+
+  // Coalesce incoming peer votes (especially the historical backfill burst at
+  // startup) into one notification per target post per frame. Optimistic
+  // self-reactions bypass this — applyOptimistic fires immediately with
+  // emoji/reacted detail so the pop is instant; these batched notifications
+  // carry no detail, so peer votes re-render without popping.
+  var dirty = null
+  function markDirty (dest) {
+    if (!dest) return
+    if (!dirty) {
+      dirty = Object.create(null)
+      requestAnimationFrame(flushDirty)
+    }
+    dirty[dest] = true
+  }
+  function flushDirty () {
+    var d = dirty
+    dirty = null
+    for (var dest in d) fireVoteChanged(dest)
+  }
+
+  // One live stream of every vote link across the whole feed (historic + live),
+  // started lazily on first post render. Each vote is injected into CACHE and
+  // its target post (link.dest) is marked dirty.
+  var voteStreamStarted = false
+  function ensureVoteStream () {
+    if (voteStreamStarted || typeof window === 'undefined') return
+    voteStreamStarted = true
+    var cache = getCache()
+    pull(
+      api.sbot_links({ rel: 'vote', values: true, keys: true, live: true, old: true }),
+      pull.drain(function (link) {
+        if (!link || !link.key || !link.value) return
+        if (cache[link.key]) return
+        cache[link.key] = link.value
+        markDirty(link.dest)
+      })
+    )
   }
 
   // Render a vote/reaction message in the feed
@@ -159,112 +350,78 @@ exports.create = function (api) {
     ]
   }
 
-  // Aggregated emoji chips rendered directly on posts (Phase 8)
-  x.message_meta = function (msg) {
-    var cache = getCache()
+  // Aggregated chips: one pill on the bottom-right of each post with one chip
+  // per distinct emoji. Fetches vote backlinks so chips reflect ALL reactions
+  // on this post, not just the ones that happen to be in window.CACHE from the
+  // log scroll.
+  x.message_reactions = function (msg) {
+    if (msg.value.content.type === 'vote') return
 
-    // Per-author deduplication: keep only each author's most-recent vote
-    var userVotes = {}
-    for (var k in cache) {
-      var cached = cache[k]
-      var c = cached && cached.content
-      if (!c || c.type !== 'vote') continue
+    var pill = h('div.reaction-pill')
+    var chipEls = {}
+    var lastSig = null
 
-      var voteLink, voteValue, voteEmoji
-      if (typeof c.vote === 'string') {
-        voteLink = c.vote; voteValue = 1; voteEmoji = '❤️'
-      } else if (c.vote && typeof c.vote === 'object') {
-        voteLink  = c.vote.link
-        voteValue = c.vote.value || 0
-        voteEmoji = ((c.vote.reason || c.vote.expression) && (c.vote.reason || c.vote.expression).length <= 8)
-          ? (c.vote.reason || c.vote.expression) : '❤️'
-      } else { continue }
+    // popEmoji: when set, fire a one-shot pop on that chip. The signature guard
+    // means the real vote arriving (same counts as the optimistic one) reuses
+    // the existing chip element, so its pop animation runs to completion instead
+    // of being cut short by a rebuild.
+    function renderChips (popEmoji) {
+      var agg = aggregateReactions(getCache(), msg.key)
+      var counts = agg.counts
+      var myReactions = agg.myReactions
+      var emojis = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] })
+      var sig = emojis.map(function (e) {
+        return e + ':' + counts[e] + ':' + (myReactions[e] ? 1 : 0)
+      }).join(',')
 
-      if (voteLink !== msg.key) continue
-
-      var aut = cached.author
-      var ts  = cached.timestamp || 0
-      if (!userVotes[aut] || ts > userVotes[aut].ts)
-        userVotes[aut] = { emoji: voteEmoji, value: voteValue, ts: ts }
-    }
-
-    // Aggregate counts; track what the current user voted for
-    var counts = {}
-    var myReaction = null
-    for (var uid in userVotes) {
-      var uv = userVotes[uid]
-      if (uv.value > 0) {
-        counts[uv.emoji] = (counts[uv.emoji] || 0) + 1
-        if (uid === selfId) myReaction = uv.emoji
-      }
-    }
-
-    var emojis = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] })
-    if (!emojis.length) return null
-
-    return h('span.reaction-chips',
-      emojis.map(function (emoji) {
-        var isActive = myReaction === emoji
-        return h(
-          'button.reaction-chip' + (isActive ? '.reaction-chip--active' : ''),
-          {
-            type:    'button',
-            title:   (isActive ? 'Remove ' : 'React ') + emoji,
-            onclick: function (e) {
-              e.preventDefault()
-              e.stopPropagation()
-              var newVal = isActive ? 0 : 1
-              var vote = { type: 'vote', vote: { link: msg.key, value: newVal, reason: emoji } }
-              if (msg.value.content.recps) {
-                vote.recps = msg.value.content.recps.map(function (r) {
-                  return r && typeof r !== 'string' ? r.link : r
-                })
-                vote.private = true
+      if (sig !== lastSig) {
+        lastSig = sig
+        pill.innerHTML = ''
+        chipEls = {}
+        emojis.forEach(function (emoji) {
+          var isActive = !!myReactions[emoji]
+          var chip = h(
+            'button.reaction-chip' + (isActive ? '.reaction-chip--active' : ''),
+            {
+              type:    'button',
+              title:   (isActive ? 'Remove ' : 'React ') + emoji,
+              onclick: function (e) {
+                e.preventDefault()
+                e.stopPropagation()
+                castVote(msg, emoji, isActive)
               }
-              api.message_confirm(vote)
-            }
-          },
-          h('span.reaction-chip__emoji', emoji),
-          h('span.reaction-chip__count', String(counts[emoji]))
-        )
-      })
-    )
+            },
+            h('span.reaction-chip__emoji', emoji),
+            h('span.reaction-chip__count', String(counts[emoji]))
+          )
+          chipEls[emoji] = chip
+          pill.appendChild(chip)
+        })
+      }
+
+      if (popEmoji) popEl(chipEls[popEmoji])
+    }
+
+    // Re-render whenever anyone (self or otherwise) publishes a vote on this
+    // post, via the shared registry. Only a self-activation carries an
+    // emoji/reacted detail, so only that case pops.
+    subscribeVote(msg.key, pill, function (detail) {
+      renderChips(detail.reacted ? detail.emoji : null)
+    })
+
+    // First pass: whatever's already in CACHE. The shared live stream backfills
+    // any votes not yet cached and re-renders this pill as they land.
+    renderChips()
+    ensureVoteStream()
+
+    return pill
   }
 
+  // Action button: heart + hover-tray + full emoji picker (restored original UX)
   x.message_action = function (msg) {
     if (msg.value.content.type === 'vote') return
 
-    var cache = getCache()
-    var myVote = null
-    var counts = {}
-
-    for (var k in cache) {
-      var cached = cache[k]
-      var c = cached && cached.content
-      if (!c || c.type !== 'vote') continue
-
-      var voteLink, voteValue, voteEmoji
-      if (typeof c.vote === 'string') {
-        voteLink = c.vote; voteValue = 1; voteEmoji = '❤️'
-      } else if (c.vote && typeof c.vote === 'object') {
-        voteLink  = c.vote.link
-        voteValue = c.vote.value || 0
-        voteEmoji = ((c.vote.reason || c.vote.expression) && (c.vote.reason || c.vote.expression).length <= 8)
-          ? (c.vote.reason || c.vote.expression) : '❤️'
-      } else { continue }
-
-      if (voteLink !== msg.key) continue
-
-      if (cached.author === selfId) {
-        var ts = cached.timestamp || 0
-        if (!myVote || ts > myVote.timestamp)
-          myVote = { emoji: voteEmoji, value: voteValue, timestamp: ts }
-      }
-      if (voteValue > 0)
-        counts[voteEmoji] = (counts[voteEmoji] || 0) + 1
-    }
-
-    var myReaction = (myVote && myVote.value > 0) ? myVote.emoji : null
+    var myReactions = aggregateReactions(getCache(), msg.key).myReactions
 
     // ── State ───────────────────────────────────────────────────────────────
     var trayOpen       = false
@@ -275,22 +432,34 @@ exports.create = function (api) {
     var outsideClickFn = null
     var escKeyFn       = null
 
-    // Lazily-built picker elements — created once on first open
     var pickerEl          = null
     var pickerSearchInput = null
     var pickerBodyEl      = null
 
-    // ── Core send ───────────────────────────────────────────────────────────
-    function sendReaction (emoji) {
-      var newVal = myReaction === emoji ? 0 : 1
-      var vote = { type: 'vote', vote: { link: msg.key, value: newVal, reason: emoji } }
-      if (msg.value.content.recps) {
-        vote.recps = msg.value.content.recps.map(function (r) {
-          return r && typeof r !== 'string' ? r.link : r
-        })
-        vote.private = true
+    // Every heart + tray button is stashed here so a single vote event can
+    // toggle their "reacted" class without rebuilding the tray.
+    var emojiBtns = {}
+
+    function refreshReactedUI (popEmoji) {
+      myReactions = aggregateReactions(getCache(), msg.key).myReactions
+      Object.keys(emojiBtns).forEach(function (emoji) {
+        var btn = emojiBtns[emoji]
+        if (!btn) return
+        if (myReactions[emoji]) btn.classList.add('action-btn--reacted')
+        else btn.classList.remove('action-btn--reacted')
+        btn.title = (myReactions[emoji] ? 'Remove ' : 'React ') + emoji
+      })
+      // Pop the button only when the viewer just added this reaction (silence
+      // on un-react), and only if that button is currently mounted (heart, or
+      // a tray emoji while the tray is open).
+      if (popEmoji && emojiBtns[popEmoji]) popEl(emojiBtns[popEmoji])
+      if (pickerOpen && pickerSearchInput) {
+        renderPickerBody(pickerSearchInput.value.trim().toLowerCase())
       }
-      api.message_confirm(vote)
+    }
+
+    function sendReaction (emoji) {
+      castVote(msg, emoji, !!myReactions[emoji])
     }
 
     function reactAndClose (emoji) {
@@ -316,7 +485,6 @@ exports.create = function (api) {
       }
       escKeyFn = function (e) {
         if (e.key === 'Escape') {
-          // Two-level: first Escape closes picker (if open), second closes tray
           if (pickerOpen) closePicker()
           else closeTray(true)
         }
@@ -346,13 +514,12 @@ exports.create = function (api) {
       }
     }
 
-    // ── Emoji picker (Phase 6) ──────────────────────────────────────────────
+    // ── Emoji picker ────────────────────────────────────────────────────────
 
     function renderPickerBody (query) {
       pickerBodyEl.innerHTML = ''
 
       if (query) {
-        // Gather results: exact prefix matches first, then partial
         var seen = {}
         var results = []
         var kw
@@ -370,7 +537,6 @@ exports.create = function (api) {
             })
           }
         }
-        // Also scan all emojis for any keyword that contains the query
         if (!results.length) {
           EMOJI_CATEGORIES.forEach(function (cat) {
             if (cat.label.toLowerCase().indexOf(query) >= 0) {
@@ -393,7 +559,6 @@ exports.create = function (api) {
         return
       }
 
-      // No query: recents first, then categories
       var recents = getRecents()
       if (recents.length) {
         var rGrid = h('div.emoji-grid')
@@ -420,7 +585,7 @@ exports.create = function (api) {
 
     function makePickerBtn (emoji) {
       return h(
-        'button.emoji-btn' + (myReaction === emoji ? '.emoji-btn--active' : ''),
+        'button.emoji-btn' + (myReactions[emoji] ? '.emoji-btn--active' : ''),
         {
           type:    'button',
           title:   emoji,
@@ -451,17 +616,13 @@ exports.create = function (api) {
 
     function openPicker () {
       if (pickerOpen) return
-      // Ensure tray is open so the picker is visible in context
       if (!trayOpen) openTray()
       pickerOpen = true
       buildPickerOnce()
-      // Position picker above the tray (tray height + gaps)
       var trayH = trayEl.offsetHeight || 44
       pickerEl.style.bottom = 'calc(100% + ' + (trayH + 16) + 'px)'
-      // Reset search and refresh recents each time the picker opens
       pickerSearchInput.value = ''
       renderPickerBody('')
-      // Add open class after a rAF so the CSS transition fires
       requestAnimationFrame(function () {
         pickerEl.classList.add('reaction-picker--open')
         pickerSearchInput.focus()
@@ -476,12 +637,11 @@ exports.create = function (api) {
 
     // ── Button factories ────────────────────────────────────────────────────
     function makeBtn (emoji, inTray) {
-      var isActive = myReaction === emoji
-      var count    = counts[emoji] || 0
+      var isActive = !!myReactions[emoji]
       var iconEl = inTray
         ? h('span.reaction-emoji', emoji)
         : h('span.material-symbols-outlined.action-icon', 'favorite')
-      return h(
+      var btn = h(
         'button.action-btn.action-btn--react' + (isActive ? '.action-btn--reacted' : ''),
         {
           type:    'button',
@@ -492,9 +652,10 @@ exports.create = function (api) {
             reactAndClose(emoji)
           }
         },
-        iconEl,
-        count > 0 ? h('span.action-count', String(count)) : null
+        iconEl
       )
+      emojiBtns[emoji] = btn
+      return btn
     }
 
     // ── Tray (floating pill) ────────────────────────────────────────────────
@@ -517,7 +678,6 @@ exports.create = function (api) {
       pickerTriggerBtn
     )
 
-    // Keep tray open while mouse is over it
     trayEl.addEventListener('mouseenter', function () {
       clearTimeout(closeTimer)
       clearTimeout(hoverTimer)
@@ -531,9 +691,13 @@ exports.create = function (api) {
       QUICK_REACTIONS.map(function (e) { return makeBtn(e, false) }),
       trayEl
     )
-    // Note: pickerEl is appended to reactionGroup lazily inside buildPickerOnce()
 
-    // Desktop hover — open tray after 300 ms hover-intent delay, close on leave
+    // Refresh heart/tray "reacted" state on any vote change for this post via
+    // the shared registry; pop only on self-activation (detail.reacted).
+    subscribeVote(msg.key, reactionGroup, function (detail) {
+      refreshReactedUI(detail.reacted ? detail.emoji : null)
+    })
+
     var hasFineMouse = typeof window !== 'undefined' &&
       window.matchMedia && window.matchMedia('(pointer: fine)').matches
     if (hasFineMouse) {
@@ -546,7 +710,6 @@ exports.create = function (api) {
       })
     }
 
-    // Mobile long-press (400 ms) to open tray
     reactionGroup.addEventListener('touchstart', function () {
       longPressTimer = setTimeout(openTray, 400)
     }, { passive: true })

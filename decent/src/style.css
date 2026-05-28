@@ -213,7 +213,6 @@ textarea {
   align-self: flex-start;
   margin-top: -4px;
   justify-content: flex-end;
-  margin-right: -18px;
 }
 
 .message-card .message_content {
@@ -330,12 +329,6 @@ textarea {
   line-height: 1;
 }
 
-.action-count {
-  font-size: 0.82em;
-  min-width: 1ch;
-  line-height: 1;
-}
-
 .action-btn--reply:hover {
   color: #1d9bf0;
   background: rgba(29, 155, 240, 0.1);
@@ -366,16 +359,24 @@ textarea {
   gap: 2px;
 }
 
-.action-btn--react:hover {
-  background: rgba(249, 24, 128, 0.1);
+/* ── Reaction pill (aggregated chips, bottom-right of each post) ────────── */
+
+.reaction-pill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .action-btn--reacted {
-  background: rgba(249, 24, 128, 0.08);
+  color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.1);
 }
 
 .action-btn--reacted:hover {
-  background: rgba(249, 24, 128, 0.18);
+  color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.18);
 }
 
 .git-message-action-group {
@@ -453,12 +454,7 @@ textarea {
   margin-top: 12px;
 }
 
-.reaction-emoji {
-  font-size: 15px;
-  line-height: 1;
-}
-
-/* ── Reaction tray (Phase 5: floating pill, spring animation) ───────────── */
+/* ── Floating tray (reactions + share): pill, spring animation) ─────────── */
 
 .reaction-tray,
 .share-tray {
@@ -475,7 +471,6 @@ textarea {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06);
   white-space: nowrap;
   z-index: 200;
-  /* hidden by default — JS adds .reaction-tray--open */
   pointer-events: none;
   opacity: 0;
   transform: scale(0.82) translateY(6px);
@@ -491,7 +486,6 @@ textarea {
   pointer-events: auto;
 }
 
-/* Tray emoji buttons are slightly larger than the quick-row ones */
 .reaction-tray .action-btn,
 .share-tray .action-btn {
   padding: 4px 5px;
@@ -501,7 +495,12 @@ textarea {
   font-size: 18px;
 }
 
-/* ── Picker trigger button (··· at the end of the tray) ────────────────── */
+.reaction-emoji {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ── Picker trigger button (··· at the end of the tray) ─────────────────── */
 
 .reaction-picker-trigger {
   margin-left: 2px;
@@ -515,8 +514,8 @@ textarea {
 }
 
 .reaction-picker-trigger:hover {
-  color: #f91880;
-  background: rgba(249, 24, 128, 0.1);
+  color: #536471;
+  background: rgba(0, 0, 0, 0.06);
 }
 
 /* ── Full emoji picker panel (Phase 6) ──────────────────────────────────── */
@@ -632,63 +631,75 @@ textarea {
 }
 
 .emoji-btn--active {
-  background: rgba(249, 24, 128, 0.1);
+  background: rgba(29, 155, 240, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(29, 155, 240, 0.35);
 }
 
 .emoji-btn--active:hover {
-  background: rgba(249, 24, 128, 0.18);
+  background: rgba(29, 155, 240, 0.2);
 }
 
-/* ── Reaction chips (Phase 8: aggregated emoji chips on each post) ──────── */
-
-.reaction-chips {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
-  /* push chips visually away from the timestamp link on the left */
-  margin-left: 4px;
-}
+/* ── Reaction chips (chip appearance inside the .reaction-pill) ──────────── */
 
 .reaction-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 1px 7px 1px 4px;
+  gap: 4px;
+  padding: 4px 10px 4px 7px;
   border: 1px solid #e1e8ed;
   border-radius: 999px;
   background: #f7f9fa;
   cursor: pointer;
-  font-size: 0.8em;
-  color: #536471;
+  font-size: 0.88em;
+  color: #3d4a54;
   line-height: 1;
-  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.1s;
 }
 
 .reaction-chip:hover {
-  border-color: #f91880;
-  background: rgba(249, 24, 128, 0.07);
-  color: #f91880;
+  border-color: #cfd9de;
+  background: #eef3f5;
+  color: #3d4a54;
+  transform: translateY(-1px);
 }
 
 .reaction-chip--active {
-  border-color: #f91880;
-  background: rgba(249, 24, 128, 0.1);
-  color: #f91880;
+  border-color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.1);
+  color: #1d9bf0;
 }
 
 .reaction-chip--active:hover {
-  background: rgba(249, 24, 128, 0.18);
+  border-color: #1d9bf0;
+  background: rgba(29, 155, 240, 0.18);
+  color: #1d9bf0;
 }
 
 .reaction-chip__emoji {
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .reaction-chip__count {
-  font-size: 0.85em;
-  font-weight: 600;
+  font-size: 0.92em;
+  font-weight: 700;
+}
+
+/* ── One-shot reaction pop (Stage 2) ──────────────────────────────────────── */
+/* Toggled by JS on the element that the viewer just reacted with (chip or
+   heart/tray button). Never applied on un-react. */
+@keyframes reaction-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.reaction-pop-anim {
+  animation: reaction-pop 150ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-pop-anim { animation: none; }
 }
 
 /* Legacy — kept for any cached renders still using this class */

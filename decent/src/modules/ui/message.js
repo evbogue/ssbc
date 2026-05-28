@@ -24,6 +24,7 @@ exports.needs = {
   avatar_link: 'first',
   message_meta: 'map',
   message_action: 'map',
+  message_reactions: 'map',
   message_link: 'first',
 //  sbot_links: 'first'
 }
@@ -58,7 +59,8 @@ exports.create = function (api) {
     var div = h('div.message.message--mini.message-card.row',
       api.avatar_link(msg.value.author, api.avatar_name(msg.value.author)),
       content,
-      h('span.message_meta.row', api.message_meta(msg))
+      h('span.message_meta.row', api.message_meta(msg)),
+      api.message_reactions(msg)
     )
     div.setAttribute('tabindex', '0')
     return div
@@ -137,7 +139,7 @@ exports.create = function (api) {
       ),
       content,
       h('div.message_actions.row',
-        h('div.actions', replyLink, api.message_action(msg))
+        h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg))
       ),
       backlinks,
       {onkeydown: function (ev) {
