@@ -227,7 +227,7 @@ function aggregateReactions (cache, msgKey) {
 function fireVoteChanged (msgKey, detail) {
   if (typeof window === 'undefined') return
   var d = { msgKey: msgKey }
-  if (detail) { d.emoji = detail.emoji; d.reacted = detail.reacted }
+  if (detail) { d.emoji = detail.emoji; d.reacted = detail.reacted; d.arrived = detail.arrived }
   var ev
   try {
     ev = new CustomEvent('decent:vote-changed', { detail: d })
@@ -337,20 +337,29 @@ exports.create = function (api) {
   // startup) into one notification per target post per frame. Optimistic
   // self-reactions bypass this — applyOptimistic fires immediately with
   // emoji/reacted detail so the pop is instant; these batched notifications
-  // carry no detail, so peer votes re-render without popping.
+  // carry an arrived emoji (Stage 7 item 3), so a peer reaction landing on a
+  // visible post pops its chip once. A dest with multiple emojis in one frame,
+  // or any removal/old-format vote, stores `true` and re-renders without popping.
   var dirty = null
-  function markDirty (dest) {
+  function markDirty (dest, popEmoji) {
     if (!dest) return
     if (!dirty) {
       dirty = Object.create(null)
       requestAnimationFrame(flushDirty)
     }
-    dirty[dest] = true
+    // First emoji this frame wins; a second distinct one downgrades to no-pop.
+    var cur = dirty[dest]
+    if (cur === undefined) dirty[dest] = popEmoji || true
+    else if (cur !== popEmoji) dirty[dest] = true
   }
   function flushDirty () {
     var d = dirty
     dirty = null
-    for (var dest in d) fireVoteChanged(dest)
+    for (var dest in d) {
+      var pe = d[dest]
+      if (typeof pe === 'string') fireVoteChanged(dest, { emoji: pe, arrived: true })
+      else fireVoteChanged(dest)
+    }
   }
 
   // One live stream of every vote link across the whole feed (historic + live),
@@ -367,7 +376,16 @@ exports.create = function (api) {
         if (!link || !link.key || !link.value) return
         if (cache[link.key]) return
         cache[link.key] = link.value
-        markDirty(link.dest)
+        // Pop the chip only for an incoming *peer* reaction (value > 0). Our own
+        // votes already popped optimistically; removals and old-format votes
+        // re-render without a pop.
+        var v = link.value.content && link.value.content.vote
+        var emoji = null
+        if (v && typeof v !== 'string' && (v.value || 0) > 0 &&
+            link.value.author !== selfId) {
+          emoji = (v.reason && v.reason.length <= 8) ? v.reason : '❤️'
+        }
+        markDirty(link.dest, emoji)
       })
     )
   }
@@ -567,10 +585,10 @@ exports.create = function (api) {
     }
 
     // Re-render whenever anyone (self or otherwise) publishes a vote on this
-    // post, via the shared registry. Only a self-activation carries an
-    // emoji/reacted detail, so only that case pops.
+    // post, via the shared registry. A self-activation (reacted) or an incoming
+    // peer reaction (arrived) carries an emoji, so the chip pops in both cases.
     subscribeVote(msg.key, pill, function (detail) {
-      renderChips(detail.reacted ? detail.emoji : null)
+      renderChips((detail.reacted || detail.arrived) ? detail.emoji : null)
     })
 
     // First pass: whatever's already in CACHE. The shared live stream backfills

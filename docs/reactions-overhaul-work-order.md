@@ -1,6 +1,19 @@
 # Work Order: Reactions overhaul
 
-**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips), 4 (who-reacted popover), 5 (content-aware picker suggestions), 6 (short-text reactions) implemented + browser-verified 2026-05-28. Stage 7 open.
+**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips), 4 (who-reacted popover), 5 (content-aware picker suggestions), 6 (short-text reactions), 7 (gestures + keyboard polish) implemented + browser-verified 2026-05-28. **All stages complete.**
+
+## Session log — 2026-05-28 (Stage 7 — gestures and keyboard polish)
+
+The final stage. Three additions across `decent/src/modules/ui/message.js`, `like.js`, and `style.css`.
+
+**What landed:**
+- **Item 1 — double-tap-to-❤️ (touch).** `wireDoubleTapHeart(msgEl, content)` in `message.js` watches `touchend` on the post body (`.message_content`); two taps within 300ms click the post's heart (`.reaction-group .action-btn--react`) and spawn a floating `.reaction-heart-burst` at the tap point (`changedTouches[0].clientX/Y`). No-op if already reacted. Suppressed when the tap lands on `a, button, input, textarea, select, img, video, audio, iframe, .emoji, .reaction-pill` so it never fights a real interaction. Burst is `position:fixed`, removed on `animationend`; respects `prefers-reduced-motion`.
+- **Item 2 — `r` opens the picker.** The message card's existing `onkeydown` now also handles key `r`/keyCode 82 (ignored with meta/ctrl/alt, or when focus is in an INPUT/TEXTAREA): clicks the card's `.reaction-picker-trigger`, which opens the tray + picker and focuses the search field. Escape still closes via the picker's own outside/esc listener.
+- **Item 3 — peer-arrival pop.** A reaction landing from another peer on a visible post now pops its chip once. `fireVoteChanged` carries a new `arrived` flag; `markDirty(dest, popEmoji)` records a per-dest pop emoji (first emoji that frame wins; a second distinct one or a removal downgrades to a plain no-pop re-render), and `flushDirty` fires `{emoji, arrived:true}` when a string was stored. `ensureVoteStream`'s drain extracts the emoji from each incoming vote and pops **only** for peer votes (`link.value.author !== selfId`) with `value > 0` — our own votes already popped optimistically; removals/old-format votes re-render silently. The chips' `subscribeVote` callback pops on `reacted || arrived`; the heart/tray callback still pops only on self-`reacted`.
+
+**Deviations:** none. The `r` shortcut toggles (a second `r` from card focus closes) rather than being strictly open-only — harmless, and Escape is the documented close.
+
+**Verified in-browser** (preview :8989, build refreshed). The preview tab runs hidden, which pauses `requestAnimationFrame`, so the rAF-gated transitions (picker slide-in via `openPicker`, `flushDirty` coalescing) were tested by temporarily shimming `requestAnimationFrame` to run synchronously in the page — a runtime-only test harness, no source change. Results: Item 2 — from a closed state, dispatching an `r` keydown on a focused card opened the picker (`reaction-picker--open`) and moved focus into the search input. Item 3 — a synthetic peer vote (different author, `value:1`, `reason:🔥`) injected into `window.CACHE` (browser-only, **not** published) plus a dispatched `{arrived:true}` event rendered a 🔥 chip with `reaction-pop-anim`; a plain re-render (no emoji) does not call `popEl` (confirmed at `like.js:584`); removing the synthetic entry cleared the chip. Item 1 — two `touchend`s on `.message_content` within 300ms clicked the heart once (heart `.click` spied so no real vote published) and spawned a `.reaction-heart-burst` at the tap coords; a single tap did nothing; a double-tap on a child `<a>` was suppressed (no heart click, no burst). No console errors. (As in prior stages, no permanent SSB votes were published for testing.)
 
 ## Session log — 2026-05-28 (Stage 6 — short-text reactions)
 
@@ -172,12 +185,14 @@ message_content, message_content_mini, message_action, message_reactions
 
 ## What's next (priority order for the next agent)
 
-1. **Stage 2 — Optimistic updates + pop animation.** Highest impact, lowest risk. Every click currently waits for the SSB publish round-trip; chips feel laggy even on localhost. Landing this makes the whole reactions area feel alive.
-2. **Stage 4 — Who-reacted popover on chips.** Turns chips from dead counters into a social discovery surface. Fits cleanly because chips now have a stable hover target separate from the heart's tray.
-3. **Stage 6 — Short-text reactions** (`+1`, `lol`, `wat`). SSB-unique feature; the schema already supports it and no other social app ships it. Adds a one-line input below the picker grid.
-4. **Stage 3 — Avatar chips.** Makes reactions personal. Medium effort (needs a small avatar-module variant) but big visual payoff.
-5. **Stage 5 — Content-aware picker suggestions.** Contextual "For this post" section at top of picker. Small and delightful; ghost-chips-on-the-pill idea from v1 of this workorder is **cut** (see below).
-6. **Stage 7 — Gestures.** Double-tap-to-❤️ on mobile and `r` keyboard shortcut. Nice-to-have; bottom-sheet picker variant is **cut** (see below).
+**All stages are done** (1, 1.5, 1.6, 1.7, 2, 3, 4, 5, 6, 7). Nothing in this work order remains open; the list below is the historical priority ordering, kept for context.
+
+1. ~~**Stage 2 — Optimistic updates + pop animation.**~~ ✅ Done 2026-05-28.
+2. ~~**Stage 4 — Who-reacted popover on chips.**~~ ✅ Done 2026-05-28.
+3. ~~**Stage 6 — Short-text reactions** (`+1`, `lol`, `wat`).~~ ✅ Done 2026-05-28.
+4. ~~**Stage 3 — Avatar chips.**~~ ✅ Done 2026-05-28.
+5. ~~**Stage 5 — Content-aware picker suggestions.**~~ ✅ Done 2026-05-28.
+6. ~~**Stage 7 — Gestures.** Double-tap-to-❤️ on mobile and `r` keyboard shortcut.~~ ✅ Done 2026-05-28. Bottom-sheet picker variant remains **cut** (see below).
 
 ---
 

@@ -767,6 +767,30 @@ textarea {
   .reaction-pop-anim { animation: none; }
 }
 
+/* ── Double-tap heart burst (Stage 7 item 1) ──────────────────────────────── */
+/* Floating heart spawned at the tap point, then removed on animationend.
+   Positioned fixed to the viewport (JS sets left/top from the touch coords). */
+.reaction-heart-burst {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  line-height: 1;
+  animation: reaction-heart-burst 700ms ease-out 1 forwards;
+}
+
+@keyframes reaction-heart-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  60%  { opacity: 1; transform: translate(-50%, -90%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -160%) scale(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-heart-burst { display: none; }
+}
+
 /* ── Who-reacted popover (Stage 4) ────────────────────────────────────────── */
 /* Anchored above the hovered chip; reuses the .reaction-picker panel look.
    `left` is set by JS to the chip's centre, so translateX(-50%) centres it. */

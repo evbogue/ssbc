@@ -66,6 +66,44 @@ exports.create = function (api) {
     return div
   }
 
+  // Double-tap-to-heart gesture for touch devices (Stage 7 item 1).
+  function wireDoubleTapHeart (msgEl, content) {
+    if (typeof window === 'undefined') return
+    var lastTap = 0
+    content.addEventListener('touchend', function (ev) {
+      // Leave real interactions alone.
+      if (ev.target.closest &&
+          ev.target.closest('a, button, input, textarea, select, ' +
+            'img, video, audio, iframe, .emoji, .reaction-pill')) {
+        lastTap = 0
+        return
+      }
+      var now = Date.now()
+      if (now - lastTap < 300) {
+        lastTap = 0
+        var heart = msgEl.querySelector('.reaction-group .action-btn--react')
+        if (heart && !heart.classList.contains('action-btn--reacted')) {
+          heart.click()
+        }
+        var t = ev.changedTouches && ev.changedTouches[0]
+        if (t) spawnHeartBurst(t.clientX, t.clientY)
+      } else {
+        lastTap = now
+      }
+    }, { passive: true })
+  }
+
+  function spawnHeartBurst (x, y) {
+    if (typeof document === 'undefined') return
+    var burst = h('div.reaction-heart-burst', '❤️')
+    burst.style.left = x + 'px'
+    burst.style.top = y + 'px'
+    document.body.appendChild(burst)
+    burst.addEventListener('animationend', function () {
+      if (burst.parentNode) burst.parentNode.removeChild(burst)
+    })
+  }
+
   return function (msg, sbot) {
     if (!isRenderableMessage(msg)) return null
 
@@ -143,20 +181,37 @@ exports.create = function (api) {
       ),
       backlinks,
       {onkeydown: function (ev) {
+        // never hijack typing in a field
+        if (ev.target.nodeName === 'INPUT'
+          || ev.target.nodeName === 'TEXTAREA') return
+
         //on enter, hit first meta.
         if(ev.keyCode == 13) {
-
-          // unless in an input
-          if (ev.target.nodeName === 'INPUT'
-            || ev.target.nodeName === 'TEXTAREA') return
-
           msgEl.querySelector('.enter').click()
+          return
+        }
+
+        // "r" opens the reaction picker for the focused post (Stage 7 item 2).
+        // Escape is handled by the picker's own outside/esc listener.
+        if ((ev.keyCode === 82 || ev.key === 'r') && !ev.metaKey
+            && !ev.ctrlKey && !ev.altKey) {
+          var trigger = msgEl.querySelector('.reaction-picker-trigger')
+          if (trigger) {
+            ev.preventDefault()
+            trigger.click()
+          }
         }
       }}
     )
 
     // ); hyperscript does not seem to set attributes correctly.
     msgEl.setAttribute('tabindex', '0')
+
+    // ── Double-tap to ❤️ (Stage 7 item 1) ──────────────────────────────────
+    // On touch, two quick taps on the post body cast a heart, with a floating
+    // burst at the tap point. Suppressed over links/buttons/media/emoji so it
+    // never fights a real interaction, and a no-op if already reacted.
+    wireDoubleTapHeart(msgEl, content)
 
     return msgEl
   }
