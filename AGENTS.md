@@ -71,9 +71,18 @@ This repo has two remotes and pushes should always go to **both**:
 - `origin` — GitHub (public source of truth)
 - `ssb` — git-over-HTTP via our own sbot (dogfooding; Decent surfaces these pushes in the feed)
 
+**`main` is the canonical branch on both remotes.** When work is committed, advance
+`main` on `origin` *and* `ssb` — never push to one and forget the other. If you're
+on a working branch, push it too, but `main` is the one that must always be in sync
+across both:
+
 ```bash
-git push origin HEAD && git push ssb HEAD
+git push origin HEAD:main && git push ssb HEAD:main
+# and, if on a working branch, also: git push origin HEAD && git push ssb HEAD
 ```
+
+Only fast-forward `main` (check with `git merge-base --is-ancestor origin/main HEAD`).
+If it isn't a fast-forward, stop and surface it — don't force.
 
 The `ssb` remote must be an HTTP URL served by our running sbot
 (`http://127.0.0.1:8989/git/%25<repo-id>.sha256`), not an `ssb://` URL. The
