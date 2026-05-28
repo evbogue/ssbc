@@ -686,6 +686,34 @@ textarea {
   font-weight: 700;
 }
 
+/* ── Avatar chips (Stage 3) ───────────────────────────────────────────────── */
+/* ≤5 reactors render as overlapping faces in place of the numeric count. The
+   ring (a background-coloured border via box-shadow) makes the stack read when
+   faces overlap; active chips get a tinted ring to match their background. */
+.reaction-chip__avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.reaction-chip__avatars > *:not(:first-child) {
+  margin-left: -5px;
+}
+
+.avatar--micro {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #f7f9fa;
+}
+
+.reaction-chip:hover .avatar--micro {
+  box-shadow: 0 0 0 1px #eef3f5;
+}
+
+.reaction-chip--active .avatar--micro {
+  box-shadow: 0 0 0 1px #e8f4fd;
+}
+
 /* ── One-shot reaction pop (Stage 2) ──────────────────────────────────────── */
 /* Toggled by JS on the element that the viewer just reacted with (chip or
    heart/tray button). Never applied on un-react. */

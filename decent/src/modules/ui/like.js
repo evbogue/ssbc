@@ -6,6 +6,7 @@ var selfId = require('../../keys').id
 
 exports.needs = {
   avatar:       'first',
+  avatar_image: 'first',
   avatar_name:  'first',
   publish:      'first',
   message_link: 'first',
@@ -478,8 +479,14 @@ exports.create = function (api) {
       var myReactions = agg.myReactions
       lastReactors = agg.reactors
       var emojis = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] })
+      // Signature drives the rebuild guard. For chips showing avatars (≤5
+      // reactors) the avatar set can change while the count holds steady (one
+      // person swaps in for another), so fold the reactor identities into the
+      // signature below the avatar threshold; above it, the bare count suffices.
       var sig = emojis.map(function (e) {
-        return e + ':' + counts[e] + ':' + (myReactions[e] ? 1 : 0)
+        var rs = agg.reactors[e] || []
+        var who = rs.length <= 5 ? rs.map(function (r) { return r.author }).join('|') : 'n'
+        return e + ':' + counts[e] + ':' + (myReactions[e] ? 1 : 0) + ':' + who
       }).join(',')
 
       if (sig !== lastSig) {
@@ -492,6 +499,19 @@ exports.create = function (api) {
         chipEls = {}
         emojis.forEach(function (emoji) {
           var isActive = !!myReactions[emoji]
+          var rs = agg.reactors[emoji] || []
+          // ≤5 reactors → overlapping avatar faces (no links: a chip is a
+          // toggle button, and the who-reacted popover already provides the
+          // linkable list). >5 → numeric count, as before.
+          var tail
+          if (rs.length && rs.length <= 5) {
+            tail = h('span.reaction-chip__avatars')
+            rs.forEach(function (r) {
+              tail.appendChild(api.avatar_image(r.author, 'micro'))
+            })
+          } else {
+            tail = h('span.reaction-chip__count', String(counts[emoji]))
+          }
           var chip = h(
             'button.reaction-chip' + (isActive ? '.reaction-chip--active' : ''),
             {
@@ -505,7 +525,7 @@ exports.create = function (api) {
               }
             },
             h('span.reaction-chip__emoji', emoji),
-            h('span.reaction-chip__count', String(counts[emoji]))
+            tail
           )
           wireChipHover(chip, emoji)
           chipEls[emoji] = chip

@@ -1,6 +1,19 @@
 # Work Order: Reactions overhaul
 
-**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stage 4 (who-reacted popover) implemented + browser-verified 2026-05-28. Stage 3 (avatar chips) and Stages 5–7 open.
+**Status:** Stages 1, 1.5, 1.6 shipped 2026-04-21. Stage 2 (pop animation) + Stage 1.7 (subscription consolidation) implemented 2026-05-28. Stages 3 (avatar chips) and 4 (who-reacted popover) implemented + browser-verified 2026-05-28. Stages 5–7 open.
+
+## Session log — 2026-05-28 (Stage 3 — avatar chips for low reactor counts)
+
+Chips with ≤5 reactors now show overlapping reactor faces instead of a number. All in `decent/src/modules/ui/like.js` `message_reactions` + `style.css`.
+
+**What landed:**
+- `avatar_image` added to `exports.needs`. In the chip render, when `reactors[emoji].length` is 1–5, the trailing `.reaction-chip__count` is replaced by a `.reaction-chip__avatars` span holding one `api.avatar_image(author, 'micro')` per reactor; >5 keeps the numeric count. Faces are **not** linked — a chip is a toggle button, and the Stage 4 popover already provides the linkable reactor list, so nesting `<a>` inside the `<button>` is avoided.
+- **Rebuild signature** now folds reactor identities into the per-emoji signature when ≤5 (`e:count:mine:authorA|authorB`). Without this, a same-count reactor swap (one person un-reacts as another reacts) would leave stale faces, because the count-only signature wouldn't change.
+- CSS: `.reaction-chip__avatars` inline-flex with `-5px` overlap; `.avatar--micro` 16px round with a 1px background-coloured `box-shadow` ring (tinted variants on hover and `--active`) so overlapping faces stay legible.
+
+**Deviations:** none. Spec offered "add a tiny size to avatar.js OR use avatar_image_link with inline sizing"; chose neither — used the existing `avatar_image` (returns a bare img, no link) with a new `.avatar--micro` class, which is the no-nested-interactive path and doesn't touch `avatar.js`.
+
+**Verified in-browser** (preview :8989, thread `%YxOvt1NC6…` with 5 distinct emoji, 1–2 reactors each): chips rendered `😮🙂🙂  🔥🙂🙂  😅🙂🙂  👍🙂  😭🙂` — `.reaction-chip__count` absent, `.avatar--micro` computed to 16×16 round with the ring shadow. No console errors. The >5 fallback path is unexercised by current data but is the unchanged prior numeric render.
 
 ## Session log — 2026-05-28 (Stage 4 — who-reacted popover)
 
