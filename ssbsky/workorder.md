@@ -61,8 +61,12 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   content and data does not exist in the DOM at all.
 - **In-feed Following / Discover tabs** — Decent's Public and Friends are
   separate routes, not one tabbed timeline. Merging them is structural.
-- **Profile banner + follower/following/post counts** in Bluesky's header
-  layout — partial via CSS, but the banner field and counts need data wiring.
+- **Profile follower/following/post counts** in Bluesky's header layout — the
+  banner field already exists as Decent's `about.headerImage`, but the counts
+  and any new header metadata need data/layout wiring.
+- **Always-visible shortened pubkeys in post/profile headers** — useful for
+  disambiguating petname/display-name collisions, but this needs DOM/module
+  support unless an existing attribute can be safely surfaced.
 - Quote-embeds-as-cards, share sheet, feeds/lists — feature-level.
 
 ## Architecture
@@ -198,9 +202,11 @@ defaults to `8990`.
 ## Decisions (resolved)
 
 1. **Handles.** Keep SSB's existing petname/alias system as the display handle —
-   collisions and all. Always show the **pubkey** alongside (shortened, full on
-   click/copy) so viewers can tell apart identities that share a name. No
-   invented `@handle.domain` strings.
+   collisions and all. No invented `@handle.domain` strings. Always-visible
+   shortened pubkeys are the preferred disambiguator, with full-key click/copy
+   affordance, but that is DOM/module work unless the existing markup already
+   exposes a safe attribute for CSS to surface. Do not make pubkey display a
+   hidden requirement of the CSS-only first cut.
 2. **Banners.** Reuse Decent's existing `about.headerImage` extension and banner
    crop/upload UI. ssbsky should restyle the profile header around that field;
    it should not invent a second banner field.
