@@ -66,19 +66,63 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   different stylesheet (`ssbsky-style.css`), served by the sbot on a second
   port. Same injected ws remote → same identity, same data, runs alongside
   Decent.
-- New plugin `plugins/ssbsky-ui.js` (or parametrize `plugins/decent-ui.js`)
-  serves the existing build but injects `ssbsky-style.css` in place of
-  `style.css`. The build step compiles only the new CSS.
+- Do **not** copy-paste `plugins/decent-ui.js` wholesale. Extract the shared
+  HTTP/static/ws/git/blob/doc serving machinery into a small helper module, then
+  have `plugins/decent-ui.js` and `plugins/ssbsky-ui.js` call it with different
+  options:
+  - plugin name / log prefix
+  - config namespace (`decent` vs `ssbsky`)
+  - default port (`8888` vs `8990`)
+  - stylesheet href (`/style.css` vs `/ssbsky-style.css`)
+  - launch message
+- `plugins/ssbsky-ui.js` should be a thin wrapper around that helper, not a
+  second divergent implementation of blob uploads, git routes, docs routes,
+  path validation, content types, or websocket remote derivation.
+- The build step compiles/copies only the new CSS. The JS bundle remains the
+  Decent bundle.
 
-### Known gotcha to design around
+### Implementation hazards to handle deliberately
 
-`decent/src/modules/core/app.js` (~line 9) only recognizes an external
-stylesheet whose href contains the substring `style.css`; otherwise it injects
-Decent's inline CSS fallback (from `style.css.json`) and both skins fight.
+1. **The built HTML already links `/style.css`.**
+   `decent/scripts/postprocess-index.js` inserts hardcoded Decent stylesheet
+   links into `decent/build/index.html`. `plugins/decent-ui.js` only injects a
+   stylesheet when the HTML does not already contain one, so ssbsky cannot rely
+   on "extra injection" alone.
 
-**Mitigation:** name the file so it matches the substring (e.g.
-`ssbsky-style.css` contains `style.css`), or have the plugin suppress the
-inline fallback. Cheap, but must be handled deliberately.
+   **Solution:** when serving `index.html` for ssbsky, rewrite the preload and
+   stylesheet links from `/style.css` to `/ssbsky-style.css` before sending the
+   response. Keep Decent's served HTML unchanged. A second generated
+   `ssbsky-index.html` is acceptable if that ends up cleaner, but the first
+   cut should prefer a small server-side rewrite so the JS build stays single.
+
+2. **The inline fallback stylesheet check is substring-based.**
+   `decent/src/modules/core/app.js` only recognizes an external stylesheet
+   whose href contains `style.css`; otherwise it injects Decent's inline CSS
+   fallback from `style.css.json` and the skins fight.
+
+   **Solution:** keep the ssbsky filename as `ssbsky-style.css`. It contains
+   the `style.css` substring, so the existing fallback check sees it and does
+   not inject Decent's inline CSS. Do not rename it to something like
+   `ssbsky.css` unless the app fallback logic is also changed.
+
+3. **The websocket server config must be additive.**
+   Current Decent startup attaches the HTTP server to `config.connections.incoming.ws`.
+   A second-port plugin must not replace the existing ws incoming entry, or it
+   can break Decent while enabling ssbsky.
+
+   **Solution:** the shared helper should append a ws incoming config for the
+   new HTTP server while preserving existing entries. If it needs to prevent
+   duplicate entries on repeated init, dedupe by the exact `server` object or
+   port. Confirm this against `ssb-ws`, which supports multiple ws servers.
+
+4. **Second-origin behavior is the first thing to verify.**
+   `8990` is a different origin from `8888`, and production subdomain proxying
+   will depend on `x-forwarded-host` / `x-forwarded-proto` producing the correct
+   same-origin websocket remote.
+
+   **Solution:** Stage 2 must verify identity and feed loading from
+   `http://127.0.0.1:8990/` before any serious CSS work lands. Also inspect the
+   logged `ssbsky-ui ws remote:` value locally and behind the intended proxy.
 
 ## Concept mapping: SSB → Bluesky
 
@@ -96,17 +140,34 @@ inline fallback. Cheap, but must be handled deliberately.
 
 ## Proposed stages
 
-1. **Serve ssbsky on its own port** with a near-empty stylesheet — prove the
-   second-port + ws-remote + identity path end to end against the live sbot.
-2. **Base theme:** palette, type, flatten post rows, action-row restyle.
-3. **Left rail:** reposition navbar + `attr()` labels + "New Post" button.
-4. **Mobile bottom tab bar:** media query.
-5. **Profile / thread / compose-modal** theming.
-6. *(structural, later)* Right discover column; unified Following/Discover
+1. **Refactor shared UI serving without behavior changes.** Extract the reusable
+   serving helper, keep Decent on port `8888`, keep `/style.css`, and verify the
+   Decent UI still loads. This is a mechanical prep chunk; no ssbsky visuals yet.
+2. **Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
+   the second-port + ws-remote + identity path end to end against the live sbot.
+   Confirm Decent still loads on `8888` in the same process.
+3. **Base theme:** palette, type, flatten post rows, action-row restyle.
+4. **Left rail:** reposition navbar + `attr()` labels + "New Post" button.
+5. **Mobile bottom tab bar:** media query.
+6. **Profile / thread / compose-modal** theming.
+7. *(structural, later)* Right discover column; unified Following/Discover
    timeline tabs; profile banner + counts.
 
-Recommendation: ship stages 1–5 (the CSS-only fork) as the first cut, get it on
-the subdomain, then decide whether stage 6 is worth the structural cost.
+Recommendation: ship stages 1–6 (the CSS-only fork) as the first cut, get it on
+the subdomain, then decide whether stage 7 is worth the structural cost.
+
+## First-cut acceptance criteria
+
+- `node bin.js start` serves Decent at `http://127.0.0.1:8888/`.
+- The same process serves ssbsky at `http://127.0.0.1:8990/`.
+- Both origins inject a working `window.PATCHBAY_REMOTE` for the same sbot
+  identity.
+- Decent loads `/style.css`; ssbsky loads `/ssbsky-style.css`; ssbsky does not
+  also inject the inline Decent fallback CSS.
+- Blob upload/get routes, docs routes, and git HTTP routes still work from
+  Decent after the shared-helper refactor.
+- `npm run build:web` still produces the existing Decent bundle.
+- `npm test` passes before commit.
 
 ## Open questions
 
@@ -121,5 +182,7 @@ the subdomain, then decide whether stage 6 is worth the structural cost.
 4. **Discover feed.** Bluesky's Discover is algorithmic; we map it to
    chronological Public. Confirm that expectation is acceptable.
 5. **Dark mode.** Bluesky ships dim/dark themes. In scope for v1 or later?
-6. **Build wiring.** Add a `build:ssbsky` script (CSS-only) or fold it into
-   `build:web`?
+6. **Build wiring.** Add a `build:ssbsky` script that copies
+   `ssbsky/ssbsky-style.css` into `decent/build/ssbsky-style.css`, or fold that
+   copy into `build:web`? The first implementation should choose one and
+   document it in `package.json` scripts.
