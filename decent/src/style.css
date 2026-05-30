@@ -104,6 +104,53 @@ textarea {
   display: block;
 }
 
+/* Inline "what's on your mind" prompt pinned at the top of the feed. */
+.compose-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 5px 0 0 0;
+  padding: 12px;
+  font: inherit;
+  text-align: left;
+  background-color: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.compose-prompt:hover {
+  background-color: #fafafa;
+  border-color: #1967d2;
+}
+
+.compose-prompt .avatar {
+  flex: 0 0 auto;
+}
+
+.compose-prompt .avatar img,
+.compose-prompt .avatar canvas,
+.compose-prompt .avatar svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.compose-prompt__text {
+  flex: 1 1 auto;
+  color: #70757a;
+  font-size: 1em;
+}
+
+.compose-prompt__icon {
+  flex: 0 0 auto;
+  color: #1967d2;
+  font-size: 22px;
+}
+
 .message-confirm {
   gap: 12px;
 }

@@ -95,6 +95,10 @@ exports.create = function (api) {
               {
                 placeholder: 'Write a public message',
                 modal: true,
+                inline: true,
+                promptText: path === 'friends'
+                  ? 'Write to your friends…'
+                  : 'Write a public message…',
                 triggerLabel: 'Compose',
                 listenReplyEvents: true,
                 autoOpen: autoOpen,

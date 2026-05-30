@@ -422,7 +422,29 @@ exports.create = function (api) {
         }
         setTimeout(tryOpen, 0)
       }
-      return h('div.compose-trigger', trigger)
+
+      var fab = h('div.compose-trigger', trigger)
+
+      // An inline prompt pinned atop the feed makes composing discoverable
+      // without hunting for the corner button; both open the same modal, and
+      // the floating button stays for when the prompt has scrolled away.
+      if (opts.inline) {
+        var promptText = opts.promptText || opts.placeholder || 'Write a public message'
+        var prompt = h('button.compose-prompt', {
+          type: 'button',
+          'aria-label': promptText,
+          onclick: function () { clearReply(); showModal(prompt) }
+        },
+          h('div.avatar', api.avatar(selfId, 'thumbnail')),
+          h('span.compose-prompt__text', promptText),
+          h('span.compose-prompt__icon.material-symbols-outlined', {
+            'aria-hidden': 'true'
+          }, 'edit')
+        )
+        return h('div.compose-entry', prompt, fab)
+      }
+
+      return fab
     }
 
     return composer
