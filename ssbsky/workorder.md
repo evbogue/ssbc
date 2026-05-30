@@ -3,9 +3,9 @@
 A Bluesky-skinned fork of the Decent web client. Same SSB engine, same data,
 same identity — a different skin, served on its own port.
 
-> Status: Stage 2 has landed. `plugins/decent-ui.js` now delegates to the
-> shared `lib/ui-server.js` helper, and `plugins/ssbsky-ui.js` launches the same
-> Decent bundle with `ssbsky-style.css` on its own same-origin HTTP/ws port.
+> Status: Stage 3 has landed. ssbsky now has its own same-origin UI server and
+> a base Bluesky-style skin with CSS variables, flattened feed rows, dark mode,
+> compact action/reaction styling, and ssbsky-only Discover/Following/Chat copy.
 
 ## Thesis
 
@@ -191,7 +191,7 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    default-on, uses `ssbsky.host` / `ssbsky.port`, and defaults to
    `http://127.0.0.1:8990/`. The stage-2 stylesheet may include tiny placeholder
    or structural CSS, but should not attempt the full visual theme yet.
-3. **Base theme:** palette **(on CSS variables)**, type, flatten post rows,
+3. **DONE: Base theme:** palette **(on CSS variables)**, type, flatten post rows,
    action-row restyle. Add the `prefers-color-scheme: dark` override here so
    dark mode ships with the base theme. Also land safe ssbsky-only language
    changes: Public → Discover, Friends → Following, Private → Chat/DMs, while

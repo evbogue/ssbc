@@ -28,6 +28,10 @@ exports.gives = {
 exports.create = function (api) {
   var id = keys.id
 
+  function isSsbskySkin () {
+    return !!document.querySelector('link[rel="stylesheet"][href*="ssbsky-style.css"]')
+  }
+
   function privateStream (opts) {
     return pull(
       u.next(api.sbot_log, opts),
@@ -55,6 +59,7 @@ exports.create = function (api) {
       var div = h('div.column.scroller',
           {style: {'overflow':'auto'}})
       div.setAttribute('data-icon', 'lock')
+      div.title = isSsbskySkin() ? 'Chat' : 'Private'
 
       var compose = api.message_compose(
         {type: 'post', recps: [], private: true},
@@ -67,7 +72,7 @@ exports.create = function (api) {
               throw new Error('cannot make private message without recipients - just mention the user in an at reply in the message you send')
             return msg
           },
-          placeholder: 'Write a private message'
+          placeholder: isSsbskySkin() ? 'Write a chat message' : 'Write a private message'
         }
         )
 

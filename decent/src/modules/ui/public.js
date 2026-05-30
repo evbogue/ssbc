@@ -20,6 +20,10 @@ exports.gives = {
 }
 
 exports.create = function (api) {
+  function isSsbskySkin () {
+    return !!document.querySelector('link[rel="stylesheet"][href*="ssbsky-style.css"]')
+  }
+
   function isPublicMessage (msg) {
     var value = msg && msg.value
     var content = value && value.content
@@ -76,6 +80,9 @@ exports.create = function (api) {
 
     screen_view: function (path, sbot) {
       if(path === 'public' || path === 'friends') {
+        var isSsbsky = isSsbskySkin()
+        var publicLabel = isSsbsky ? 'Discover' : 'Public'
+        var friendsLabel = isSsbsky ? 'Following' : 'Friends'
         var autoOpen = false
         var initialQuote = null
         if (path === 'public') {
@@ -97,8 +104,8 @@ exports.create = function (api) {
                 modal: true,
                 inline: true,
                 promptText: path === 'friends'
-                  ? 'Write to your friends…'
-                  : 'Write a public message…',
+                  ? (isSsbsky ? 'Post to Following...' : 'Write to your friends…')
+                  : (isSsbsky ? 'What is happening?' : 'Write a public message…'),
                 triggerLabel: 'Compose',
                 listenReplyEvents: true,
                 autoOpen: autoOpen,
@@ -109,7 +116,7 @@ exports.create = function (api) {
           )
         )
         div.setAttribute('data-icon', 'key')
-        div.title = path === 'friends' ? 'Friends' : 'Public'
+        div.title = path === 'friends' ? friendsLabel : publicLabel
 
         function renderFeed(authors) {
           var filter = path === 'friends'

@@ -12,6 +12,7 @@ module.exports = {
           h('style', {'data-decent-style': 'true'}, require('../../style.css.json'))
         )
       }
+      var isSsbsky = !!document.querySelector('link[rel="stylesheet"][href*="ssbsky-style.css"]')
 
       window.addEventListener('error', window.onError = function (e) {
         document.body.appendChild(h('div.error',
@@ -45,10 +46,18 @@ module.exports = {
       }
 
       var selfId = require('../../keys').id
+      function labelForRoute (route, fallback) {
+        if (!isSsbsky) return fallback
+        if (route === 'public') return 'Discover'
+        if (route === 'friends') return 'Following'
+        if (route === 'private') return 'Chat'
+        return fallback
+      }
+
       var navItems = [
-        {route: 'public', label: 'Public', icon: 'newspaper'},
-        {route: 'friends', label: 'Friends', icon: 'groups'},
-        {route: 'private', label: 'Private', icon: 'mail_lock'},
+        {route: 'public', label: labelForRoute('public', 'Public'), icon: 'newspaper'},
+        {route: 'friends', label: labelForRoute('friends', 'Friends'), icon: 'groups'},
+        {route: 'private', label: labelForRoute('private', 'Private'), icon: 'mail_lock'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
         {route: 'key', label: 'Keys', icon: 'vpn_key'}
       ]
@@ -63,7 +72,8 @@ module.exports = {
           }, [
             h('span.material-symbols-outlined.nav__icon', {
               'aria-hidden': 'true'
-            }, item.icon)
+            }, item.icon),
+            isSsbsky ? h('span.nav__label', item.label) : null
           ])
         )
       }))
@@ -108,12 +118,12 @@ module.exports = {
       }
 
       function setTitle (route, view) {
-        var base = 'Decent SSB'
+        var base = isSsbsky ? 'ssbsky' : 'Decent SSB'
         var suffix = (view && view.title) || null
         if (!suffix) {
-          if (route === 'public') suffix = 'Public'
-          else if (route === 'friends') suffix = 'Friends'
-          else if (route === 'private') suffix = 'Private'
+          if (route === 'public') suffix = labelForRoute(route, 'Public')
+          else if (route === 'friends') suffix = labelForRoute(route, 'Friends')
+          else if (route === 'private') suffix = labelForRoute(route, 'Private')
           else if (route === 'repos') suffix = 'Repositories'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
