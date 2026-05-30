@@ -104,6 +104,64 @@ exports.create = function (api) {
     })
   }
 
+  // Collapse long posts by default (tweet-sized), with a "Show more" toggle
+  // that reveals the full body. The CSS clamps .collapsible to a fixed height;
+  // here we decide whether the post is actually tall enough to need the toggle
+  // and only then surface the button + fade. Git pushes, stories, and any other
+  // long content all flow through here via .message_content.
+  function makeExpander () {
+    return h('button.message-expand', {type: 'button', 'aria-expanded': 'false'},
+      h('span.message-expand__label', 'Show more'))
+  }
+
+  function wireCollapse (content, expandBtn) {
+    if (typeof window === 'undefined') return
+    content.classList.add('collapsible')
+    var label = expandBtn.firstChild
+    var expanded = false
+
+    function update () {
+      if (expanded) return
+      var over = content.scrollHeight > content.clientHeight + 4
+      content.classList.toggle('is-overflowing', over)
+    }
+
+    expandBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      expanded = !expanded
+      content.classList.toggle('collapsible--expanded', expanded)
+      expandBtn.setAttribute('aria-expanded', String(expanded))
+      label.textContent = expanded ? 'Show less' : 'Show more'
+      if (!expanded) {
+        update()
+        content.scrollIntoView({block: 'nearest'})
+      }
+    })
+
+    // A ResizeObserver fires once the card is actually laid out (cards may be
+    // built offscreen, where an eager measurement would read 0 height) and
+    // again whenever it becomes visible or reflows — re-measuring each time.
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(update).observe(content)
+    } else {
+      requestAnimationFrame(function () { requestAnimationFrame(update) })
+      setTimeout(update, 300)
+    }
+
+    // Embedded images grow scrollHeight without resizing the clamped box, so
+    // the observer won't catch them — re-measure as each one loads.
+    requestAnimationFrame(function settle () {
+      if (!content.isConnected) return requestAnimationFrame(settle)
+      var imgs = content.querySelectorAll('img')
+      for (var i = 0; i < imgs.length; i++) {
+        if (imgs[i].complete) continue
+        imgs[i].addEventListener('load', update)
+        imgs[i].addEventListener('error', update)
+      }
+    })
+  }
+
   return function (msg, sbot) {
     if (!isRenderableMessage(msg)) return null
 
@@ -170,12 +228,15 @@ exports.create = function (api) {
       }
     })
 
+    var expandBtn = makeExpander()
+
     var msgEl = h('div.message.message-card',
       h('div.title.row',
         h('div.avatar', api.avatar(msg.value.author, 'thumbnail')),
         h('div.message_meta.row', api.message_meta(msg))
       ),
       content,
+      expandBtn,
       h('div.message_actions.row',
         h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg))
       ),
@@ -212,6 +273,9 @@ exports.create = function (api) {
     // burst at the tap point. Suppressed over links/buttons/media/emoji so it
     // never fights a real interaction, and a no-op if already reacted.
     wireDoubleTapHeart(msgEl, content)
+
+    // ── Collapse long posts by default (Twitter-style) ─────────────────────
+    wireCollapse(content, expandBtn)
 
     return msgEl
   }

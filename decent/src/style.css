@@ -220,6 +220,58 @@ textarea {
   padding-left: 0;
 }
 
+/* Collapse long posts by default; the "Show more" button expands them. */
+.message-card .message_content.collapsible {
+  position: relative;
+  max-height: 320px;
+  overflow: hidden;
+}
+
+.message-card .message_content.collapsible.is-overflowing::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4em;
+  background: linear-gradient(rgba(245, 245, 245, 0), #f5f5f5);
+  pointer-events: none;
+}
+
+.message-card .message_content.collapsible--expanded {
+  max-height: none;
+  overflow: visible;
+}
+
+.message-card .message_content.collapsible--expanded::after {
+  display: none;
+}
+
+.message-expand {
+  display: none;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: #1967d2;
+  background: rgba(25, 103, 210, 0.08);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.message-expand:hover {
+  background: rgba(25, 103, 210, 0.16);
+}
+
+.message_content.is-overflowing + .message-expand,
+.message_content.collapsible--expanded + .message-expand {
+  display: inline-flex;
+}
+
 .message-card .message_actions.row {
   display: flex;
   justify-content: flex-start;
