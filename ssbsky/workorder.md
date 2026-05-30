@@ -26,6 +26,9 @@ second port. Structural pieces that CSS genuinely can't reach come later.
   Bluesky-style like-only model. They get restyled, not removed.
 - **New port, not a route under Decent.** ssbsky is served on its own port
   (e.g. 8990) so a subdomain can point straight at it. Decent is untouched.
+- **Same origin for everything.** The ssbsky origin serves HTML/CSS/JS, blobs,
+  git HTTP routes, docs, and the websocket remote. Do not make the browser
+  connect cross-origin to Decent's websocket port.
 - **Maximize reuse of Decent's JS.** No framework rewrite. Ideally zero JS
   changes for the first shippable cut.
 
@@ -66,7 +69,7 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 
 - ssbsky = **Decent's exact JS bundle** (`decent/build/index.html`) + a
   different stylesheet (`ssbsky-style.css`), served by the sbot on a second
-  port. Same injected ws remote → same identity, same data, runs alongside
+  port. Same-origin injected ws remote → same identity, same data, runs alongside
   Decent.
 - Do **not** copy-paste `plugins/decent-ui.js` wholesale. Extract the shared
   HTTP/static/ws/git/blob/doc serving machinery into a small helper module, then
@@ -74,7 +77,7 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   options:
   - plugin name / log prefix
   - config namespace (`decent` vs `ssbsky`)
-  - default port (`8888` vs `8990`)
+  - default/configured port (Decent's configured port vs ssbsky's default `8990`)
   - stylesheet href (`/style.css` vs `/ssbsky-style.css`)
   - launch message
 - `plugins/ssbsky-ui.js` should be a thin wrapper around that helper, not a
@@ -82,6 +85,11 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   path validation, content types, or websocket remote derivation.
 - The build step compiles/copies only the new CSS. The JS bundle remains the
   Decent bundle.
+- The ssbsky HTTP server must expose the same same-origin surface Decent exposes:
+  `/`, `/style assets`, `/blobs/add`, `/blobs/get/:hash`, `/git/*`, `/docs/*`,
+  and websocket upgrade on the ssbsky port. The frontend already builds blob and
+  git URLs from `window.location.origin`, so a "static-only ssbsky server" is
+  not sufficient.
 
 ### Implementation hazards to handle deliberately
 
@@ -107,25 +115,30 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    not inject Decent's inline CSS. Do not rename it to something like
    `ssbsky.css` unless the app fallback logic is also changed.
 
-3. **Reuse Decent's existing websocket port — do not start a second ws server (decided).**
-   ssbsky serves its static assets on a new HTTP port, but the injected
-   `window.PATCHBAY_REMOTE` points at Decent's *existing* ws endpoint. No
-   additive ws-incoming config, no second ws server.
+3. **The websocket server config must be additive.**
+   Current Decent startup attaches its HTTP server to
+   `config.connections.incoming.ws`. ssbsky needs its own websocket listener on
+   the ssbsky HTTP server so the injected remote can be same-origin
+   (`ws://127.0.0.1:8990~shs:<key>` locally, `wss://ssbsky.example~shs:<key>`
+   behind HTTPS).
 
-   **To verify:** the ssbsky page origin differs from the ws origin (page on the
-   new HTTP port, ws on Decent's shared port), so confirm `ssb-ws` accepts the
-   cross-origin connection — check any origin allowlist — and that behind the
-   subdomain proxy the `x-forwarded-*` headers still yield a working same-host
-   remote.
+   **Solution:** the shared helper should append a ws incoming config for each
+   UI HTTP server while preserving existing entries. Do not replace Decent's ws
+   entry when adding ssbsky. If repeated init needs dedupe, dedupe by the exact
+   `server` object or port. Confirm this against `ssb-ws`, which supports
+   multiple ws servers.
 
-4. **Second-origin behavior is the first thing to verify.**
-   `8990` is a different origin from `8888`, and production subdomain proxying
-   will depend on `x-forwarded-host` / `x-forwarded-proto` producing the correct
-   same-origin websocket remote.
+4. **Same-origin behavior is the first thing to verify.**
+   `8990` is a different origin from Decent, but ssbsky itself must be internally
+   same-origin: page, websocket, blobs, git, and docs all served from the ssbsky
+   origin. Production subdomain proxying should forward websocket upgrades to the
+   ssbsky server, not to Decent's port.
 
    **Solution:** Stage 2 must verify identity and feed loading from
-   `http://127.0.0.1:8990/` before any serious CSS work lands. Also inspect the
-   logged `ssbsky-ui ws remote:` value locally and behind the intended proxy.
+   `http://127.0.0.1:8990/` before any serious CSS work lands. Inspect the
+   logged `ssbsky-ui ws remote:` value and confirm it points at the ssbsky
+   origin. Behind the intended proxy, confirm `x-forwarded-host` /
+   `x-forwarded-proto` produce `wss://<ssbsky-subdomain>~shs:<key>`.
 
 ## Concept mapping: SSB → Bluesky
 
@@ -144,11 +157,12 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 ## Proposed stages
 
 1. **Refactor shared UI serving without behavior changes.** Extract the reusable
-   serving helper, keep Decent on port `8888`, keep `/style.css`, and verify the
-   Decent UI still loads. This is a mechanical prep chunk; no ssbsky visuals yet.
+   serving helper, keep Decent on its configured port, keep `/style.css`, and
+   verify the Decent UI still loads. This is a mechanical prep chunk; no ssbsky
+   visuals yet.
 2. **Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
-   the second-port + ws-remote + identity path end to end against the live sbot.
-   Confirm Decent still loads on `8888` in the same process.
+   the second-port + same-origin ws remote + identity path end to end against
+   the live sbot. Confirm Decent still loads in the same process.
 3. **Base theme:** palette **(on CSS variables)**, type, flatten post rows,
    action-row restyle. Add the `prefers-color-scheme: dark` override here so
    dark mode ships with the base theme.
@@ -156,8 +170,8 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 5. **Mobile bottom tab bar:** media query.
 6. **Profile / thread / compose-modal** theming.
 7. *(structural, later)* Right discover column; unified Following/Discover
-   timeline tabs; profile banner (custom `about` banner field + editor) +
-   follower/following/post counts.
+   timeline tabs; profile header refinement around Decent's existing
+   `about.headerImage` field + follower/following/post counts.
 
 Recommendation: ship stages 1–6 (the CSS-only fork, dark mode included) as the
 first cut, get it on the subdomain, then decide whether stage 7 is worth the
@@ -165,16 +179,21 @@ structural cost.
 
 ## First-cut acceptance criteria
 
-- `node bin.js start` serves Decent at `http://127.0.0.1:8888/`.
+- `node bin.js start` serves Decent at its configured port.
 - The same process serves ssbsky at `http://127.0.0.1:8990/`.
-- Both origins inject a working `window.PATCHBAY_REMOTE` for the same sbot
-  identity.
+- Both origins inject a working same-origin `window.PATCHBAY_REMOTE` for the
+  same sbot identity: Decent points at the Decent origin, ssbsky points at the
+  ssbsky origin.
 - Decent loads `/style.css`; ssbsky loads `/ssbsky-style.css`; ssbsky does not
   also inject the inline Decent fallback CSS.
-- Blob upload/get routes, docs routes, and git HTTP routes still work from
-  Decent after the shared-helper refactor.
+- Blob upload/get routes, docs routes, and git HTTP routes work from both
+  Decent and ssbsky after the shared-helper refactor.
 - `npm run build:web` still produces the existing Decent bundle.
 - `npm test` passes before commit.
+
+Note: Decent may be configured locally as `8888`, `8989`, or another port. The
+acceptance check is "Decent still works on its configured origin"; ssbsky still
+defaults to `8990`.
 
 ## Decisions (resolved)
 
@@ -182,15 +201,12 @@ structural cost.
    collisions and all. Always show the **pubkey** alongside (shortened, full on
    click/copy) so viewers can tell apart identities that share a name. No
    invented `@handle.domain` strings.
-2. **Banners.** Bluesky has profile banners, so ssbsky wants them. SSB `about`
-   has no banner field, so introduce a custom `about` banner (blob ref) that
-   ssbsky reads and lets you set, rendered behind the avatar in the profile
-   header. This is feature work (data + render + editor), not CSS — it lands in
-   the structural stage (7), not the first cut.
-3. **WebSocket port.** Reuse Decent's existing ws port; do **not** start a
-   second ws server. ssbsky's static assets serve on a new HTTP port, but the
-   injected remote points at the shared ws. See Implementation hazard 3 — verify
-   `ssb-ws` accepts the cross-origin connection.
+2. **Banners.** Reuse Decent's existing `about.headerImage` extension and banner
+   crop/upload UI. ssbsky should restyle the profile header around that field;
+   it should not invent a second banner field.
+3. **WebSocket port.** Same-origin for each UI. Decent uses its own configured
+   HTTP/ws origin; ssbsky uses its own HTTP/ws origin. The shared helper appends
+   websocket incoming configs and never clobbers Decent while adding ssbsky.
 4. **Discover feed.** Chronological Public for v1, labeled "Discover." A
    plug-and-play feed-algorithm system (à la Bluesky's feed generators) is
    wanted eventually but is **low priority** — not in the first cuts.
