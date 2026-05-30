@@ -49,6 +49,8 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   bottom; the icon-only nav is already shaped like a tab bar.
 - Reposition the compose FAB / inline prompt into a rail "New Post" button.
 - Profile, thread, and the compose modal: recolor and reflow.
+- **Dark mode** following the OS — a `@media (prefers-color-scheme: dark)`
+  override on a CSS-variable palette. No JS, no toggle needed for v1.
 
 ### Needs DOM / module work (CSS cannot do these)
 
@@ -105,15 +107,16 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    not inject Decent's inline CSS. Do not rename it to something like
    `ssbsky.css` unless the app fallback logic is also changed.
 
-3. **The websocket server config must be additive.**
-   Current Decent startup attaches the HTTP server to `config.connections.incoming.ws`.
-   A second-port plugin must not replace the existing ws incoming entry, or it
-   can break Decent while enabling ssbsky.
+3. **Reuse Decent's existing websocket port — do not start a second ws server (decided).**
+   ssbsky serves its static assets on a new HTTP port, but the injected
+   `window.PATCHBAY_REMOTE` points at Decent's *existing* ws endpoint. No
+   additive ws-incoming config, no second ws server.
 
-   **Solution:** the shared helper should append a ws incoming config for the
-   new HTTP server while preserving existing entries. If it needs to prevent
-   duplicate entries on repeated init, dedupe by the exact `server` object or
-   port. Confirm this against `ssb-ws`, which supports multiple ws servers.
+   **To verify:** the ssbsky page origin differs from the ws origin (page on the
+   new HTTP port, ws on Decent's shared port), so confirm `ssb-ws` accepts the
+   cross-origin connection — check any origin allowlist — and that behind the
+   subdomain proxy the `x-forwarded-*` headers still yield a working same-host
+   remote.
 
 4. **Second-origin behavior is the first thing to verify.**
    `8990` is a different origin from `8888`, and production subdomain proxying
@@ -146,15 +149,19 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 2. **Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
    the second-port + ws-remote + identity path end to end against the live sbot.
    Confirm Decent still loads on `8888` in the same process.
-3. **Base theme:** palette, type, flatten post rows, action-row restyle.
+3. **Base theme:** palette **(on CSS variables)**, type, flatten post rows,
+   action-row restyle. Add the `prefers-color-scheme: dark` override here so
+   dark mode ships with the base theme.
 4. **Left rail:** reposition navbar + `attr()` labels + "New Post" button.
 5. **Mobile bottom tab bar:** media query.
 6. **Profile / thread / compose-modal** theming.
 7. *(structural, later)* Right discover column; unified Following/Discover
-   timeline tabs; profile banner + counts.
+   timeline tabs; profile banner (custom `about` banner field + editor) +
+   follower/following/post counts.
 
-Recommendation: ship stages 1–6 (the CSS-only fork) as the first cut, get it on
-the subdomain, then decide whether stage 7 is worth the structural cost.
+Recommendation: ship stages 1–6 (the CSS-only fork, dark mode included) as the
+first cut, get it on the subdomain, then decide whether stage 7 is worth the
+structural cost.
 
 ## First-cut acceptance criteria
 
@@ -169,20 +176,29 @@ the subdomain, then decide whether stage 7 is worth the structural cost.
 - `npm run build:web` still produces the existing Decent bundle.
 - `npm test` passes before commit.
 
-## Open questions
+## Decisions (resolved)
 
-1. **Handles.** Bluesky shows `@handle.domain`; SSB has only non-unique
-   `about` names + pubkeys. Render display name + a derived handle (`@name` or
-   `@first8ofkey`)? Affects every post header's fidelity.
-2. **Banners.** SSB `about` has an avatar but no banner field by convention.
-   Skip banners in v1, or introduce a custom `about` banner field?
-3. **Second-origin ws.** A new port is a different origin — confirm `ssb-ws`
-   accepts the connection and the subdomain proxy forwards the ws remote
-   correctly (the plugin derives remote from `x-forwarded-host`). Verify early.
-4. **Discover feed.** Bluesky's Discover is algorithmic; we map it to
-   chronological Public. Confirm that expectation is acceptable.
-5. **Dark mode.** Bluesky ships dim/dark themes. In scope for v1 or later?
-6. **Build wiring.** Add a `build:ssbsky` script that copies
-   `ssbsky/ssbsky-style.css` into `decent/build/ssbsky-style.css`, or fold that
-   copy into `build:web`? The first implementation should choose one and
-   document it in `package.json` scripts.
+1. **Handles.** Keep SSB's existing petname/alias system as the display handle —
+   collisions and all. Always show the **pubkey** alongside (shortened, full on
+   click/copy) so viewers can tell apart identities that share a name. No
+   invented `@handle.domain` strings.
+2. **Banners.** Bluesky has profile banners, so ssbsky wants them. SSB `about`
+   has no banner field, so introduce a custom `about` banner (blob ref) that
+   ssbsky reads and lets you set, rendered behind the avatar in the profile
+   header. This is feature work (data + render + editor), not CSS — it lands in
+   the structural stage (7), not the first cut.
+3. **WebSocket port.** Reuse Decent's existing ws port; do **not** start a
+   second ws server. ssbsky's static assets serve on a new HTTP port, but the
+   injected remote points at the shared ws. See Implementation hazard 3 — verify
+   `ssb-ws` accepts the cross-origin connection.
+4. **Discover feed.** Chronological Public for v1, labeled "Discover." A
+   plug-and-play feed-algorithm system (à la Bluesky's feed generators) is
+   wanted eventually but is **low priority** — not in the first cuts.
+5. **Dark mode.** In scope for v1. Follow the OS via
+   `@media (prefers-color-scheme: dark)` over a CSS-variable palette (added in
+   stage 3). No manual toggle needed initially.
+6. **Build wiring.** Extend `decent/scripts/style.js` (it already copies
+   `style.css` → build and writes the JSON fallback) to **also emit
+   `ssbsky-style.css`** into the build dir, so the existing `npm run build:web`
+   produces both stylesheets with nothing new to remember. Optionally add a thin
+   `build:ssbsky` for a fast skin-only rebuild loop.
