@@ -44,10 +44,11 @@ session unless Ev says otherwise in the current conversation.
    sessions; assume the tree has moved.
 2. **Work in discrete, shippable chunks.** A chunk = one coherent change that leaves the
    branch in a working state.  Don't mix unrelated changes in one chunk.
-3. **Build after every change.** Run `npm run build:web` for frontend edits.  Today it
-   rebuilds the shared Decent JS bundle and `style.css`; once the ssbsky stylesheet wiring
-   lands, the same command must rebuild both `style.css` and `ssbsky-style.css`.  A broken
-   build is never an acceptable stopping point.
+3. **Build after every change.** Run `npm run build:web` for frontend edits — it rebuilds
+   the shared JS bundle plus **both** stylesheets (`style.css` for Decent and
+   `ssbsky-style.css` for ssbsky).  Always rebuild both skins after any frontend or
+   stylesheet change; never rebuild one and leave the other stale.  A broken build is never
+   an acceptable stopping point.
 4. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
    UI, verify the change in the browser before declaring done.
 5. **Commit every chunk.** Never leave modified files sitting in the working tree at the end
@@ -188,9 +189,9 @@ both sides and will notice if either model is coasting.
 ## How to run
 
 ```bash
-node bin.js start          # starts SSB server + Decent HTTP UI at http://127.0.0.1:8888
-                           # (ssbsky serves on its own port, 8990, as that stage lands)
-npm run build:web          # rebuilds decent/build/ (run after any frontend change)
+node bin.js start          # starts SSB server + Decent UI at 127.0.0.1:8888
+                           # and ssbsky UI at 127.0.0.1:8990
+npm run build:web          # rebuilds decent/build/ — both Decent and ssbsky assets
 ```
 
 The server must be running before the browser app can connect.
@@ -203,10 +204,10 @@ The server must be running before the browser app can connect.
 - `npm run coverage` – generate coverage via `nyc` (outputs `coverage/`).
 - `npm start` – run the CLI locally (`node bin.js start`), equivalent to `ssb-server start`
   when installed globally.
-- `npm run build:web` – rebuild the frontend bundle and Decent stylesheet. Once
-  `ssbsky-style.css` lands, this same command should produce both skins because ssbsky
-  reuses Decent's exact JS bundle and only the stylesheet differs. Always run it after any
-  frontend or stylesheet change and confirm the generated assets build cleanly.
+- `npm run build:web` – rebuild the frontend bundle and **both** stylesheets
+  (`style.css` for Decent, `ssbsky-style.css` for ssbsky). ssbsky reuses Decent's exact JS
+  bundle; only the stylesheet differs, so this one command produces both skins. Always run
+  it after any frontend or stylesheet change and confirm both skins build cleanly.
 
 ## Architecture in two sentences
 

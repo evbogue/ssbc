@@ -1,0 +1,24 @@
+/*
+ * ssbsky stage 2 placeholder skin.
+ *
+ * The filename intentionally contains "style.css" so Decent's browser-side
+ * fallback stylesheet check recognizes it as an external stylesheet.
+ */
+
+:root {
+  --ssbsky-proof: #1185fe;
+}
+
+body::before {
+  content: 'ssbsky';
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9999;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--ssbsky-proof);
+  color: #fff;
+  font: 600 12px/1.4 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  pointer-events: none;
+}

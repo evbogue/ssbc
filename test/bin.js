@@ -6,6 +6,7 @@ const test   = require('tape')
 const { spawn, exec } = require('child_process')
 const crypto = require('crypto')
 const net    = require('net')
+const http   = require('http')
 const { join } = require('path')
 const ma     = require('multiserver-address')
 
@@ -28,6 +29,8 @@ function ssbServer(t, argv, opts) {
   if (!argv.some((arg) => /^--decent\.port(?:=|$)/.test(arg)) &&
       !argv.some((arg) => /^--ws\.port(?:=|$)/.test(arg)))
     argv.push('--decent.port=0')
+  if (!argv.some((arg) => /^--ssbsky\.port(?:=|$)/.test(arg)))
+    argv.push('--ssbsky.port=0')
 
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 
@@ -83,6 +86,15 @@ function connect(port, host, cb) {
   const socket = net.connect(port, host)
   socket.on('error', (err) => { if (!done) { done = true; cb(err) } })
   socket.on('connect', () => { if (!done) { done = true; cb(null) } })
+}
+
+function getText(url, cb) {
+  http.get(url, (res) => {
+    let body = ''
+    res.setEncoding('utf8')
+    res.on('data', (chunk) => { body += chunk })
+    res.on('end', () => { cb(null, res, body) })
+  }).on('error', cb)
 }
 
 function testSsbServer(t, opts, asConfig, port, cb) {
@@ -170,8 +182,10 @@ test('ssbServer should have websockets and http server by default', (t) => {
     const remotes = ma.decode(addr)
     console.log('remotes', remotes, addr)
     const ws_remotes = remotes.filter((a) => a.find((c) => c.name === 'ws'))
-    t.equal(ws_remotes.length, 1, 'has one ws remote')
-    const remote = ma.encode([ws_remotes[0]])
+    t.ok(ws_remotes.length >= 2, 'has Decent and ssbsky ws remotes')
+    const decentRemote = ws_remotes.find((parts) => ma.encode([parts]).indexOf('9002') > 0)
+    t.ok(decentRemote, 'has Decent ws remote on expected port')
+    const remote = ma.encode([decentRemote])
     t.ok(remote.indexOf('9002') > 0, 'ws address contains expected port')
 
     const key = require('ssb-keys').loadOrCreateSync(join(p, 'secret'))
@@ -227,13 +241,56 @@ test('decent and websockets share one internal port', (t) => {
 
     const remotes = ma.decode(addr)
     const ws_remotes = remotes.filter((a) => a.find((c) => c.name === 'ws'))
-    t.equal(ws_remotes.length, 1, 'has one ws remote')
+    t.ok(ws_remotes.length >= 2, 'has Decent and ssbsky ws remotes')
 
-    const remote = ma.encode([ws_remotes[0]])
+    const decentRemote = ws_remotes.find((parts) => ma.encode([parts]).indexOf('9002') > 0)
+    t.ok(decentRemote, 'has Decent shared-port ws remote')
+    const remote = ma.encode([decentRemote])
     t.ok(remote.indexOf('9002') > 0, 'ws address uses the shared http port')
 
     connect(9002, '127.0.0.1', (connectErr) => {
       t.error(connectErr, 'shared decent/ws port is listening')
+      end()
+    })
+  })
+})
+
+test('ssbsky serves rewritten stylesheet and same-origin websocket remote', (t) => {
+  const p    = '/tmp/ssbServer_ssbsky_' + Date.now()
+  const caps = crypto.randomBytes(32).toString('base64')
+  const end  = ssbServer(t, [
+    'start',
+    '--host=127.0.0.1',
+    '--port=0',
+    '--ws.port=0',
+    '--decent.port=0',
+    '--ssbsky.host=127.0.0.1',
+    '--ssbsky.port=8990',
+    '--path', p,
+    '--caps.shs', caps
+  ])
+
+  try_often(10, { ignore: /ECONNREFUSED/ }, (cb) => {
+    getText('http://127.0.0.1:8990/', (err, res, html) => {
+      if (err) return cb(err)
+      if (res.statusCode !== 200) return cb(new Error('unexpected status ' + res.statusCode))
+      cb(null, html)
+    })
+  }, (err, html) => {
+    t.error(err, 'ssbsky http server starts')
+    if (err) return end()
+
+    t.ok(html.indexOf('href="/ssbsky-style.css"') !== -1, 'index loads ssbsky stylesheet')
+    t.equal(html.indexOf('href="/style.css"'), -1, 'index does not load Decent stylesheet')
+    t.ok(/window\.PATCHBAY_REMOTE = "ws:\/\/127\.0\.0\.1:8990~shs:[^"]+"/.test(html),
+      'injects same-origin ssbsky websocket remote')
+
+    getText('http://127.0.0.1:8990/ssbsky-style.css', (styleErr, res, css) => {
+      t.error(styleErr, 'ssbsky stylesheet request succeeds')
+      if (!styleErr) {
+        t.equal(res.statusCode, 200, 'ssbsky stylesheet returns 200')
+        t.ok(css.indexOf('ssbsky stage 2 placeholder skin') !== -1, 'serves ssbsky stylesheet contents')
+      }
       end()
     })
   })
@@ -285,6 +342,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
     '--host=127.0.0.1',
     '--port=0',
     '--decent.port=0',
+    '--ssbsky.port=0',
     '--path', dir
   ], {
     env: Object.assign({}, process.env, { ssb_appname: 'test' })
@@ -314,6 +372,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
       '--host=127.0.0.1',
       '--port=0',
       '--decent.port=0',
+      '--ssbsky.port=0',
       '--path', dir
     ], {
       env: Object.assign({}, process.env, { ssb_appname: 'test' })

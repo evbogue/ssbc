@@ -3,9 +3,9 @@
 A Bluesky-skinned fork of the Decent web client. Same SSB engine, same data,
 same identity — a different skin, served on its own port.
 
-> Status: Stage 1 has landed. `plugins/decent-ui.js` now delegates to the
-> shared `lib/ui-server.js` helper. Stage 2 is the next implementation chunk:
-> launch ssbsky by default on its own same-origin HTTP/ws port.
+> Status: Stage 2 has landed. `plugins/decent-ui.js` now delegates to the
+> shared `lib/ui-server.js` helper, and `plugins/ssbsky-ui.js` launches the same
+> Decent bundle with `ssbsky-style.css` on its own same-origin HTTP/ws port.
 
 ## Thesis
 
@@ -185,7 +185,7 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    serving helper, keep Decent on its configured port, keep `/style.css`, and
    verify the Decent UI still loads. Landed as `lib/ui-server.js` plus a thin
    `plugins/decent-ui.js` wrapper.
-2. **Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
+2. **DONE: Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
    the second-port + same-origin ws remote + identity path end to end against
    the live sbot. Confirm Decent still loads in the same process. ssbsky is
    default-on, uses `ssbsky.host` / `ssbsky.port`, and defaults to
