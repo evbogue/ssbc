@@ -426,20 +426,42 @@ exports.create = function (api) {
       var fab = h('div.compose-trigger', trigger)
 
       // An inline prompt pinned atop the feed makes composing discoverable
-      // without hunting for the corner button; both open the same modal, and
+      // without hunting for the corner button. It mirrors the real composer
+      // card — a (shorter) textarea plus the same Browse/Preview controls —
+      // but is just a launcher: any interaction opens the existing modal, and
       // the floating button stays for when the prompt has scrolled away.
       if (opts.inline) {
         var promptText = opts.promptText || opts.placeholder || 'Write a public message'
-        var prompt = h('button.compose-prompt', {
-          type: 'button',
+        var openModal = function (ev) {
+          if (ev && ev.preventDefault) ev.preventDefault()
+          clearReply()
+          showModal(prompt)
+        }
+        // Purely visual: not focusable and click-through, so the card handles
+        // every interaction (avoids a stray focus auto-opening the modal).
+        var promptField = h('textarea.compose-prompt__field', {
+          placeholder: promptText,
+          readonly: true,
+          tabindex: '-1',
+          rows: 2,
+          'aria-hidden': 'true'
+        })
+        var prompt = h('div.compose-prompt.message-card', {
+          role: 'button',
+          tabindex: '0',
           'aria-label': promptText,
-          onclick: function () { clearReply(); showModal(prompt) }
+          onclick: openModal,
+          onkeydown: function (ev) {
+            if (ev.keyCode === 13 || ev.keyCode === 32) openModal(ev)
+          }
         },
-          h('div.avatar', api.avatar(selfId, 'thumbnail')),
-          h('span.compose-prompt__text', promptText),
-          h('span.compose-prompt__icon.material-symbols-outlined', {
-            'aria-hidden': 'true'
-          }, 'edit')
+          h('div.column',
+            promptField,
+            h('div.row.compose-prompt__controls',
+              h('button.btn', 'Browse', {type: 'button', onclick: openModal}),
+              h('button.btn.btn-primary', 'Preview', {type: 'button', onclick: openModal})
+            )
+          )
         )
         return h('div.compose-entry', prompt, fab)
       }
