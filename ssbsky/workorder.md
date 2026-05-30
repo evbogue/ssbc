@@ -3,8 +3,9 @@
 A Bluesky-skinned fork of the Decent web client. Same SSB engine, same data,
 same identity — a different skin, served on its own port.
 
-> Status: planning. Nothing here is built yet. This document is the agreed
-> shape of the work before any code lands.
+> Status: Stage 1 has landed. `plugins/decent-ui.js` now delegates to the
+> shared `lib/ui-server.js` helper. Stage 2 is the next implementation chunk:
+> launch ssbsky by default on its own same-origin HTTP/ws port.
 
 ## Thesis
 
@@ -29,8 +30,15 @@ second port. Structural pieces that CSS genuinely can't reach come later.
 - **Same origin for everything.** The ssbsky origin serves HTML/CSS/JS, blobs,
   git HTTP routes, docs, and the websocket remote. Do not make the browser
   connect cross-origin to Decent's websocket port.
+- **Launch by default.** There is no feature flag for the first cut:
+  `node bin.js start` should start Decent and ssbsky in the same process.
+- **Config namespace:** ssbsky mirrors Decent's config shape with
+  `ssbsky.host` and `ssbsky.port`. Defaults are `127.0.0.1` and `8990`.
 - **Maximize reuse of Decent's JS.** No framework rewrite. Ideally zero JS
   changes for the first shippable cut.
+- **Use Bluesky-ish language where the mapping is honest.** In the ssbsky skin,
+  low-risk copy/label changes are allowed so the UI reads more like Bluesky.
+  Decent's copy stays unchanged.
 
 ## How much is achievable by swapping the stylesheet alone?
 
@@ -45,6 +53,9 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 - Flatten `.message-card` from boxed cards into hairline-separated post rows.
 - Restyle the action row (reply / repost / like / reaction) into Bluesky's
   icon + count style.
+- Rename ssbsky-visible labels where the SSB behavior maps cleanly:
+  Public → Discover, Friends → Following, Private → Chat/DMs. Keep git/code
+  labels explicit because Bluesky has no equivalent and git-over-SSB is core.
 - **Left rail:** the top `.navbar` is flexbox — re-anchor it to a fixed
   vertical rail (`flex-direction: column`, fixed left, push `.screen__content`
   over with `margin-left`) and pull labels in with `attr()`.
@@ -94,6 +105,9 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
   and websocket upgrade on the ssbsky port. The frontend already builds blob and
   git URLs from `window.location.origin`, so a "static-only ssbsky server" is
   not sufficient.
+- `plugins/ssbsky-ui.js` should be registered in `bin.js` before `ssb-ws`, the
+  same as `plugins/decent-ui.js`, so both UI helpers append their websocket
+  server entries before `ssb-ws` builds the multiserver listeners.
 
 ### Implementation hazards to handle deliberately
 
@@ -132,6 +146,13 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    `server` object or port. Confirm this against `ssb-ws`, which supports
    multiple ws servers.
 
+   **Stage-2 gotcha:** preserve Decent's historical fallback from `decent.port`
+   to `config.ws.port`, but do not let ssbsky inherit `config.ws.port` by
+   accident. If `ssbsky.port` is unset, ssbsky should default to `8990`, not the
+   global websocket port (`8989` in the local default config). The helper now has
+   an explicit `useWsPortFallback` option: Decent opts into the legacy fallback,
+   and ssbsky should leave it off.
+
 4. **Same-origin behavior is the first thing to verify.**
    `8990` is a different origin from Decent, but ssbsky itself must be internally
    same-origin: page, websocket, blobs, git, and docs all served from the ssbsky
@@ -160,16 +181,22 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
 
 ## Proposed stages
 
-1. **Refactor shared UI serving without behavior changes.** Extract the reusable
+1. **DONE: Refactor shared UI serving without behavior changes.** Extract the reusable
    serving helper, keep Decent on its configured port, keep `/style.css`, and
-   verify the Decent UI still loads. This is a mechanical prep chunk; no ssbsky
-   visuals yet.
+   verify the Decent UI still loads. Landed as `lib/ui-server.js` plus a thin
+   `plugins/decent-ui.js` wrapper.
 2. **Serve ssbsky on its own port** with a near-empty `ssbsky-style.css` — prove
    the second-port + same-origin ws remote + identity path end to end against
-   the live sbot. Confirm Decent still loads in the same process.
+   the live sbot. Confirm Decent still loads in the same process. ssbsky is
+   default-on, uses `ssbsky.host` / `ssbsky.port`, and defaults to
+   `http://127.0.0.1:8990/`. The stage-2 stylesheet may include tiny placeholder
+   or structural CSS, but should not attempt the full visual theme yet.
 3. **Base theme:** palette **(on CSS variables)**, type, flatten post rows,
    action-row restyle. Add the `prefers-color-scheme: dark` override here so
-   dark mode ships with the base theme.
+   dark mode ships with the base theme. Also land safe ssbsky-only language
+   changes: Public → Discover, Friends → Following, Private → Chat/DMs, while
+   keeping git/code explicit. Emoji reactions remain visible and are styled as
+   compact reaction/action affordances, not hidden behind a like-only fiction.
 4. **Left rail:** reposition navbar + `attr()` labels + "New Post" button.
 5. **Mobile bottom tab bar:** media query.
 6. **Profile / thread / compose-modal** theming.
@@ -184,7 +211,8 @@ structural cost.
 ## First-cut acceptance criteria
 
 - `node bin.js start` serves Decent at its configured port.
-- The same process serves ssbsky at `http://127.0.0.1:8990/`.
+- The same process serves ssbsky by default at `http://127.0.0.1:8990/`, unless
+  overridden via `ssbsky.host` / `ssbsky.port`.
 - Both origins inject a working same-origin `window.PATCHBAY_REMOTE` for the
   same sbot identity: Decent points at the Decent origin, ssbsky points at the
   ssbsky origin.
@@ -224,3 +252,9 @@ defaults to `8990`.
    `ssbsky-style.css`** into the build dir, so the existing `npm run build:web`
    produces both stylesheets with nothing new to remember. Optionally add a thin
    `build:ssbsky` for a fast skin-only rebuild loop.
+7. **Default launch/config.** ssbsky is enabled by default on `node bin.js start`.
+   Use `config.ssbsky.host` and `config.ssbsky.port`, mirroring Decent's
+   namespace. The default display spelling is lowercase `ssbsky`.
+8. **Stage-3 rhetoric/copy.** ssbsky may rename UI labels to match Bluesky's
+   product language when the behavior maps honestly. Do not change Decent's copy
+   for this, and do not rename git/code into something misleading.

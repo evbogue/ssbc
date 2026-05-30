@@ -17,7 +17,8 @@ exports.init = function (sbot, config) {
     defaultPort: DEFAULT_PORT,
     stylesheetName: 'style.css',
     buildDir,
-    launchMessage: 'Decent launched at'
+    launchMessage: 'Decent launched at',
+    useWsPortFallback: true
   })
   return { decent: { port: result.port, host: result.host } }
 }
