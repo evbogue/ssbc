@@ -316,6 +316,7 @@ button { border-radius: 999px; }
   border-radius: 999px;
   color: var(--sky-text);
   font-weight: 500;
+  text-decoration: none;
   text-shadow: none;
 }
 
