@@ -8,5 +8,5 @@ coverage
 .DS_Store
 
 # scratch screenshots from dev/verification
-/ssbsky-*.png
+/ssbski-*.png
 /ref-*.png

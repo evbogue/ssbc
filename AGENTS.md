@@ -46,7 +46,7 @@ session unless Ev says otherwise in the current conversation.
    branch in a working state.  Don't mix unrelated changes in one chunk.
 3. **Build after every change.** Run `npm run build:web` for frontend edits — it rebuilds
    the shared JS bundle plus **both** stylesheets (`style.css` for Decent and
-   `ssbsky-style.css` for ssbsky).  Always rebuild both skins after any frontend or
+   `ssbski-style.css` for ssbski).  Always rebuild both skins after any frontend or
    stylesheet change; never rebuild one and leave the other stale.  A broken build is never
    an acceptable stopping point.
 4. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
@@ -190,8 +190,8 @@ both sides and will notice if either model is coasting.
 
 ```bash
 node bin.js start          # starts SSB server + Decent UI at 127.0.0.1:8888
-                           # and ssbsky UI at 127.0.0.1:8990
-npm run build:web          # rebuilds decent/build/ — both Decent and ssbsky assets
+                           # and ssbski UI at 127.0.0.1:8990
+npm run build:web          # rebuilds decent/build/ — both Decent and ssbski assets
 ```
 
 The server must be running before the browser app can connect.
@@ -205,7 +205,7 @@ The server must be running before the browser app can connect.
 - `npm start` – run the CLI locally (`node bin.js start`), equivalent to `ssb-server start`
   when installed globally.
 - `npm run build:web` – rebuild the frontend bundle and **both** stylesheets
-  (`style.css` for Decent, `ssbsky-style.css` for ssbsky). ssbsky reuses Decent's exact JS
+  (`style.css` for Decent, `ssbski-style.css` for ssbski). ssbski reuses Decent's exact JS
   bundle; only the stylesheet differs, so this one command produces both skins. Always run
   it after any frontend or stylesheet change and confirm both skins build cleanly.
 

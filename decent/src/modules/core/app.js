@@ -13,7 +13,7 @@ module.exports = {
           h('style', {'data-decent-style': 'true'}, require('../../style.css.json'))
         )
       }
-      var isSsbsky = !!document.querySelector('link[rel="stylesheet"][href*="ssbsky-style.css"]')
+      var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
 
       window.addEventListener('error', window.onError = function (e) {
         document.body.appendChild(h('div.error',
@@ -49,7 +49,7 @@ module.exports = {
 
       var selfId = require('../../keys').id
       function labelForRoute (route, fallback) {
-        if (!isSsbsky) return fallback
+        if (!isSsbski) return fallback
         if (route === 'public') return 'Discover'
         if (route === 'friends') return 'Following'
         if (route === 'private') return 'Chat'
@@ -75,7 +75,7 @@ module.exports = {
             h('span.material-symbols-outlined.nav__icon', {
               'aria-hidden': 'true'
             }, item.icon),
-            isSsbsky ? h('span.nav__label', item.label) : null
+            isSsbski ? h('span.nav__label', item.label) : null
           ])
         )
       }))
@@ -151,12 +151,12 @@ module.exports = {
             profileLink,
             nav,
             h('div.pull-right', searchInput, api.menu(),
-              isSsbsky ? buildTrendingCard() : null,
-              isSsbsky ? h('div.right-footer', [
+              isSsbski ? buildTrendingCard() : null,
+              isSsbski ? h('div.right-footer', [
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
                 h('a.right-footer__link', {href: '#key'}, 'Keys'),
-                h('span.right-footer__tag', 'ssbsky · SSB')
+                h('span.right-footer__tag', 'ssbski · SSB')
               ]) : null
             )
           )
@@ -164,13 +164,13 @@ module.exports = {
       )
 
       var content = h('div.screen__content.column')
-      // ssbsky shows a sticky, Bluesky-style header (feed tabs / section title)
+      // ssbski shows a sticky, Bluesky-style header (feed tabs / section title)
       // at the top of the centre column; the route view renders below it. The
       // view host is a separate node so renderRoute can replace the view
       // without wiping the persistent header.
       var feedHeader = null
       var renderTarget = content
-      if (isSsbsky) {
+      if (isSsbski) {
         feedHeader = h('div.feed-header')
         var feedHost = h('div.feed-host')
         content.appendChild(feedHeader)
@@ -208,7 +208,7 @@ module.exports = {
       }
 
       function setTitle (route, view) {
-        var base = isSsbsky ? 'ssbsky' : 'Decent SSB'
+        var base = isSsbski ? 'ssbski' : 'Decent SSB'
         var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }

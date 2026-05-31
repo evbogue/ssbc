@@ -1,8 +1,8 @@
 /*
- * ssbsky skin — a Bluesky-faithful reskin of the Decent web client.
+ * ssbski skin — a Bluesky-faithful reskin of the Decent web client.
  *
- * Loaded INSTEAD OF Decent's style.css (the ssbsky UI server rewrites the
- * /style.css link to /ssbsky-style.css). The only other stylesheets present
+ * Loaded INSTEAD OF Decent's style.css (the ssbski UI server rewrites the
+ * /style.css link to /ssbski-style.css). The only other stylesheets present
  * are Twitter Bootstrap 2.3.2 and the Material Symbols font, so this file owns
  * the entire layout — it builds Bluesky's three-zone shell (left nav rail,
  * centered feed, right column) on top of Decent's existing DOM with no JS
@@ -67,7 +67,7 @@
   }
 }
 
-/* Reset — ssbsky no longer loads Bootstrap, so re-establish the few base
+/* Reset — ssbski no longer loads Bootstrap, so re-establish the few base
  * rules it used to provide (box model, body margin, list chrome). */
 *,
 *::before,
@@ -109,7 +109,7 @@ textarea, input, button { font-family: inherit; }
 
 button { border-radius: 999px; }
 
-/* Bootstrap used to supply the base button look; re-establish it for ssbsky */
+/* Bootstrap used to supply the base button look; re-establish it for ssbski */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -278,7 +278,7 @@ button { border-radius: 999px; }
 
 /* Wordmark at the top of the rail */
 .navbar .container-fluid::before {
-  content: 'ssbsky';
+  content: 'ssbski';
   display: block;
   padding: 4px 14px 16px;
   font-size: 1.55rem;
@@ -723,7 +723,7 @@ button { border-radius: 999px; }
 
 /* ============================================================
  * Reactions — layout/behavior ported from Decent's stylesheet (trays, picker,
- * popover, chips, animations), re-themed with the ALF tokens. ssbsky doesn't
+ * popover, chips, animations), re-themed with the ALF tokens. ssbski doesn't
  * load Decent's style.css, so these structural rules have to live here.
  * ============================================================ */
 
@@ -1086,7 +1086,7 @@ button { border-radius: 999px; }
 }
 
 /* ============================================================
- * Composer modal (the "New Post" dialog) — ssbsky lacks Decent's
+ * Composer modal (the "New Post" dialog) — ssbski lacks Decent's
  * structural compose CSS, so build the dialog look here.
  * ============================================================ */
 
@@ -1303,7 +1303,7 @@ button { border-radius: 999px; }
   color: var(--sky-muted);
 }
 
-/* Repositories list — ssbsky never loaded Decent's repos-card CSS, so cards
+/* Repositories list — ssbski never loaded Decent's repos-card CSS, so cards
  * stacked full-width and long clone URLs overflowed. */
 .repos-heading {
   margin: 16px 0 12px;
@@ -1400,7 +1400,7 @@ button { border-radius: 999px; }
 
 .lightbox { background: rgba(15, 20, 25, 0.62); }
 
-/* Avatar size classes (used by repos, lists, embeds, etc.). ssbsky never
+/* Avatar size classes (used by repos, lists, embeds, etc.). ssbski never
  * loaded these from Decent, so unsized avatars rendered at natural size. */
 .avatar--thumbnail {
   width: 36px;

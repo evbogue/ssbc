@@ -29,8 +29,8 @@ function ssbServer(t, argv, opts) {
   if (!argv.some((arg) => /^--decent\.port(?:=|$)/.test(arg)) &&
       !argv.some((arg) => /^--ws\.port(?:=|$)/.test(arg)))
     argv.push('--decent.port=0')
-  if (!argv.some((arg) => /^--ssbsky\.port(?:=|$)/.test(arg)))
-    argv.push('--ssbsky.port=0')
+  if (!argv.some((arg) => /^--ssbski\.port(?:=|$)/.test(arg)))
+    argv.push('--ssbski.port=0')
 
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 
@@ -182,7 +182,7 @@ test('ssbServer should have websockets and http server by default', (t) => {
     const remotes = ma.decode(addr)
     console.log('remotes', remotes, addr)
     const ws_remotes = remotes.filter((a) => a.find((c) => c.name === 'ws'))
-    t.ok(ws_remotes.length >= 2, 'has Decent and ssbsky ws remotes')
+    t.ok(ws_remotes.length >= 2, 'has Decent and ssbski ws remotes')
     const decentRemote = ws_remotes.find((parts) => ma.encode([parts]).indexOf('9002') > 0)
     t.ok(decentRemote, 'has Decent ws remote on expected port')
     const remote = ma.encode([decentRemote])
@@ -241,7 +241,7 @@ test('decent and websockets share one internal port', (t) => {
 
     const remotes = ma.decode(addr)
     const ws_remotes = remotes.filter((a) => a.find((c) => c.name === 'ws'))
-    t.ok(ws_remotes.length >= 2, 'has Decent and ssbsky ws remotes')
+    t.ok(ws_remotes.length >= 2, 'has Decent and ssbski ws remotes')
 
     const decentRemote = ws_remotes.find((parts) => ma.encode([parts]).indexOf('9002') > 0)
     t.ok(decentRemote, 'has Decent shared-port ws remote')
@@ -255,8 +255,8 @@ test('decent and websockets share one internal port', (t) => {
   })
 })
 
-test('ssbsky serves rewritten stylesheet and same-origin websocket remote', (t) => {
-  const p    = '/tmp/ssbServer_ssbsky_' + Date.now()
+test('ssbski serves rewritten stylesheet and same-origin websocket remote', (t) => {
+  const p    = '/tmp/ssbServer_ssbski_' + Date.now()
   const caps = crypto.randomBytes(32).toString('base64')
   const end  = ssbServer(t, [
     'start',
@@ -264,8 +264,8 @@ test('ssbsky serves rewritten stylesheet and same-origin websocket remote', (t) 
     '--port=0',
     '--ws.port=0',
     '--decent.port=0',
-    '--ssbsky.host=127.0.0.1',
-    '--ssbsky.port=8990',
+    '--ssbski.host=127.0.0.1',
+    '--ssbski.port=8990',
     '--path', p,
     '--caps.shs', caps
   ])
@@ -277,19 +277,19 @@ test('ssbsky serves rewritten stylesheet and same-origin websocket remote', (t) 
       cb(null, html)
     })
   }, (err, html) => {
-    t.error(err, 'ssbsky http server starts')
+    t.error(err, 'ssbski http server starts')
     if (err) return end()
 
-    t.ok(html.indexOf('href="/ssbsky-style.css"') !== -1, 'index loads ssbsky stylesheet')
+    t.ok(html.indexOf('href="/ssbski-style.css"') !== -1, 'index loads ssbski stylesheet')
     t.equal(html.indexOf('href="/style.css"'), -1, 'index does not load Decent stylesheet')
     t.ok(/window\.PATCHBAY_REMOTE = "ws:\/\/127\.0\.0\.1:8990~shs:[^"]+"/.test(html),
-      'injects same-origin ssbsky websocket remote')
+      'injects same-origin ssbski websocket remote')
 
-    getText('http://127.0.0.1:8990/ssbsky-style.css', (styleErr, res, css) => {
-      t.error(styleErr, 'ssbsky stylesheet request succeeds')
+    getText('http://127.0.0.1:8990/ssbski-style.css', (styleErr, res, css) => {
+      t.error(styleErr, 'ssbski stylesheet request succeeds')
       if (!styleErr) {
-        t.equal(res.statusCode, 200, 'ssbsky stylesheet returns 200')
-        t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbsky stylesheet contents')
+        t.equal(res.statusCode, 200, 'ssbski stylesheet returns 200')
+        t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbski stylesheet contents')
       }
       end()
     })
@@ -342,7 +342,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
     '--host=127.0.0.1',
     '--port=0',
     '--decent.port=0',
-    '--ssbsky.port=0',
+    '--ssbski.port=0',
     '--path', dir
   ], {
     env: Object.assign({}, process.env, { ssb_appname: 'test' })
@@ -372,7 +372,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
       '--host=127.0.0.1',
       '--port=0',
       '--decent.port=0',
-      '--ssbsky.port=0',
+      '--ssbski.port=0',
       '--path', dir
     ], {
       env: Object.assign({}, process.env, { ssb_appname: 'test' })

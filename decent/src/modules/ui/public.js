@@ -20,8 +20,8 @@ exports.gives = {
 }
 
 exports.create = function (api) {
-  function isSsbskySkin () {
-    return !!document.querySelector('link[rel="stylesheet"][href*="ssbsky-style.css"]')
+  function isSsbskiSkin () {
+    return !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
   }
 
   function isPublicMessage (msg) {
@@ -80,9 +80,9 @@ exports.create = function (api) {
 
     screen_view: function (path, sbot) {
       if(path === 'public' || path === 'friends') {
-        var isSsbsky = isSsbskySkin()
-        var publicLabel = isSsbsky ? 'Discover' : 'Public'
-        var friendsLabel = isSsbsky ? 'Following' : 'Friends'
+        var isSsbski = isSsbskiSkin()
+        var publicLabel = isSsbski ? 'Discover' : 'Public'
+        var friendsLabel = isSsbski ? 'Following' : 'Friends'
         var autoOpen = false
         var initialQuote = null
         if (path === 'public') {
@@ -104,8 +104,8 @@ exports.create = function (api) {
                 modal: true,
                 inline: true,
                 promptText: path === 'friends'
-                  ? (isSsbsky ? 'Post to Following...' : 'Write to your friends…')
-                  : (isSsbsky ? 'What is happening?' : 'Write a public message…'),
+                  ? (isSsbski ? 'Post to Following...' : 'Write to your friends…')
+                  : (isSsbski ? 'What is happening?' : 'Write a public message…'),
                 triggerLabel: 'Compose',
                 listenReplyEvents: true,
                 autoOpen: autoOpen,
