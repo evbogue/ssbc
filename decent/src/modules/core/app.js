@@ -43,6 +43,7 @@ module.exports = {
         container.appendChild(view)
         setActive(route)
         setTitle(route, view)
+        renderFeedHeader(route, view)
       }
 
       var selfId = require('../../keys').id
@@ -99,12 +100,32 @@ module.exports = {
           h('div.container-fluid',
             profileLink,
             nav,
-            h('div.pull-right', searchInput, api.menu())
+            h('div.pull-right', searchInput, api.menu(),
+              isSsbsky ? h('div.right-footer', [
+                h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
+                h('a.right-footer__link', {href: '/docs'}, 'Docs'),
+                h('a.right-footer__link', {href: '#key'}, 'Keys'),
+                h('span.right-footer__tag', 'ssbsky · SSB')
+              ]) : null
+            )
           )
         )
       )
 
       var content = h('div.screen__content.column')
+      // ssbsky shows a sticky, Bluesky-style header (feed tabs / section title)
+      // at the top of the centre column; the route view renders below it. The
+      // view host is a separate node so renderRoute can replace the view
+      // without wiping the persistent header.
+      var feedHeader = null
+      var renderTarget = content
+      if (isSsbsky) {
+        feedHeader = h('div.feed-header')
+        var feedHost = h('div.feed-host')
+        content.appendChild(feedHeader)
+        content.appendChild(feedHost)
+        renderTarget = feedHost
+      }
       var screen = h('div.screen.column', header, content)
 
       function setActive (route) {
@@ -117,8 +138,7 @@ module.exports = {
         })
       }
 
-      function setTitle (route, view) {
-        var base = isSsbsky ? 'ssbsky' : 'Decent SSB'
+      function suffixForRoute (route, view) {
         var suffix = (view && view.title) || null
         if (!suffix) {
           if (route === 'public') suffix = labelForRoute(route, 'Public')
@@ -132,13 +152,40 @@ module.exports = {
           else if (route[0] === '%') suffix = 'Thread'
           else if (route[0] === '#') suffix = 'Message'
         }
+        return suffix
+      }
+
+      function setTitle (route, view) {
+        var base = isSsbsky ? 'ssbsky' : 'Decent SSB'
+        var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }
 
-      renderRoute(getRoute(), content)
+      // Bluesky-style centre-column header: the two primary feeds render as a
+      // tab switcher (Discover / Following); every other route shows its title.
+      function renderFeedHeader (route, view) {
+        if (!feedHeader) return
+        feedHeader.innerHTML = ''
+        if (route === 'public' || route === 'friends') {
+          [
+            {route: 'public', href: '#/', label: 'Discover'},
+            {route: 'friends', href: '#friends', label: 'Following'}
+          ].forEach(function (t) {
+            var tab = h('a.feed-header__tab', {href: t.href}, h('span', t.label))
+            if (t.route === route) tab.classList.add('feed-header__tab--active')
+            feedHeader.appendChild(tab)
+          })
+        } else {
+          feedHeader.appendChild(
+            h('div.feed-header__title', suffixForRoute(route, view) || '')
+          )
+        }
+      }
+
+      renderRoute(getRoute(), renderTarget)
 
       window.onhashchange = function () {
-        renderRoute(getRoute(), content)
+        renderRoute(getRoute(), renderTarget)
       }
 
       document.body.appendChild(screen)
