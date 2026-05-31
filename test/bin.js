@@ -289,7 +289,7 @@ test('ssbsky serves rewritten stylesheet and same-origin websocket remote', (t) 
       t.error(styleErr, 'ssbsky stylesheet request succeeds')
       if (!styleErr) {
         t.equal(res.statusCode, 200, 'ssbsky stylesheet returns 200')
-        t.ok(css.indexOf('ssbsky stage 3 base skin') !== -1, 'serves ssbsky stylesheet contents')
+        t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbsky stylesheet contents')
       }
       end()
     })

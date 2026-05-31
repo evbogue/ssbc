@@ -6,3 +6,7 @@ node_modules
 coverage
 .playwright-mcp/
 .DS_Store
+
+# scratch screenshots from dev/verification
+/ssbsky-*.png
+/ref-*.png
