@@ -460,6 +460,46 @@ button { border-radius: 999px; }
   align-self: flex-start;
 }
 
+/* Right-column "Trending" card */
+.trending-card {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  background: var(--sky-surface-soft);
+}
+
+.trending-card__head {
+  margin-bottom: 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--sky-text);
+}
+
+.trending__list { display: flex; flex-direction: column; }
+
+.trending__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 0;
+  text-decoration: none;
+}
+
+.trending__item:hover .trending__topic { text-decoration: underline; }
+
+.trending__topic {
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.95em;
+  word-break: break-all;
+}
+
+.trending__count {
+  color: var(--sky-muted-soft);
+  font-size: 0.82em;
+}
+
 /* Right-column footer links (Bluesky has a links footer in this column) */
 .right-footer {
   margin-top: auto;

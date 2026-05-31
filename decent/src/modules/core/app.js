@@ -1,8 +1,9 @@
 var plugs = require('../../wire')
 var h = require('hyperscript')
+var pull = require('pull-stream')
 
 module.exports = {
-  needs: {screen_view: 'first', menu: 'first', avatar_image: 'first'},
+  needs: {screen_view: 'first', menu: 'first', avatar_image: 'first', sbot_log: 'first'},
   gives: 'app',
   create: function (api) {
     return function () {
@@ -95,12 +96,62 @@ module.exports = {
         'aria-label': 'Profile'
       }, api.avatar_image(selfId, 'thumbnail'))
 
+      // Right-column "Trending" card built from real SSB data: the most-used
+      // channels and #hashtags across recent public posts. Hidden until it has
+      // something to show.
+      function buildTrendingCard () {
+        var list = h('div.trending__list')
+        var card = h('div.trending-card', {style: {display: 'none'}},
+          h('div.trending-card__head', 'Trending'),
+          list
+        )
+        var counts = {}
+        function bump (raw) {
+          if (!raw) return
+          var name = String(raw).toLowerCase().replace(/^#/, '').trim()
+          if (!name || name.length > 40) return
+          counts[name] = (counts[name] || 0) + 1
+        }
+        pull(
+          api.sbot_log({reverse: true, limit: 500, old: true, live: false}),
+          pull.drain(function (msg) {
+            var v = msg && msg.value
+            var c = v && v.content
+            if (!c || typeof c !== 'object' || c.type !== 'post') return
+            if (v.private || c.private || Array.isArray(c.recps)) return
+            if (typeof c.channel === 'string') bump(c.channel)
+            if (typeof c.text === 'string') {
+              var tags = c.text.match(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g)
+              if (tags) tags.forEach(bump)
+            }
+          }, function (err) {
+            if (err && err !== true) { console.error(err); return }
+            var entries = Object.keys(counts)
+              .map(function (k) { return [k, counts[k]] })
+              .sort(function (a, b) { return b[1] - a[1] })
+              .slice(0, 7)
+            if (!entries.length) return
+            entries.forEach(function (e) {
+              list.appendChild(
+                h('a.trending__item', {href: '#channel/' + encodeURIComponent(e[0])},
+                  h('span.trending__topic', '#' + e[0]),
+                  h('span.trending__count', e[1] + (e[1] === 1 ? ' post' : ' posts'))
+                )
+              )
+            })
+            card.style.display = ''
+          })
+        )
+        return card
+      }
+
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
             profileLink,
             nav,
             h('div.pull-right', searchInput, api.menu(),
+              isSsbsky ? buildTrendingCard() : null,
               isSsbsky ? h('div.right-footer', [
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
