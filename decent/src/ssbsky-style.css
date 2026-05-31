@@ -1265,6 +1265,219 @@ button { border-radius: 999px; }
 .lightbox { background: rgba(15, 20, 25, 0.62); }
 
 /* ============================================================
+ * Profile page — structure ported from Decent, themed with ALF tokens
+ * ============================================================ */
+
+.profile-card {
+  margin: 0;
+  background: var(--sky-surface);
+  border-bottom: 1px solid var(--sky-border);
+  overflow: hidden;
+}
+
+.profile-banner {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--sky-blue) 32%, var(--sky-surface)) 0%,
+    color-mix(in srgb, var(--sky-blue) 14%, var(--sky-surface)) 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-banner--editable { cursor: pointer; }
+
+.profile-banner-edit-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+  font-size: 0.88em;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.profile-body { padding: 0 16px 16px; }
+
+.profile-body-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  margin-top: -42px;
+  flex-shrink: 0;
+}
+
+.profile-avatar-wrap img,
+.profile-avatar-wrap canvas,
+.profile-avatar-wrap svg,
+.avatar--profile {
+  display: block;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid var(--sky-surface);
+  background: var(--sky-surface);
+  object-fit: cover;
+}
+
+.profile-avatar--editable { cursor: pointer; }
+
+.profile-avatar--editable::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+
+.profile-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.profile-edit-btn {
+  padding: 7px 18px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.profile-edit-btn:hover { background: var(--sky-hover); }
+
+.profile-card-actions div,
+.profile-card-actions a { font-size: 0.9em; }
+
+.profile-name {
+  margin-bottom: 2px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--sky-text);
+}
+
+.profile-handle {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: var(--sky-muted);
+  word-break: break-all;
+}
+
+.profile-bio {
+  margin-bottom: 12px;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: var(--sky-text);
+  white-space: pre-wrap;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 4px;
+}
+
+.profile-stat {
+  font-size: 0.9em;
+  color: var(--sky-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.profile-stat:hover {
+  color: var(--sky-text);
+  text-decoration: underline;
+}
+
+.profile-stat strong { color: var(--sky-text); font-weight: 700; }
+
+.profile-list-expand {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sky-border);
+}
+
+.profile-list-title {
+  margin-bottom: 8px;
+  font-size: 0.82em;
+  font-weight: 700;
+  color: var(--sky-muted-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-list-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.profile-list-grid a img,
+.profile-list-grid a canvas {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-edit-form { margin-bottom: 12px; }
+
+.profile-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.profile-edit-label {
+  margin-top: 6px;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--sky-muted);
+}
+
+.profile-name-input,
+.profile-bio-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-size: 0.95em;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.profile-name-input:focus,
+.profile-bio-input:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.profile-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ============================================================
  * Responsive
  * ============================================================ */
 
