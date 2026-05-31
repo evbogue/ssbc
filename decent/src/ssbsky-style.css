@@ -514,14 +514,14 @@ button { border-radius: 999px; }
  * markup) is lifted into a fixed left column so the name, timestamp, body and
  * actions all line up in the content column. Scoped to full post cards — git
  * one-liner ".message--mini" rows stay inline. */
-.message-card:not(.message--mini) {
+.message-card:not(.message--mini):not(.compose) {
   position: relative;
   padding-left: 70px;
 }
 
-.message-card:not(.message--mini) > .title .avatar img,
-.message-card:not(.message--mini) > .title .avatar canvas,
-.message-card:not(.message--mini) > .title .avatar svg {
+.message-card:not(.message--mini):not(.compose) > .title .avatar img,
+.message-card:not(.message--mini):not(.compose) > .title .avatar canvas,
+.message-card:not(.message--mini):not(.compose) > .title .avatar svg {
   position: absolute;
   left: 16px;
   top: 14px;
@@ -556,7 +556,7 @@ button { border-radius: 999px; }
 }
 
 /* Bluesky renders "Name · time"; add the middot before the timestamp */
-.message-card:not(.message--mini) > .title .message_meta.row::before {
+.message-card:not(.message--mini):not(.compose) > .title .message_meta.row::before {
   content: '·';
   margin-right: 6px;
   color: var(--sky-muted-soft);
@@ -1044,28 +1044,120 @@ button { border-radius: 999px; }
   vertical-align: middle;
 }
 
+/* ============================================================
+ * Composer modal (the "New Post" dialog) — ssbsky lacks Decent's
+ * structural compose CSS, so build the dialog look here.
+ * ============================================================ */
+
+.lightbox__content {
+  max-width: 600px;
+  margin: 48px auto;
+  padding: 0 16px;
+}
+
 .compose-modal {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
   background: var(--sky-surface);
-  border-color: var(--sky-border);
+  border: 1px solid var(--sky-border);
+  border-radius: 16px;
   box-shadow: var(--sky-shadow);
   color: var(--sky-text);
 }
 
-/* ============================================================
- * Composer modal, quotes, embeds, git
- * ============================================================ */
+.compose-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
 
-.compose { background: var(--sky-surface); }
+.compose-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.compose-modal__title .avatar,
+.compose-modal__title .avatar a.avatar {
+  display: inline-flex;
+  align-items: center;
+}
+
+.compose-modal__title .avatar img,
+.compose-modal__title .avatar canvas,
+.compose-modal__title .avatar svg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.compose-modal__close { font-size: 0.9em; }
+
+.compose-modal__hint,
+.compose-modal__quote-hint {
+  margin-bottom: 8px;
+  color: var(--sky-muted);
+  font-size: 0.9em;
+}
+
+/* The composer card itself — strip the feed-card chrome */
+.message-card.compose {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.message-card.compose:hover { background: transparent; }
+
+.compose .column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compose .row.compose__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
 
 .compose textarea {
-  border-color: var(--sky-border);
+  width: 100%;
+  min-height: 140px;
+  padding: 12px 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
   background: var(--sky-surface-soft);
   color: var(--sky-text);
   box-shadow: none;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.compose textarea:focus {
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+  outline: none;
 }
 
 .compose textarea::placeholder,
 .nav-search::placeholder { color: var(--sky-muted-soft); }
+
+/* ============================================================
+ * Quotes, embeds, git, media
+ * ============================================================ */
 
 .btn-primary {
   background: var(--sky-blue);
@@ -1080,6 +1172,65 @@ button { border-radius: 999px; }
   background: var(--sky-blue-hover);
   border-color: var(--sky-blue-hover);
   color: #fff;
+}
+
+/* Post media — Bluesky rounds images with a hairline border */
+.message img,
+.message_content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--sky-border);
+}
+
+/* Markdown content inside posts */
+.markdown a,
+.message_content a { color: var(--sky-blue); }
+.markdown a:hover,
+.message_content a:hover { text-decoration: underline; }
+
+.markdown code,
+.message_content code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--sky-surface-soft);
+  font-size: 0.92em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.markdown pre,
+.message_content pre {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  border: 1px solid var(--sky-border);
+  overflow-x: auto;
+}
+
+.markdown pre code,
+.message_content pre code { padding: 0; background: none; }
+
+.markdown blockquote,
+.message_content blockquote {
+  margin: 6px 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--sky-border-strong);
+  color: var(--sky-muted);
+}
+
+.markdown h1, .markdown h2, .markdown h3,
+.markdown h4, .markdown h5, .markdown h6 {
+  margin: 10px 0 6px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.markdown ul, .markdown ol { padding-left: 22px; }
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--sky-border);
+  margin: 12px 0;
 }
 
 .quoted-post,
@@ -1158,7 +1309,83 @@ button { border-radius: 999px; }
   .screen__content.column { margin-right: 0; }
 }
 
-@media (max-width: 500px) {
-  .message-card { padding: 12px; }
-  .scroller__wrapper { border-left: 0; border-right: 0; }
+/* Mobile: the left rail becomes a bottom tab bar (Bluesky mobile layout) */
+@media (max-width: 600px) {
+  .navbar {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 56px;
+    border-right: 0;
+    border-top: 1px solid var(--sky-border);
+    background: color-mix(in srgb, var(--sky-surface) 92%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .navbar .container-fluid {
+    flex-direction: row;
+    align-items: center;
+    height: 100%;
+    padding: 0 4px;
+    gap: 0;
+  }
+
+  .navbar .container-fluid::before { display: none; }
+
+  .navbar .nav.pull-left {
+    flex-direction: row;
+    flex: 1;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .navbar .nav.pull-left li { width: auto; }
+
+  .navbar .nav.pull-left li a {
+    width: 48px;
+    height: 48px;
+    min-height: 0;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .nav__icon { font-size: 1.6rem; }
+
+  .navbar-avatar {
+    order: 0;
+    margin-top: 0;
+    padding: 0 6px;
+  }
+  .navbar-avatar img { width: 32px; height: 32px; }
+
+  /* content clears the bottom bar and goes full-width */
+  .screen__content,
+  .screen__content.column {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 56px;
+  }
+
+  .scroller__wrapper,
+  .feed-header { border-left: 0; border-right: 0; }
+
+  /* New Post becomes a floating action button above the tab bar */
+  .compose-trigger {
+    left: auto;
+    right: 16px;
+    bottom: 72px;
+    width: 52px;
+  }
+  .compose-trigger__button { padding: 0; }
+  .compose-trigger__button::after { display: none; }
+
+  .message-card:not(.message--mini):not(.compose) { padding-left: 60px; }
+  .message-card:not(.message--mini):not(.compose) > .title .avatar img,
+  .message-card:not(.message--mini):not(.compose) > .title .avatar canvas,
+  .message-card:not(.message--mini):not(.compose) > .title .avatar svg { left: 12px; }
+
+  .lightbox__content { margin: 16px auto; }
 }
