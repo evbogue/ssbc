@@ -1264,6 +1264,28 @@ button { border-radius: 999px; }
 
 .lightbox { background: rgba(15, 20, 25, 0.62); }
 
+/* Avatar size classes (used by repos, lists, embeds, etc.). ssbsky never
+ * loaded these from Decent, so unsized avatars rendered at natural size. */
+.avatar--thumbnail {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar--large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar--fullsize {
+  width: 50%;
+  height: auto;
+  border-radius: 12px;
+}
+
 /* ============================================================
  * Profile page — structure ported from Decent, themed with ALF tokens
  * ============================================================ */
