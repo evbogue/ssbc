@@ -1303,6 +1303,101 @@ button { border-radius: 999px; }
   color: var(--sky-muted);
 }
 
+/* Repositories list — ssbsky never loaded Decent's repos-card CSS, so cards
+ * stacked full-width and long clone URLs overflowed. */
+.repos-heading {
+  margin: 16px 0 12px;
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--sky-text);
+}
+
+.repos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  padding: 12px 16px 20px;
+}
+
+.repos-empty { padding: 20px 0; color: var(--sky-muted); font-size: 0.9em; }
+
+.repos-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--sky-surface-soft);
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.repos-card:hover {
+  border-color: var(--sky-border-strong);
+  background: var(--sky-hover);
+}
+
+.repos-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85em;
+  color: var(--sky-muted);
+}
+
+.repos-card-name { margin: 0; font-size: 1.05em; font-weight: 700; }
+.repos-card-name a { color: var(--sky-blue); text-decoration: none; }
+.repos-card-name a:hover { text-decoration: underline; }
+
+.repos-card-meta { font-size: 0.82em; color: var(--sky-muted-soft); }
+
+.repos-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.repos-card-clone {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.75em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.git-clone-url {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.git-label { font-size: 0.82em; color: var(--sky-muted); white-space: nowrap; }
+
+.git-clone-input {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  white-space: nowrap;
+  overflow-x: auto;
+  user-select: all;
+}
+
+.git-clone-command { color: var(--sky-text); font-weight: 600; }
+
 .lightbox { background: rgba(15, 20, 25, 0.62); }
 
 /* Avatar size classes (used by repos, lists, embeds, etc.). ssbsky never

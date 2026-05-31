@@ -198,6 +198,7 @@ module.exports = {
           else if (route === 'repos') suffix = 'Repositories'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
+          else if (route.indexOf('code-search/') === 0) suffix = 'Search'
           else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)
           else if (route[0] === '@') suffix = 'Profile'
           else if (route[0] === '%') suffix = 'Thread'
@@ -217,6 +218,7 @@ module.exports = {
       function renderFeedHeader (route, view) {
         if (!feedHeader) return
         feedHeader.innerHTML = ''
+        feedHeader.style.display = ''
         if (route === 'public' || route === 'friends') {
           [
             {route: 'public', href: '#/', label: 'Discover'},
@@ -226,10 +228,14 @@ module.exports = {
             if (t.route === route) tab.classList.add('feed-header__tab--active')
             feedHeader.appendChild(tab)
           })
+          return
+        }
+        var title = suffixForRoute(route, view)
+        if (title) {
+          feedHeader.appendChild(h('div.feed-header__title', title))
         } else {
-          feedHeader.appendChild(
-            h('div.feed-header__title', suffixForRoute(route, view) || '')
-          )
+          // No title for this route — don't leave an empty bar.
+          feedHeader.style.display = 'none'
         }
       }
 
