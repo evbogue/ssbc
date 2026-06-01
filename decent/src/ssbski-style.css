@@ -641,8 +641,29 @@ button { border-radius: 999px; }
   font-size: 1rem;
 }
 
+/* Collapse long posts to a skeet-sized block with a "Show more" toggle. The
+ * clamp is what lets message.js measure overflow (scrollHeight > clientHeight),
+ * so short posts aren't clamped and never show the button. */
+.message-card .message_content.collapsible {
+  position: relative;
+  max-height: 11.5rem;   /* ~8 lines — skeet-sized */
+  overflow: hidden;
+}
+
+.message-card .message_content.collapsible--expanded {
+  max-height: none;
+  overflow: visible;
+}
+
 .message-card .message_content.collapsible.is-overflowing::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3.5em;
   background: linear-gradient(rgba(255, 255, 255, 0), var(--sky-surface));
+  pointer-events: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -651,16 +672,35 @@ button { border-radius: 999px; }
   }
 }
 
+.message-card .message_content.collapsible--expanded::after { display: none; }
+
 .message_content p:last-child,
 .markdown p:last-child { margin-bottom: 0; }
 
+/* Hidden by default; message.js adds .is-overflowing only when the post is
+ * actually taller than the clamp, so short posts never show the toggle. */
 .message-expand {
+  display: none;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--sky-blue);
-  background: var(--sky-blue-soft);
+  font-weight: 600;
+  font-size: 0.95em;
+  line-height: 1.2;
+  cursor: pointer;
 }
 
 .message-expand:hover {
-  background: color-mix(in srgb, var(--sky-blue-soft) 80%, var(--sky-blue) 20%);
+  background: none;
+  text-decoration: underline;
+}
+
+.message_content.is-overflowing + .message-expand,
+.message_content.collapsible--expanded + .message-expand {
+  display: inline-flex;
 }
 
 /* ============================================================

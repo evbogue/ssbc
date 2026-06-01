@@ -122,7 +122,9 @@ exports.create = function (api) {
 
     function update () {
       if (expanded) return
-      var over = content.scrollHeight > content.clientHeight + 4
+      // Tolerance so a post only ~1 line over the clamp shows in full rather
+      // than a near-useless "Show more" that reveals almost nothing.
+      var over = content.scrollHeight > content.clientHeight + 24
       content.classList.toggle('is-overflowing', over)
     }
 
