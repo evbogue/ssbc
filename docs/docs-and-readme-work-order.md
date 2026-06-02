@@ -38,6 +38,13 @@ Two options:
 
 Either is valid. Pick one and note it here before proceeding.
 
+**Decision (2026-06-02): Option 2 — README now.** Write the README against the
+current first-run experience and describe it honestly. The empty-state
+onboarding polish (task 3f) is deferred to a separate follow-up. Rationale: the
+live demo already lands on a populated public feed, so most README readers click
+through to that rather than a fresh empty node — the onboarding panel is a nice
+improvement but not a blocker for an honest, useful README.
+
 ---
 
 ## Part 2: README overhaul
