@@ -320,7 +320,13 @@ test('ssbski serves rewritten stylesheet and same-origin websocket remote', (t) 
           t.equal(res.statusCode, 200, 'ssbski stylesheet returns 200')
           t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbski stylesheet contents')
         }
-        end()
+        // A malformed blob id must be rejected up front (404), not passed to
+        // sbot.blobs.get where it could throw and reset the connection.
+        getText(origin + '/blobs/get/notablob', (blobErr, blobRes) => {
+          t.error(blobErr, 'malformed blob request completes')
+          if (!blobErr) t.equal(blobRes.statusCode, 404, 'malformed blob id returns 404')
+          end()
+        })
       })
     })
   })
