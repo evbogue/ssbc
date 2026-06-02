@@ -7,6 +7,7 @@ var paramap = require('pull-paramap')
 var plugs = require('../../wire')
 var cont = require('cont')
 var ref = require('ssb-ref')
+var emptyState = require('../../empty-state')
 
 //var message_render = plugs.first(exports.message_render = [])
 //var sbot_log = plugs.first(exports.sbot_log = [])
@@ -153,6 +154,12 @@ exports.create = function (api) {
           )
         )
         div.setAttribute('data-icon', 'notifications')
+
+        emptyState(content, {
+          icon: 'notifications',
+          title: 'No notifications yet',
+          body: 'Replies, likes, and follows will show up here.'
+        })
 
         pull(
           u.next(api.sbot_log, {old: false, limit: 100}),

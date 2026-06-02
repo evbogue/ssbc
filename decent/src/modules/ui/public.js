@@ -2,6 +2,7 @@ var h = require('hyperscript')
 var pull = require('pull-stream')
 var Scroller = require('../../scroller')
 var keys = require('../../keys')
+var emptyState = require('../../empty-state')
 
 //var plugs = require('../../wire')
 //var message_render = plugs.first(exports.message_render = [])
@@ -117,6 +118,12 @@ exports.create = function (api) {
         )
         div.setAttribute('data-icon', 'key')
         div.title = path === 'friends' ? friendsLabel : publicLabel
+
+        emptyState(content, path === 'friends'
+          ? { icon: 'group', title: 'Your ' + friendsLabel + ' feed is empty',
+              body: 'Follow some accounts and their posts will show up here.' }
+          : { icon: 'tag', title: 'Nothing here yet',
+              body: 'Posts from across the network will show up here.' })
 
         function renderFeed(authors) {
           var filter = path === 'friends'

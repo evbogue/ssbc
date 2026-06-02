@@ -5,6 +5,7 @@ var pull = require('pull-stream')
 var Scroller = require('../../scroller')
 var ref = require('ssb-ref')
 var keys = require('../../keys')
+var emptyState = require('../../empty-state')
 
 function map(ary, iter) {
   if(Array.isArray(ary)) return ary.map(iter)
@@ -78,6 +79,12 @@ exports.create = function (api) {
 
       var content = h('div.column.scroller__content')
       div.appendChild(h('div.scroller__wrapper', compose, content))
+
+      emptyState(content, {
+        icon: 'forum',
+        title: 'No messages yet',
+        body: 'Mention someone in a message to start a private conversation.'
+      })
 
       pull(
         privateStream({old: false, limit: 100}),

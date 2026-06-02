@@ -3,6 +3,7 @@ var Scroller = require('../../scroller')
 var h = require('hyperscript')
 var pull = require('pull-stream')
 var u = require('../../util')
+var emptyState = require('../../empty-state')
 
 //var plugs = require('../../wire')
 //var sbot_user_feed = plugs.first(exports.sbot_user_feed = [])
@@ -34,6 +35,12 @@ exports.create = function (api) {
           content
         )
       )
+
+      emptyState(content, {
+        icon: 'article',
+        title: 'No posts yet',
+        body: 'When this account posts, it’ll show up here.'
+      })
 
       api.signifier(id, function (_, names) {})
 
