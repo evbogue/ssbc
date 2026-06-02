@@ -1,7 +1,7 @@
 # Work Order: Docs and README overhaul
 
 **Status:** In progress
-**Supersedes:** `readme-prep-work-order.md`, `readme-overhaul-work-order.md`, `docs-alignment-work-order.md`, `scuttlebot-doc-drift-work-order.md`
+**Consolidates:** the prior `readme-prep`, `readme-overhaul`, `docs-alignment`, and `scuttlebot-doc-drift` work orders, which have been folded into this one and removed. This is the single source of truth for docs and README work.
 
 ---
 
