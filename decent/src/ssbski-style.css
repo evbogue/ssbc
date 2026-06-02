@@ -30,9 +30,9 @@
   --sky-text: #0b0f14;          /* ~contrast_1000 */
   --sky-muted: #42576e;         /* ~contrast_700 */
   --sky-muted-soft: #8798b0;    /* contrast_400 */
-  --sky-blue: #1083fe;          /* brand blue */
+  --sky-blue: #1085fe;          /* brand blue — ALF primary (tokens.ts) */
   --sky-blue-hover: #0a7aff;
-  --sky-blue-soft: rgba(16, 131, 254, 0.12);
+  --sky-blue-soft: rgba(16, 133, 254, 0.12);
   --sky-green: #09b35e;         /* positive_500 */
   --sky-green-soft: rgba(9, 179, 94, 0.12);
   --sky-pink: #ec4899;          /* alf pink */
@@ -66,9 +66,9 @@
     --sky-text: #eef3f8;          /* ~contrast_0 inverted */
     --sky-muted: #a5b2c5;         /* contrast_300 */
     --sky-muted-soft: #667b99;    /* contrast_500 */
-    --sky-blue: #208bfe;
+    --sky-blue: #1085fe;          /* same brand blue in dark — Bluesky doesn't lighten it */
     --sky-blue-hover: #4a9eff;
-    --sky-blue-soft: rgba(32, 139, 254, 0.18);
+    --sky-blue-soft: rgba(16, 133, 254, 0.20);
     --sky-green: #0dd370;         /* positive_400 */
     --sky-green-soft: rgba(13, 211, 112, 0.16);
     --sky-pink: #f472b6;
@@ -120,8 +120,10 @@ body {
 
 button { cursor: pointer; }
 
-a { color: var(--sky-blue); }
-a:hover { color: var(--sky-blue-hover); text-decoration: none; }
+/* Bluesky doesn't underline links by default (mentions, timestamps, post URLs
+ * are colour-only); post-body links underline on hover via the rule below. */
+a { color: var(--sky-blue); text-decoration: none; }
+a:hover { color: var(--sky-blue-hover); }
 
 textarea, input, button { font-family: inherit; }
 
