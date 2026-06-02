@@ -3,9 +3,17 @@
 A Bluesky-skinned fork of the Decent web client. Same SSB engine, same data,
 same identity — a different skin, served on its own port.
 
-> Status: Stage 3 has landed. ssbski now has its own same-origin UI server and
-> a base Bluesky-style skin with CSS variables, flattened feed rows, dark mode,
-> compact action/reaction styling, and ssbski-only Discover/Following/Chat copy.
+> Status: **Stages 1–7 have all landed.** ssbski has its own same-origin UI
+> server and a full Bluesky-style skin: CSS-variable palette + dark mode,
+> flattened feed rows, compact action/reaction styling, ssbski-only
+> Discover/Following/Chat copy, a fixed left rail with `attr()` labels and a
+> "New Post" pill, a mobile bottom tab bar, themed profile/thread/compose, and
+> the structural pieces that were once "decide later": a right-hand column
+> (search + active people + footer links), in-feed Discover/Following tabs,
+> profile follower/following/post counts, and always-visible shortened pubkeys.
+> The remaining ideas (pluggable feed-algorithm generators) stay explicitly
+> low-priority and out of scope. The bin.js test suite was also made robust to a
+> running local instance (it no longer hardcodes ports), and `npm test` is green.
 
 ## Thesis
 
@@ -197,16 +205,24 @@ as `title`/`aria-label` attributes — CSS can surface them as visible text via
    changes: Public → Discover, Friends → Following, Private → Chat/DMs, while
    keeping git/code explicit. Emoji reactions remain visible and are styled as
    compact reaction/action affordances, not hidden behind a like-only fiction.
-4. **Left rail:** reposition navbar + `attr()` labels + "New Post" button.
-5. **Mobile bottom tab bar:** media query.
-6. **Profile / thread / compose-modal** theming.
-7. *(structural, later)* Right discover column; unified Following/Discover
-   timeline tabs; profile header refinement around Decent's existing
-   `about.headerImage` field + follower/following/post counts.
+4. **DONE: Left rail:** navbar re-anchored to a fixed left rail with `attr()`
+   labels and a relocated "New Post" pill (collapses to an icon strip below
+   1300px).
+5. **DONE: Mobile bottom tab bar:** the `max-width: 600px` media query re-pins
+   the rail to the bottom and turns "New Post" into a floating action button.
+6. **DONE: Profile / thread / compose-modal** theming, plus a Bluesky-faithful
+   git-forge skin.
+7. **DONE (structural):** right column (search + "Active people" + footer
+   links); in-feed Discover/Following tabs; profile header with
+   follower/following/post counts over Decent's existing `about.headerImage`
+   field; always-visible shortened pubkeys in post/profile headers. The only
+   deferred piece is the pluggable feed-algorithm generator system, which stays
+   **low priority** per Decision 4 below.
 
-Recommendation: ship stages 1–6 (the CSS-only fork, dark mode included) as the
-first cut, get it on the subdomain, then decide whether stage 7 is worth the
-structural cost.
+All stages shipped. The CSS-only ambition expanded into modest, surgical JS/DOM
+additions (`decent/src/modules/core/app.js`, `decent/src/modules/ui/message.js`,
+`decent/src/modules/ui/avatar-profile.js`) for the structural stage-7 items,
+while Decent itself stayed untouched.
 
 ## First-cut acceptance criteria
 

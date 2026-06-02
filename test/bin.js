@@ -52,13 +52,32 @@ function ssbServer(t, argv, opts) {
     t.end()
   })
 
-  sh.stdout.pipe(process.stdout)
+  // Capture stdout so tests can read dynamically-assigned ports (e.g. when a
+  // UI server is started with port 0) while still echoing it for debugging.
+  let stdoutBuf = ''
+  const lineWaiters = []
+  sh.stdout.on('data', (chunk) => {
+    process.stdout.write(chunk)
+    stdoutBuf += chunk
+    for (let i = lineWaiters.length - 1; i >= 0; i--) {
+      const m = stdoutBuf.match(lineWaiters[i].re)
+      if (m) lineWaiters.splice(i, 1)[0].cb(m)
+    }
+  })
   sh.stderr.pipe(process.stderr)
   children.push(sh)
 
-  return function end() {
+  function end() {
     while (children.length) children.shift().kill('SIGKILL')
   }
+  // Resolve as soon as a stdout line matches `re`, including already-buffered
+  // output, so callers don't race the spawn.
+  end.waitForLine = (re, cb) => {
+    const m = stdoutBuf.match(re)
+    if (m) return cb(m)
+    lineWaiters.push({ re, cb })
+  }
+  return end
 }
 
 function try_often(times, opts, work, done) {
@@ -262,36 +281,47 @@ test('ssbski serves rewritten stylesheet and same-origin websocket remote', (t) 
     'start',
     '--host=127.0.0.1',
     '--port=0',
-    '--ws.port=0',
+    // ssb-ws ignores a 0 here and falls back to its default 8989, so give the
+    // base ws listener a concrete free port like the sibling tests do.
+    '--ws.port=9002',
     '--decent.port=0',
     '--ssbski.host=127.0.0.1',
-    '--ssbski.port=8990',
+    '--ssbski.port=0',
     '--path', p,
     '--caps.shs', caps
   ])
 
-  try_often(10, { ignore: /ECONNREFUSED/ }, (cb) => {
-    getText('http://127.0.0.1:8990/', (err, res, html) => {
-      if (err) return cb(err)
-      if (res.statusCode !== 200) return cb(new Error('unexpected status ' + res.statusCode))
-      cb(null, html)
-    })
-  }, (err, html) => {
-    t.error(err, 'ssbski http server starts')
-    if (err) return end()
+  // Discover the OS-assigned ssbski port from the launch line so the test does
+  // not collide with a real ssbski instance already bound to the default port.
+  end.waitForLine(/ssbski launched at http:\/\/127\.0\.0\.1:(\d+)\//, (launch) => {
+    const port     = launch[1]
+    const origin   = 'http://127.0.0.1:' + port
+    const remoteRe = new RegExp(
+      'window\\.PATCHBAY_REMOTE = "ws:\\/\\/127\\.0\\.0\\.1:' + port + '~shs:[^"]+"')
 
-    t.ok(html.indexOf('href="/ssbski-style.css"') !== -1, 'index loads ssbski stylesheet')
-    t.equal(html.indexOf('href="/style.css"'), -1, 'index does not load Decent stylesheet')
-    t.ok(/window\.PATCHBAY_REMOTE = "ws:\/\/127\.0\.0\.1:8990~shs:[^"]+"/.test(html),
-      'injects same-origin ssbski websocket remote')
+    try_often(10, { ignore: /ECONNREFUSED/ }, (cb) => {
+      getText(origin + '/', (err, res, html) => {
+        if (err) return cb(err)
+        if (res.statusCode !== 200) return cb(new Error('unexpected status ' + res.statusCode))
+        cb(null, html)
+      })
+    }, (err, html) => {
+      t.error(err, 'ssbski http server starts')
+      if (err) return end()
 
-    getText('http://127.0.0.1:8990/ssbski-style.css', (styleErr, res, css) => {
-      t.error(styleErr, 'ssbski stylesheet request succeeds')
-      if (!styleErr) {
-        t.equal(res.statusCode, 200, 'ssbski stylesheet returns 200')
-        t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbski stylesheet contents')
-      }
-      end()
+      t.ok(html.indexOf('href="/ssbski-style.css"') !== -1, 'index loads ssbski stylesheet')
+      t.equal(html.indexOf('href="/style.css"'), -1, 'index does not load Decent stylesheet')
+      t.ok(remoteRe.test(html),
+        'injects same-origin ssbski websocket remote')
+
+      getText(origin + '/ssbski-style.css', (styleErr, res, css) => {
+        t.error(styleErr, 'ssbski stylesheet request succeeds')
+        if (!styleErr) {
+          t.equal(res.statusCode, 200, 'ssbski stylesheet returns 200')
+          t.ok(css.indexOf('--sky-blue') !== -1, 'serves ssbski stylesheet contents')
+        }
+        end()
+      })
     })
   })
 })
@@ -341,6 +371,9 @@ test('second start against the same app dir fails before plugin init', (t) => {
     'start',
     '--host=127.0.0.1',
     '--port=0',
+    // ssb-ws falls back to its default 8989 when the ws port is 0/unset, so
+    // pin a concrete free port to stay isolated from any running instance.
+    '--ws.port=9002',
     '--decent.port=0',
     '--ssbski.port=0',
     '--path', dir
