@@ -22,6 +22,14 @@ Open `https://decent.evbogue.com/` in a private window and record what a first-t
 
 Record the answer in a short note before writing the README call-to-action copy. Do not guess.
 
+**Findings (2026-06-02, loaded cold with no identity):**
+- **No wall.** `https://decent.evbogue.com/` lands directly on the public feed; read-only browsing works with no login or invite. Safe to link from the hero as "see a live feed."
+- **Rich, current activity.** The feed's top items are live `git-update` push messages (commit lists, branch refs, `+/−` file diffs) replicating in real time over git-over-SSB — richer than a fresh local node, and ideal source material for `git-forge.png` / `feed.png`.
+- **Default skin is Decent** (page title "Decent SSB — Public"), not ssbski, so live screenshots match the README's Decent-based screenshot plan.
+- **Two caveats before capturing screenshots / writing the CTA:**
+  - The demo feed's avatars render as empty boxes (no `about.image` set). Set a display name + avatar on the demo identity first so screenshots look intentional.
+  - No public invite code is surfaced in the UI. Decide whether to (a) publish a long-lived public invite to link from the README, or (b) keep the README's join instructions CLI-only (`node bin.js invite.accept "<code>"`) and point readers at the node without a baked-in code. The order already warns against hard-coding an invite that will expire.
+
 ### 1c. Decide: onboarding polish before or after README?
 
 Two options:
