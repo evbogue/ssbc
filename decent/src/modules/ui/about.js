@@ -1,10 +1,6 @@
 
 var h = require('hyperscript')
 
-function idLink (id) {
-  return h('a', {href:'#'+id}, id)
-}
-
 function asLink (ln) {
   return 'string' === typeof ln ? ln : ln.link
 }
@@ -12,7 +8,9 @@ function asLink (ln) {
 //var blob_url = require('../../wire').first(exports.blob_url = [])
 
 exports.needs = {
-  blob_url: 'first'
+  blob_url: 'first',
+  avatar_link: 'first',
+  avatar_name: 'first'
 }
 
 exports.gives = {
@@ -35,7 +33,7 @@ exports.create = function (api) {
       h('p',
         about.about === msg.value.author
           ? h('span', 'self-identifies ')
-          : h('span', 'identifies ', idLink(id)),
+          : h('span', 'identifies ', api.avatar_link(id, api.avatar_name(id), '')),
         ' as ',
         h('a', {href:"#"+about.about},
           about.name || null,
@@ -60,7 +58,7 @@ exports.create = function (api) {
     if(about.about === msg.value.author)
       return ['self-identifies as ', h('a', {href:"#"+about.about}, about.name)]
 
-    return ['identifies ', idLink(id), ' as ', h('a', {href:"#"+about.about}, about.name)]
+    return ['identifies ', api.avatar_link(id, api.avatar_name(id), ''), ' as ', h('a', {href:"#"+about.about}, about.name)]
   }
 
   return exports
