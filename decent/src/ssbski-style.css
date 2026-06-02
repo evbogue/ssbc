@@ -661,6 +661,16 @@ button { border-radius: 999px; }
   text-overflow: ellipsis;
 }
 
+.message-author-key {
+  min-width: 0;
+  max-width: 120px;
+  overflow: hidden;
+  color: var(--sky-muted-soft);
+  font-size: 0.95em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* Bluesky renders "Name · time"; add the middot before the timestamp */
 .message-card:not(.message--mini):not(.compose) > .title .message_meta.row::before {
   content: '·';

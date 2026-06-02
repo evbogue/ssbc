@@ -45,6 +45,16 @@ function isRenderableMessage (msg) {
 }
 
 exports.create = function (api) {
+  function isSsbski () {
+    return typeof document !== 'undefined' &&
+      !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+  }
+
+  function shortFeedId (id) {
+    if (!id) return ''
+    return id.substring(0, 10)
+  }
+
   function getCache () {
     return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
   }
@@ -235,6 +245,9 @@ exports.create = function (api) {
     var msgEl = h('div.message.message-card',
       h('div.title.row',
         h('div.avatar', api.avatar(msg.value.author, 'thumbnail')),
+        isSsbski()
+          ? h('span.message-author-key', {title: msg.value.author}, shortFeedId(msg.value.author))
+          : null,
         h('div.message_meta.row', api.message_meta(msg))
       ),
       content,
