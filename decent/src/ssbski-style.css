@@ -782,7 +782,14 @@ button { border-radius: 999px; }
  * Action row (reply / repost / react)
  * ============================================================ */
 
-.message-card .message_actions.row { margin-top: 8px; }
+.message-card .message_actions.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
 
 .message-card .actions {
   display: flex;
@@ -794,6 +801,13 @@ button { border-radius: 999px; }
 }
 
 .message-card .actions > * { flex: 0 0 auto; }
+
+.message_actions_extra {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+}
 
 .action-btn {
   display: inline-flex;
@@ -823,6 +837,15 @@ button { border-radius: 999px; }
   color: var(--sky-blue);
 }
 
+.action-btn--save:hover,
+.action-btn--saved,
+.action-btn--saved:hover,
+.action-btn--share:hover,
+.action-btn--more:hover {
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+}
+
 .action-btn--repost:hover,
 .action-btn--reposted {
   background: var(--sky-green-soft);
@@ -835,6 +858,45 @@ button { border-radius: 999px; }
   background: var(--sky-pink-soft);
   color: var(--sky-pink);
 }
+
+.message-more-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.message-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: 38px;
+  z-index: 70;
+  display: none;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow);
+}
+
+.message-more-menu--open {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-more-menu__item {
+  display: flex;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sky-text);
+  font-size: 0.92em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.message-more-menu__item:hover { background: var(--sky-hover); }
 
 /* ============================================================
  * Reactions — layout/behavior ported from Decent's stylesheet (trays, picker,

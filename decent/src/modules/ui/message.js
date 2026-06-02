@@ -55,6 +55,118 @@ exports.create = function (api) {
     return id.substring(0, 10)
   }
 
+  function postUrl (msg) {
+    if (typeof window === 'undefined') return msg.key
+    return window.location.origin + window.location.pathname + '#' + msg.key
+  }
+
+  function copyText (text) {
+    if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+      return
+    }
+    var input = document.createElement('textarea')
+    input.value = text
+    input.setAttribute('readonly', 'readonly')
+    input.style.position = 'fixed'
+    input.style.left = '-9999px'
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+  }
+
+  var savedKey = 'ssbski:saved-posts'
+  function getSavedPosts () {
+    if (typeof window === 'undefined' || !window.localStorage) return {}
+    try {
+      return JSON.parse(window.localStorage.getItem(savedKey) || '{}') || {}
+    } catch (err) {
+      return {}
+    }
+  }
+
+  function setSavedPost (key, saved) {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    var savedPosts = getSavedPosts()
+    if (saved) savedPosts[key] = true
+    else delete savedPosts[key]
+    window.localStorage.setItem(savedKey, JSON.stringify(savedPosts))
+  }
+
+  function makeIconButton (icon, title, className) {
+    var btn = h('button.action-btn.' + className, {type: 'button', title: title},
+      h('span.material-symbols-outlined.action-icon', {'aria-hidden': 'true'}, icon))
+    btn.setAttribute('aria-label', title)
+    return btn
+  }
+
+  function makeMoreMenu (msg, menu, moreBtn) {
+    function close () {
+      menu.classList.remove('message-more-menu--open')
+      moreBtn.setAttribute('aria-expanded', 'false')
+      document.removeEventListener('click', close)
+    }
+    function item (label, action) {
+      return h('button.message-more-menu__item', {type: 'button', onclick: function (ev) {
+        ev.preventDefault()
+        ev.stopPropagation()
+        action()
+        close()
+      }}, label)
+    }
+    menu.appendChild(item('Copy message key', function () { copyText(msg.key) }))
+    menu.appendChild(item('Copy link', function () { copyText(postUrl(msg)) }))
+    menu.appendChild(item('View thread', function () { window.location.hash = '#' + msg.key }))
+    return close
+  }
+
+  function makeExtraActions (msg) {
+    var isSaved = !!getSavedPosts()[msg.key]
+    var saveBtn = makeIconButton('bookmark', 'Save post', 'action-btn--save')
+    var shareBtn = makeIconButton('ios_share', 'Copy post link', 'action-btn--share')
+    var moreBtn = makeIconButton('more_horiz', 'More', 'action-btn--more')
+    var menu = h('div.message-more-menu')
+    var closeMore = makeMoreMenu(msg, menu, moreBtn)
+
+    function renderSaved () {
+      saveBtn.classList.toggle('action-btn--saved', isSaved)
+      saveBtn.setAttribute('aria-pressed', isSaved ? 'true' : 'false')
+      saveBtn.title = isSaved ? 'Remove saved post' : 'Save post'
+      saveBtn.setAttribute('aria-label', saveBtn.title)
+    }
+
+    renderSaved()
+    saveBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      isSaved = !isSaved
+      setSavedPost(msg.key, isSaved)
+      renderSaved()
+    })
+    shareBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      copyText(postUrl(msg))
+    })
+    moreBtn.setAttribute('aria-haspopup', 'menu')
+    moreBtn.setAttribute('aria-expanded', 'false')
+    moreBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      var open = !menu.classList.contains('message-more-menu--open')
+      if (open) {
+        menu.classList.add('message-more-menu--open')
+        moreBtn.setAttribute('aria-expanded', 'true')
+        setTimeout(function () { document.addEventListener('click', closeMore) }, 0)
+      } else {
+        closeMore()
+      }
+    })
+
+    return h('div.message_actions_extra', saveBtn, shareBtn, h('span.message-more-wrap', moreBtn, menu))
+  }
+
   function getCache () {
     return typeof window !== 'undefined' && window.CACHE ? window.CACHE : {}
   }
@@ -253,7 +365,8 @@ exports.create = function (api) {
       content,
       expandBtn,
       h('div.message_actions.row',
-        h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg))
+        h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg)),
+        isSsbski() ? makeExtraActions(msg) : null
       ),
       backlinks,
       {onkeydown: function (ev) {
