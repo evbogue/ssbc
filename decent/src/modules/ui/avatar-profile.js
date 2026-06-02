@@ -303,62 +303,68 @@ exports.create = function (api) {
         followersCountEl, ' Followers')
     )
 
-    // ── Petname (others' profiles) ─────────────────────────────────
-    var petnameEl   = h('div.profile-petname', {style: {display: 'none'}})
+    // ── Petname (others' profiles): inline "add / edit nickname" ──────
+    // Collapsed: a ghost trigger ("Add nickname" / "Edit nickname"). Click it
+    // to reveal [input][Save][Cancel]. Enter/Esc are kept as shortcuts. The
+    // nickname is published as an `about` claiming a name for this feed.
+    var petnameEl    = h('div.profile-petname', {style: {display: 'none'}})
+    var petnameName  = null
     var petnameFound = false
 
-    function makePetnameInput (initialValue) {
-      var pInput = h('input.petname-input', {
-        type: 'text', value: initialValue || '', placeholder: 'Your name for them'
-      })
-      pInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && pInput.value.trim()) {
-          api.message_confirm({type: 'about', about: id, name: pInput.value.trim()},
-            function (err, msg) {
-              if (err || !msg) return
-              petnameFound = true
-              renderPetname(pInput.value.trim())
-            })
-        }
-        if (e.key === 'Escape') {
-          petnameEl.classList.remove('petname--editing')
-          petnameEl.classList.remove('petname--adding')
-        }
-      })
-      return pInput
+    function petnameEditing () {
+      return petnameEl.classList.contains('petname--editing')
     }
 
-    function renderPetname (name) {
+    function renderPetnameEditing () {
       petnameEl.innerHTML = ''
-      if (!name || isSelf) { petnameEl.style.display = 'none'; return }
+      petnameEl.classList.add('petname--editing')
 
-      var pInput = makePetnameInput(name)
-      petnameEl.appendChild(h('span.petname-label', 'You call them: '))
-      petnameEl.appendChild(h('strong.petname-value', name))
-      petnameEl.appendChild(
-        h('button.petname-edit-btn', {type: 'button', onclick: function () {
-          petnameEl.classList.toggle('petname--editing')
-          if (petnameEl.classList.contains('petname--editing')) { pInput.focus(); pInput.select() }
-        }}, h('span.material-symbols-outlined', {style: {fontSize: '14px'}}, 'edit'))
-      )
-      petnameEl.appendChild(pInput)
+      var input  = h('input.petname-input', {
+        type: 'text', value: petnameName || '', placeholder: 'Your name for them'
+      })
+      var save   = h('button.btn.btn-primary.btn-sm.petname-save',  {type: 'button'}, 'Save')
+      var cancel = h('button.btn.btn-sm.petname-cancel',            {type: 'button'}, 'Cancel')
+
+      function syncSave () { save.disabled = !input.value.trim() }
+      function commit () {
+        var v = input.value.trim()
+        if (!v) return
+        save.disabled = true
+        api.message_confirm({type: 'about', about: id, name: v}, function (err, msg) {
+          if (err || !msg) { save.disabled = false; return }
+          petnameFound = true
+          petnameName  = v
+          renderPetnameCollapsed()
+        })
+      }
+
+      save.onclick   = commit
+      cancel.onclick = renderPetnameCollapsed
+      input.addEventListener('input', syncSave)
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter')  { e.preventDefault(); commit() }
+        if (e.key === 'Escape') { renderPetnameCollapsed() }
+      })
+
+      petnameEl.appendChild(input)
+      petnameEl.appendChild(save)
+      petnameEl.appendChild(cancel)
       petnameEl.style.display = ''
+      syncSave()
+      input.focus(); input.select()
     }
 
-    function showAddPetnamePrompt () {
-      if (isSelf || petnameFound) return
+    function renderPetnameCollapsed () {
+      if (isSelf) { petnameEl.style.display = 'none'; return }
       petnameEl.innerHTML = ''
-      var pInput = makePetnameInput('')
+      petnameEl.classList.remove('petname--editing')
       petnameEl.appendChild(
-        h('button.petname-add-btn', {type: 'button', onclick: function () {
-          petnameEl.classList.add('petname--adding')
-          pInput.focus()
-        }},
-          h('span.material-symbols-outlined', {style: {fontSize: '14px'}}, 'add'),
-          ' Add a name for them'
+        h('button.petname-trigger', {type: 'button', onclick: renderPetnameEditing},
+          h('span.material-symbols-outlined', {style: {fontSize: '15px'}},
+            petnameName ? 'edit' : 'add'),
+          h('span.petname-trigger-label', petnameName ? 'Edit nickname' : 'Add nickname')
         )
       )
-      petnameEl.appendChild(pInput)
       petnameEl.style.display = ''
     }
 
@@ -549,11 +555,13 @@ exports.create = function (api) {
 
         if (!isSelf && bySelf && c.name) {
           petnameFound = true
-          renderPetname(c.name)
+          petnameName  = c.name
+          if (!petnameEditing()) renderPetnameCollapsed()
         }
       }, function () {
-        // Stream ended — show add-name prompt if we never found one
-        if (!isSelf && !petnameFound) showAddPetnamePrompt()
+        // Stream ended — render the collapsed trigger (Add / Edit nickname),
+        // unless the viewer is mid-edit.
+        if (!isSelf && !petnameEditing()) renderPetnameCollapsed()
       })
     )
 

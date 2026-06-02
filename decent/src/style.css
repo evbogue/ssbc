@@ -2587,7 +2587,7 @@ textarea {
   border-top: 1px solid #eff3f4;
 }
 
-/* Petname */
+/* Petname — inline add/edit nickname */
 
 .profile-petname {
   font-size: 0.85em;
@@ -2595,75 +2595,51 @@ textarea {
   margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.petname-label {
-  color: #536471;
-}
-
-.petname-value {
-  color: #0f1419;
-  font-weight: 600;
-}
-
-.petname-edit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 3px;
-  color: #536471;
+.petname-trigger {
   display: inline-flex;
   align-items: center;
-  border-radius: 4px;
-  transition: background 0.1s;
+  gap: 5px;
+  padding: 4px 12px;
+  border: 1px solid #cfd9de;
+  border-radius: 999px;
+  background: #fff;
+  color: #536471;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
-.petname-edit-btn:hover {
-  background: rgba(0, 0, 0, 0.06);
+.petname-trigger:hover {
+  background: #f7f9f9;
+  color: #1d9bf0;
+  border-color: #aab8c2;
 }
 
 .petname-input {
-  display: none;
-  padding: 3px 8px;
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 280px;
+  padding: 6px 10px;
   border: 1px solid #cfd9de;
-  border-radius: 4px;
-  font-size: 0.92em;
+  border-radius: 8px;
+  font-size: 0.95em;
   font-family: inherit;
 }
 
 .petname-input:focus {
   outline: none;
   border-color: #1d9bf0;
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.2);
 }
 
-.petname--editing .petname-input  { display: inline-block; }
-.petname--editing .petname-value  { display: none; }
-.petname--editing .petname-label  { display: none; }
-
-/* Petname add-name prompt */
-
-.petname-add-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  color: #536471;
-  font-size: 0.9em;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  border-radius: 4px;
-  transition: color 0.12s;
-}
-
-.petname-add-btn:hover {
-  color: #1d9bf0;
-}
-
-.petname--adding .petname-add-btn  { display: none; }
-.petname--adding .petname-input    { display: inline-block; }
+.petname-save,
+.petname-cancel { padding: 6px 14px; font-size: 0.9em; }
+.petname-save:disabled { opacity: 0.5; cursor: default; }
 
 /* Copy-ID button inline with handle */
 
