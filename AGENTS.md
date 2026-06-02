@@ -117,6 +117,14 @@ Rules:
 Execute immediately.  Don't re-ask for confirmation on things already agreed in the
 conversation.  If a wireframe was approved, build it; if a plan was approved, ship it.
 
+### Committing and pushing to `main` is pre-authorized — never ask
+
+Ev has standing authorization in place: **commit finished work and push it to `main`
+on both remotes without asking.** This is the normal end of every task, not a separate
+decision that needs a green light.  Do not pause to ask "want me to commit?" or "should
+I push to main?" — just do it (fast-forward only; see "Pushing — always both remotes").
+The only push that still needs an explicit ask is a `--force`/history rewrite.
+
 ### When to ask
 
 - Destructive or irreversible actions not already authorized (force push, `rm -rf`, dropping
@@ -125,7 +133,7 @@ conversation.  If a wireframe was approved, build it; if a plan was approved, sh
 - A discovery that invalidates the plan (e.g. the file doesn't exist, the API works
   differently than expected).
 
-Otherwise: proceed.
+Otherwise: proceed.  (Committing and pushing to `main` is **not** on this list — see above.)
 
 ### Cross-model review
 
