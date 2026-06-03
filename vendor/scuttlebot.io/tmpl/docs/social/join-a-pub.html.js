@@ -27,7 +27,7 @@ module.exports = () => page({
     <h2>Joining a Pub</h2>
     <p>
       First get an invite-code from a Pub operator, or <a href="/docs/config/create-a-pub.html">create your own Pub.</a>
-      You can ask for invites via the #scuttlebutt channel, on Freenode.
+      You can ask for invites via the #scuttlebutt channel, on Libera Chat.
     </p>
     <p>
       To use the invite, follow this command:
