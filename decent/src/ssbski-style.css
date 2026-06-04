@@ -161,22 +161,53 @@ button { border-radius: 999px; }
  * rail and fix to the right edge to form Bluesky's right column.
  * ============================================================ */
 
+/* The centre column owns the scroll (like decent / Bluesky) instead of letting
+ * the whole page scroll. This is what the pull-stream Scroller needs: it binds
+ * its scroll listener to .column.scroller and decides when to load more via
+ * that element's scrollTop. If the element grows to fit all content (page-level
+ * scroll), scrollTop stays 0, isBottom() is always true, and the entire batch
+ * is dumped on load. So we lock .screen to the viewport and make the feed
+ * column the actual scroll container. */
 .screen,
 .screen.column {
   display: block;
+  height: 100vh;
+  overflow: hidden;
   background: var(--sky-bg);
 }
 
+/* Flex column: the sticky feed-header keeps its natural height and the
+ * feed-host below it takes the remaining viewport space (min-height:0 lets it
+ * shrink so its child can scroll rather than overflow). */
 .screen__content,
 .screen__content.column {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
   margin-left: var(--sky-rail-width);
   margin-right: var(--sky-right-width);
-  min-height: 100vh;
   background: var(--sky-bg);
 }
 
-.column.scroller { display: block; }
+/* The route view renders into .feed-host. When that view is a scroller it
+ * fills the host and scrolls internally (rule below); for non-scroller routes
+ * (profile, thread, unknown) the host itself scrolls so long pages aren't
+ * clipped by .screen's overflow:hidden. */
+.feed-host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.column.scroller {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
 
 .scroll-y { scrollbar-color: var(--sky-border-strong) transparent; }
 
@@ -184,7 +215,7 @@ button { border-radius: 999px; }
   max-width: var(--sky-feed-width);
   margin: 0 auto;
   padding: 0;
-  min-height: 100vh;
+  min-height: 100%;
   border-left: 1px solid var(--sky-border);
   border-right: 1px solid var(--sky-border);
   background: var(--sky-surface);
@@ -3182,12 +3213,14 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   }
   .navbar-avatar img { width: 32px; height: 32px; }
 
-  /* content clears the bottom bar and goes full-width */
+  /* content clears the bottom bar and goes full-width. The feed scrolls
+   * internally now, so reserve the bar's height by shrinking the column
+   * rather than with margin-bottom (which .screen's overflow:hidden clips). */
   .screen__content,
   .screen__content.column {
     margin-left: 0;
     margin-right: 0;
-    margin-bottom: 56px;
+    height: calc(100vh - 56px);
   }
 
   .scroller__wrapper,
