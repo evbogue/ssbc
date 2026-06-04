@@ -103,6 +103,16 @@ module.exports = {
         'aria-label': 'Profile'
       }, api.avatar_image(selfId, 'thumbnail'))
 
+      // ssbski brand: hermit-crab logo + wordmark at the top of the rail. Decent
+      // keeps its own header, so this only renders for the ssbski skin.
+      var brand = isSsbski ? h('a.navbar-brand', {
+        href: '#/',
+        'aria-label': 'ssbski home'
+      }, [
+        h('img.navbar-brand__logo', {src: '/ssbski-logo.png', alt: ''}),
+        h('span.navbar-brand__name', 'ssbski')
+      ]) : null
+
       // Right-column card built from real SSB data. Prefer channel/hashtag
       // trends; fall back to active recent posters so the Bluesky-style column
       // does not disappear on quieter local datasets.
@@ -205,6 +215,7 @@ module.exports = {
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
+            brand,
             profileLink,
             nav,
             h('div.pull-right', searchInput, api.menu(),
