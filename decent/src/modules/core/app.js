@@ -315,6 +315,10 @@ module.exports = {
 
       document.body.appendChild(screen)
 
+      // Shell is mounted — fade out the ssbski launch splash (no-op elsewhere).
+      if (isSsbski && typeof window.__ssbskiHideSplash === 'function')
+        window.__ssbskiHideSplash()
+
       return screen
     }
   }
