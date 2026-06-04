@@ -6,7 +6,7 @@ At a high level, this repository provides:
 - an SSB server process with a familiar RPC/CLI surface,
 - a SQLite-backed message database,
 - websocket/browser access for local web clients,
-- the Decent browser UI,
+- the Decent browser UI, plus ssbski, a second skin of the same UI,
 - a git-over-HTTP bridge backed by SSB messages and blobs,
 - and archived scuttlebot reference docs served locally at `/docs`.
 
@@ -48,14 +48,20 @@ This is the main local data implementation used by the repo now. It provides the
 
 The important practical consequence is that this repo should be documented in terms of its current database-backed behavior, not in terms of historical flume/index internals.
 
-### 3. Decent web UI
+### 3. Web UI: Decent and ssbski
 
-The Decent frontend lives in `decent/` and is served by `plugins/decent-ui.js`.
+The frontend lives in `decent/` and ships in two skins:
 
-By default, the UI is available at:
-- `http://127.0.0.1:8888/`
+- **Decent** — the classic client, served by `plugins/decent-ui.js` (default `http://127.0.0.1:8888/`).
+- **ssbski** — a Bluesky-style skin served by `plugins/ssbski-ui.js` (default `http://127.0.0.1:8990/`).
 
-The same HTTP server also serves:
+Both skins are the same JavaScript bundle pointed at the same local SSB node; only the
+stylesheet differs (`style.css` vs `ssbski-style.css`). `npm run build:web` produces both.
+The two public instances on the network are
+[decent.evbogue.com](https://decent.evbogue.com/) and
+[ssbski.evbogue.com](https://ssbski.evbogue.com/).
+
+The same HTTP server (per skin) also serves:
 - blob upload/download routes,
 - the git smart HTTP endpoints,
 - archived docs at `/docs`.
@@ -93,5 +99,5 @@ A normal local run looks like this:
 
 - `docs/architecture.md` for how the pieces fit together
 - `README.md` for setup and command examples
-- `docs/frontend.md` for Decent-specific details (to be expanded)
+- `docs/frontend.md` for Decent and ssbski frontend details
 - `docs/api.md` for current RPC/API behavior (to be expanded)

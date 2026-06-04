@@ -10,7 +10,9 @@ and originated Patchbay; Paul created Patchwork, the original SSB desktop client
 git-ssb; and Everett forked Patchbay into Decent in 2016. The project was abandoned in 2024.
 This is the continuation.
 
-Try it before installing: [decent.evbogue.com](https://decent.evbogue.com/)
+Try it before installing — same node, same network, two different interfaces:
+[decent.evbogue.com](https://decent.evbogue.com/) (the classic Decent client) or
+[ssbski.evbogue.com](https://ssbski.evbogue.com/) (ssbski, a Bluesky-style skin).
 
 <!-- screenshot: docs/img/feed.png -->
 
@@ -127,19 +129,34 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 
 ---
 
-## Web UI (Decent)
+## Web UI: Decent and ssbski
 
-The Decent browser UI is built from `decent/` and served by `plugins/decent-ui.js`. Decent and the WebSocket transport share a single port — defaulting to `8989`.
+The browser UI ships in two skins, both built from `decent/`:
+
+- **Decent** — the classic Patchbay-derived client, served by `plugins/decent-ui.js`.
+  Decent and the WebSocket transport share a single port — defaulting to `8989`.
+  Public instance: [decent.evbogue.com](https://decent.evbogue.com/).
+- **ssbski** — a Bluesky-style skin served by `plugins/ssbski-ui.js` on its own port
+  (default `8990`), with Discover/Following feed tabs, a trending sidebar, and a sticky
+  centre-column header. Public instance: [ssbski.evbogue.com](https://ssbski.evbogue.com/).
+
+Both skins are the **same JavaScript bundle** talking to the **same local SSB node** — only
+the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski). When you run
+`npm start`, both are served at once: open `http://127.0.0.1:8989/` for Decent or
+`http://127.0.0.1:8990/` for ssbski. Pick whichever interface you prefer; they read and write
+the same feed.
 
 ### Rebuilding the frontend
 
-The built frontend is committed to the repo — you do not need to rebuild it to run `ssbc`. If you are making changes to the Decent source in `decent/`, rebuild with:
+The built frontend is committed to the repo — you do not need to rebuild it to run `ssbc`. If you are making changes to the source in `decent/`, rebuild with:
 
 ```bash
 npm run build:web
 ```
 
-Build output: `decent/build/index.html`, `decent/build/style.css`
+This rebuilds the shared JS bundle and **both** stylesheets in one step.
+
+Build output: `decent/build/index.html`, `decent/build/style.css`, `decent/build/ssbski-style.css`
 
 ### Local docs
 
@@ -174,13 +191,13 @@ Or set it permanently in `~/.ssb/config`:
 
 ## Architecture
 
-`ssbc` is a SQLite-backed message store connected to a secret-stack RPC surface, with a WebSocket bridge for browser clients, a git-over-HTTP plugin, and the Decent frontend served from the same port. The pieces are documented separately:
+`ssbc` is a SQLite-backed message store connected to a secret-stack RPC surface, with a WebSocket bridge for browser clients, a git-over-HTTP plugin, and the Decent and ssbski frontends served from the same node. The pieces are documented separately:
 
 - [`docs/overview.md`](docs/overview.md) — what the pieces are
 - [`docs/architecture.md`](docs/architecture.md) — how they fit together
 - [`docs/api.md`](docs/api.md) — RPC surface and message shapes
 - [`docs/cli.md`](docs/cli.md) — full command reference
-- [`docs/frontend.md`](docs/frontend.md) — Decent internals
+- [`docs/frontend.md`](docs/frontend.md) — Decent and ssbski frontend internals
 - [`docs/http-replication.md`](docs/http-replication.md) — replication protocol
 
 Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8989/docs` but `docs/` is the primary source of truth for how this repo works now.
