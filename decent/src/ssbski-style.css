@@ -231,9 +231,14 @@ button { border-radius: 999px; }
   z-index: 30;
   display: flex;
   align-items: stretch;
+  /* width:100% gives this a definite cross-size now that .screen__content is a
+   * flex column — without it, the `margin: 0 auto` collapses the bar to its
+   * content width instead of spanning (and centering at) the feed column. */
+  width: 100%;
   max-width: var(--sky-feed-width);
   height: 53px;
   margin: 0 auto;
+  flex: none;
   background: color-mix(in srgb, var(--sky-surface) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
