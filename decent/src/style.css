@@ -248,28 +248,15 @@ textarea {
   overflow: hidden;
 }
 
-.message-card .message_content.collapsible.is-overflowing::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 4em;
-  background: linear-gradient(rgba(245, 245, 245, 0), #f5f5f5);
-  pointer-events: none;
-}
-
 .message-card .message_content.collapsible--expanded {
   max-height: none;
   overflow: visible;
 }
 
-.message-card .message_content.collapsible--expanded::after {
-  display: none;
-}
-
 .message-expand {
   display: none;
+  align-items: center;
+  gap: 3px;
   align-self: flex-start;
   margin-top: 6px;
   padding: 4px 10px;
@@ -286,6 +273,22 @@ textarea {
 
 .message-expand:hover {
   background: rgba(25, 103, 210, 0.16);
+}
+
+/* Down-chevron that flips up when the post is expanded; fixed width so the
+ * literal "expand_more" ligature can't widen the button before the icon font
+ * loads. */
+.message-expand__icon {
+  display: inline-flex;
+  justify-content: center;
+  width: 1.1em;
+  overflow: hidden;
+  font-size: 1.1em;
+  transition: transform 0.15s;
+}
+
+.message-expand[aria-expanded="true"] .message-expand__icon {
+  transform: rotate(180deg);
 }
 
 .message_content.is-overflowing + .message-expand,
@@ -812,6 +815,7 @@ textarea {
   width: 16px;
   height: 16px;
   border-radius: 50%;
+  object-fit: cover;
   box-shadow: 0 0 0 1px #f7f9fa;
 }
 
@@ -930,6 +934,7 @@ textarea {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  object-fit: cover;
   vertical-align: middle;
 }
 
@@ -1044,6 +1049,7 @@ textarea {
   width: 32px;
   height: 32px;
   border-radius: 999px;
+  object-fit: cover;
   flex: 0 0 auto;
 }
 
@@ -1160,12 +1166,14 @@ textarea {
   width: 36px;
   height: 36px;
   border-radius: 4px;
+  object-fit: cover;
 }
 
 .avatar--large {
   width: 120px;
   height: 120px;
   border-radius: 6px;
+  object-fit: cover;
 }
 
 .avatar--fullsize {
@@ -1407,12 +1415,20 @@ textarea {
 .git-commit-row {
   margin: 4px 0 0 0;
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 3px 10px;
+}
+
+/* Title grows to fill the line beside the SHA and wraps internally (hanging
+ * indent) rather than dropping to its own flex line and orphaning the SHA. */
+.git-commit-title {
+  flex: 1 1 0;   /* basis 0 so it packs beside the SHA, then grows + wraps */
+  min-width: 0;
 }
 
 .git-commit-byline {
+  flex-basis: 100%;   /* author + stats always on their own line below */
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1479,7 +1495,9 @@ textarea {
 .git-commit-body-preview {
   margin: 2px 0 0 0;
   line-height: 1.4;
-  white-space: pre-wrap;
+  /* pre-line (not pre-wrap): body text is reflowed in git.js so only the blank
+   * lines between paragraphs remain as breaks; everything else fills the width. */
+  white-space: pre-line;
 }
 
 .git-commits-more {
@@ -1964,8 +1982,8 @@ textarea {
 }
 
 .repos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding-bottom: 20px;
 }

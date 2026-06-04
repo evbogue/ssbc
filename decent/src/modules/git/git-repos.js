@@ -22,7 +22,11 @@ exports.create = function (api) {
     var repoId  = msg.key
     var author  = msg.value.author
     var name    = c.name || ('repo ' + repoId.substr(1, 8) + '…')
-    var date    = new Date(msg.value.timestamp)
+    // msg.lastActivity is the newest push (git-update) timestamp, falling back
+    // to the repo creation time when nothing has been pushed yet.
+    var pushed  = msg.lastActivity || msg.value.timestamp
+    var date    = new Date(pushed)
+    var pushedLabel = msg.lastActivity ? 'pushed ' : 'created '
     var browse  = '#git/' + encodeURIComponent(repoId)
     var cloneUrl = window.location.origin + '/git/' + encodeURIComponent(repoId)
 
@@ -49,7 +53,7 @@ exports.create = function (api) {
         h('span.repos-card-owner', api.avatar_name(author))
       ),
       h('h3.repos-card-name', h('a', {href: browse}, name)),
-      h('div.repos-card-meta', branchEl, h('span.repos-card-date', ' · ', human(date))),
+      h('div.repos-card-meta', branchEl, h('span.repos-card-date', ' · ', pushedLabel, human(date))),
       h('div.repos-card-footer',
         h('a.git-branch-badge', {href: browse}, 'Browse'),
         ' ',
@@ -110,20 +114,47 @@ exports.create = function (api) {
       var wrapper = h('div.scroller__wrapper',
         header,
         createArea,
-        grid, 
+        grid,
         empty
       )
       var outer = h('div.column.scroller', {style: {overflow: 'auto'}}, wrapper)
 
+      // Two passes: first map each repo to the timestamp of its newest push
+      // (git-update), then load the repos and sort by that so the list is in
+      // most-recently-pushed-first order rather than creation order.
+      var lastPush = {}
+
+      function renderRepos() {
+        pull(
+          api.sbot_messagesByType({type: 'git-repo', reverse: true, limit: 200, live: false, old: true}),
+          pull.collect(function (err, msgs) {
+            if (err && err !== true) console.error('repos load error:', err)
+            msgs = msgs || []
+            msgs.forEach(function (msg) {
+              msg.lastActivity = lastPush[msg.key] || 0
+            })
+            msgs.sort(function (a, b) {
+              return (b.lastActivity || b.value.timestamp) - (a.lastActivity || a.value.timestamp)
+            })
+            msgs.forEach(function (msg) {
+              count++
+              grid.appendChild(repoCard(msg))
+            })
+            empty.style.display = count === 0 ? '' : 'none'
+          })
+        )
+      }
+
+      // git-update messages carry `repo: <repoKey>`; because the stream is
+      // newest-first, the first one we see per repo is its latest push.
       pull(
-        api.sbot_messagesByType({type: 'git-repo', reverse: true, limit: 200, live: false, old: true}),
+        api.sbot_messagesByType({type: 'git-update', reverse: true, limit: 1000, live: false, old: true}),
         pull.drain(function (msg) {
-          if (count === 0) empty.style.display = 'none'
-          count++
-          grid.appendChild(repoCard(msg))
+          var repo = msg.value.content && msg.value.content.repo
+          if (repo && !lastPush[repo]) lastPush[repo] = msg.value.timestamp
         }, function (err) {
-          if (err && err !== true) console.error('repos load error:', err)
-          if (count === 0) empty.style.display = ''
+          if (err && err !== true) console.error('repo updates load error:', err)
+          renderRepos()
         })
       )
 

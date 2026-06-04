@@ -233,7 +233,8 @@ exports.create = function (api) {
   // long content all flow through here via .message_content.
   function makeExpander () {
     return h('button.message-expand', {type: 'button', 'aria-expanded': 'false'},
-      h('span.message-expand__label', 'Show more'))
+      h('span.message-expand__label', 'Show more'),
+      h('span.message-expand__icon.material-symbols-outlined', {'aria-hidden': 'true'}, 'expand_more'))
   }
 
   function wireCollapse (content, expandBtn) {

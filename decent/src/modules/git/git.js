@@ -664,11 +664,22 @@ exports.create = function (api) {
           var authorName = commit.author && commit.author.name
             ? commit.author.name : null
 
-          // commit.body is the multi-line description below the title
-          var bodyText = typeof commit.body === 'string' && commit.body.trim()
-            ? commit.body.trim().slice(0, 300) +
-              (commit.body.trim().length > 300 ? '…' : '')
-            : null
+          // commit.body is the multi-line description below the title. Git
+          // hard-wraps it at ~72 cols for the terminal; unwrap each blank-line
+          // separated paragraph (single newlines → spaces) so it reflows to the
+          // card width instead of honoring those breaks and double-wrapping.
+          var rawBody = typeof commit.body === 'string' ? commit.body.trim() : ''
+          var bodyText = null
+          if (rawBody) {
+            var reflowed = rawBody
+              .split(/\n{2,}/)
+              .map(function (p) { return p.replace(/[ \t]*\n[ \t]*/g, ' ').trim() })
+              .filter(Boolean)
+              .join('\n\n')
+            bodyText = reflowed.length > 300
+              ? reflowed.slice(0, 300).replace(/\s+\S*$/, '') + '…'
+              : reflowed
+          }
 
           return [
             h('p.git-commit-row',

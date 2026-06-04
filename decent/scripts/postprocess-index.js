@@ -16,8 +16,11 @@ var insert = [
   '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
   '<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css">',
   '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css">',
-  '<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0">',
-  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0">',
+  // display=block: hide the glyph slot while the icon font loads instead of
+  // flashing the literal ligature names — combined with the fixed-width
+  // .nav__icon box this keeps the sidebar from shifting on first paint.
+  '<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block">',
+  '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0&display=block">',
   '<link rel="preload" as="style" href="/style.css">',
   '<link rel="stylesheet" href="/style.css">'
 ].join('\n') + '\n'

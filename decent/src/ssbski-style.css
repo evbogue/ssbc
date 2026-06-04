@@ -394,6 +394,14 @@ button { border-radius: 999px; }
 .nav__icon {
   color: currentColor;
   font-size: 1.65rem;
+  /* Reserve a fixed 1-glyph square (em tracks font-size across breakpoints) so
+   * the literal icon name ("newspaper", "notifications_active") rendered before
+   * the Material Symbols font loads can't widen the rail and shift the layout. */
+  flex: 0 0 1.2em;
+  width: 1.2em;
+  display: inline-flex;
+  justify-content: center;
+  overflow: hidden;
 }
 
 .navbar .nav.pull-left li.active .nav__icon {
@@ -766,25 +774,6 @@ button { border-radius: 999px; }
   overflow: visible;
 }
 
-.message-card .message_content.collapsible.is-overflowing::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3.5em;
-  background: linear-gradient(rgba(255, 255, 255, 0), var(--sky-surface));
-  pointer-events: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  .message-card .message_content.collapsible.is-overflowing::after {
-    background: linear-gradient(rgba(0, 0, 0, 0), var(--sky-surface));
-  }
-}
-
-.message-card .message_content.collapsible--expanded::after { display: none; }
-
 .message_content p:last-child,
 .markdown p:last-child { margin-bottom: 0; }
 
@@ -792,6 +781,8 @@ button { border-radius: 999px; }
  * actually taller than the clamp, so short posts never show the toggle. */
 .message-expand {
   display: none;
+  align-items: center;
+  gap: 3px;
   align-self: flex-start;
   margin-top: 6px;
   padding: 0;
@@ -806,7 +797,26 @@ button { border-radius: 999px; }
 
 .message-expand:hover {
   background: none;
+}
+
+.message-expand:hover .message-expand__label {
   text-decoration: underline;
+}
+
+/* Down-chevron that flips up when the post is expanded; fixed width so the
+ * literal "expand_more" ligature can't widen the button before the icon font
+ * loads. */
+.message-expand__icon {
+  display: inline-flex;
+  justify-content: center;
+  width: 1.1em;
+  overflow: hidden;
+  font-size: 1.05em;
+  transition: transform 0.15s;
+}
+
+.message-expand[aria-expanded="true"] .message-expand__icon {
+  transform: rotate(180deg);
 }
 
 .message_content.is-overflowing + .message-expand,
@@ -1523,6 +1533,12 @@ button { border-radius: 999px; }
 
 /* Repositories list — ssbski never loaded Decent's repos-card CSS, so cards
  * stacked full-width and long clone URLs overflowed. */
+/* Match the 16px horizontal inset of .repos-grid so the heading and the
+ * "New Repository" button line up with the repo cards below. */
+.repos-header {
+  padding: 0 16px;
+}
+
 .repos-heading {
   margin: 16px 0 12px;
   font-size: 1.1em;
@@ -1531,8 +1547,8 @@ button { border-radius: 999px; }
 }
 
 .repos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 12px 16px 20px;
 }
@@ -2424,13 +2440,21 @@ button { border-radius: 999px; }
 
 .git-commit-row {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 3px 10px;
   margin: 4px 0 0 0;
 }
 
+/* Title grows to fill the line beside the SHA and wraps internally (hanging
+ * indent) rather than dropping to its own flex line and orphaning the SHA. */
+.git-commit-title {
+  flex: 1 1 0;   /* basis 0 so it packs beside the SHA, then grows + wraps */
+  min-width: 0;
+}
+
 .git-commit-byline {
+  flex-basis: 100%;   /* author + stats always on their own line below */
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2483,7 +2507,9 @@ button { border-radius: 999px; }
 .git-commit-stats { color: var(--sky-muted-soft); }
 .git-stat-add { color: var(--sky-green); font-weight: 600; }
 .git-stat-del { color: var(--sky-red); font-weight: 600; }
-.git-commit-body-preview { margin: 2px 0 0 0; line-height: 1.4; white-space: pre-wrap; }
+/* pre-line (not pre-wrap): body text is reflowed in git.js so only the blank
+ * lines between paragraphs remain as breaks; everything else fills the width. */
+.git-commit-body-preview { margin: 2px 0 0 0; line-height: 1.4; white-space: pre-line; }
 .git-commits-more { color: var(--sky-muted-soft); font-style: italic; }
 
 /* ── State badges (issue/PR open/closed/merged) ─────────────────────────── */

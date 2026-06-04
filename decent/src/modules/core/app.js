@@ -8,7 +8,8 @@ module.exports = {
     menu: 'first',
     avatar_image: 'first',
     avatar_name: 'first',
-    sbot_log: 'first'
+    sbot_log: 'first',
+    sbot_messagesByType: 'first'
   },
   gives: 'app',
   create: function (api) {
@@ -123,62 +124,81 @@ module.exports = {
           if (!id) return
           authorCounts[id] = (authorCounts[id] || 0) + 1
         }
-        pull(
-          api.sbot_log({reverse: true, limit: 500, old: true, live: false}),
-          pull.drain(function (msg) {
-            var v = msg && msg.value
-            var c = v && v.content
-            if (!c || typeof c !== 'object' || c.type !== 'post') return
-            if (v.private || c.private || Array.isArray(c.recps)) return
-            bumpAuthor(v.author)
-            if (typeof c.channel === 'string') bump(c.channel)
-            if (typeof c.text === 'string') {
-              var tags = c.text.match(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g)
-              if (tags) tags.forEach(bump)
-            }
-          }, function (err) {
-            if (err && err !== true) { console.error(err); return }
-            var entries = Object.keys(counts)
-              .map(function (k) { return [k, counts[k]] })
-              .sort(function (a, b) { return b[1] - a[1] })
-              .slice(0, 7)
-            if (entries.length) {
-              entries.forEach(function (e) {
-                list.appendChild(
-                  h('a.trending__item', {href: '#channel/' + encodeURIComponent(e[0])},
-                    h('span.trending__topic', '#' + e[0]),
-                    h('span.trending__count', e[1] + (e[1] === 1 ? ' post' : ' posts'))
-                  )
-                )
-              })
-              card.style.display = ''
-              return
-            }
 
-            card.querySelector('.trending-card__head').textContent = 'Active people'
-            Object.keys(authorCounts)
-              .map(function (k) { return [k, authorCounts[k]] })
-              .sort(function (a, b) { return b[1] - a[1] })
-              .slice(0, 5)
-              .forEach(function (e) {
-                list.appendChild(
-                  h('a.trending__item.trending__item--person', {href: '#' + e[0]},
-                    api.avatar_image(e[0], 'thumbnail'),
-                    h('span.trending__body',
-                      h('span.trending__topic', api.avatar_name(e[0])),
-                      h('span.trending__count', e[1] + (e[1] === 1 ? ' recent post' : ' recent posts'))
-                    )
+        function renderCard () {
+          var entries = Object.keys(counts)
+            .map(function (k) { return [k, counts[k]] })
+            .sort(function (a, b) { return b[1] - a[1] })
+            .slice(0, 7)
+          if (entries.length) {
+            entries.forEach(function (e) {
+              list.appendChild(
+                h('a.trending__item', {href: '#channel/' + encodeURIComponent(e[0])},
+                  h('span.trending__topic', '#' + e[0]),
+                  h('span.trending__count', e[1] + (e[1] === 1 ? ' post' : ' posts'))
+                )
+              )
+            })
+            card.style.display = ''
+            return
+          }
+
+          card.querySelector('.trending-card__head').textContent = 'Active people'
+          Object.keys(authorCounts)
+            .map(function (k) { return [k, authorCounts[k]] })
+            .sort(function (a, b) { return b[1] - a[1] })
+            .slice(0, 5)
+            .forEach(function (e) {
+              list.appendChild(
+                h('a.trending__item.trending__item--person', {href: '#' + e[0]},
+                  api.avatar_image(e[0], 'thumbnail'),
+                  h('span.trending__body',
+                    h('span.trending__topic', api.avatar_name(e[0])),
+                    h('span.trending__count', e[1] + (e[1] === 1 ? ' recent update' : ' recent updates'))
                   )
                 )
-              })
-            if (!list.childNodes.length) {
-              list.appendChild(
-                h('div.trending__empty', 'Recent public activity will show here.')
               )
-            }
-            card.style.display = ''
-          })
-        )
+            })
+          if (!list.childNodes.length) {
+            list.appendChild(
+              h('div.trending__empty', 'Recent public activity will show here.')
+            )
+          }
+          card.style.display = ''
+        }
+
+        // Query each activity type directly so the limit budget is spent on
+        // messages we actually rank, instead of sampling the generic log (all
+        // types) and filtering — on a busy node that wastes the budget on
+        // votes/contacts and misses the genuinely most-active people.
+        // People ranking counts posts plus git activity (pushes/repos) so the
+        // infrastructure accounts that drive the network surface alongside
+        // chatty posters; hashtag/channel trends stay post-only.
+        var activityTypes = ['post', 'git-update', 'git-repo']
+        var pending = activityTypes.length
+        activityTypes.forEach(function (type) {
+          pull(
+            api.sbot_messagesByType({type: type, reverse: true, limit: 500, old: true, live: false}),
+            pull.drain(function (msg) {
+              var v = msg && msg.value
+              var c = v && v.content
+              if (!c || typeof c !== 'object' || c.type !== type) return
+              if (v.private || c.private || Array.isArray(c.recps)) return
+              bumpAuthor(v.author)
+              if (type === 'post') {
+                if (typeof c.channel === 'string') bump(c.channel)
+                if (typeof c.text === 'string') {
+                  var tags = c.text.match(/#[a-zA-Z0-9][a-zA-Z0-9_-]*/g)
+                  if (tags) tags.forEach(bump)
+                }
+              }
+            }, function (err) {
+              if (err && err !== true) console.error(err)
+              if (--pending > 0) return
+              renderCard()
+            })
+          )
+        })
         return card
       }
 
