@@ -1,8 +1,19 @@
 # Work Order: Git author identity via SSB self-claim
 
-**Status:** Ready
+**Status:** Awaiting design sign-off
+**Reviewer:** Charles Lehner (author of git-ssb)
 **Depends on:** none strictly, but `git-ui-polish-work-order.md` should land first so author slots exist on tree/log/commit/blame screens to plug into.
 **Intent:** Let Decent display a commit's author as the SSB identity that authored it, using self-claim messages and the viewer's follow graph. This is the foundational layer for every later "who actually made this change" feature. It is read-only from the git side — commits are not re-written, and SSH signing is **not** in scope here.
+
+## Summary for the reviewer
+
+> **What this is:** Decent (the `ssbc` project's web client) browses git repos that are replicated over Secure Scuttlebutt, in the lineage of git-ssb. A repo hosted on @bob's feed routinely contains commits authored by other people (e.g. @alice pushed them). Today the UI can only show the raw, unverified `Name <email>` from each commit.
+>
+> **What we propose:** a new public SSB message, `type: git-identity`, in which a feed self-claims the email address(es) it commits under. The client indexes these claims and, for any commit email, resolves the strongest claim available *relative to the viewer's own follow graph* — never a central authority. The viewer always sees a trust tier explaining why a name is shown.
+>
+> **What we are asking you to approve:** primarily the **message schema** and the **trust model** (sections below), since those become a wire format other Scuttlebutt git tools may want to read. The UI and indexer details are Decent-internal and included for completeness. Open questions for you are collected under "Open questions for the reviewer."
+>
+> **Explicitly not in this layer:** SSH signature verification, pusher attestation, repo-scoped author maps, history rewriting, or nonce-based email verification. See "Non-goals."
 
 ## Why this problem needs solving
 
@@ -152,6 +163,16 @@ Copy should be plain. Do not oversell verification — this is a **claim**, not 
 - **No email verification via nonce.** A claim is a claim. The follow graph is the trust substrate.
 - **No UI for reviewing others' claims about you.** If someone else claims your email, your feed's claim still wins for your followers. A "dispute my claimed email" UI is out of scope.
 
+## Open questions for the reviewer
+
+These are the points where your experience with git-ssb's data model would most change the design. None block the UI work; all affect the on-the-wire schema, so we want them settled before publishing real messages.
+
+1. **Message type name.** Is `git-identity` the right name, or should it sit under an existing git-ssb namespace/convention to avoid colliding with anything you already define? (Decent already emits `git-update`; we are following that `git-*` family.)
+2. **Email as the join key.** We resolve on the commit's author email, lowercased. Is email the right primary key, or would you key on something else (e.g. an explicit author block) given how git-ssb has historically associated commits with feeds?
+3. **Claim vs. revocation semantics.** We model a feed's claimed set as `union(emails) − union(revokes)` applied in sequence order, latest-message-per-feed wins. Does that match how you'd expect additive/retractable claims to behave on a feed?
+4. **Compatibility.** Did git-ssb ever ship an author-identity or email-mapping message we should read for backward compatibility, rather than introducing a brand-new type? If so, we'd rather consume the existing format.
+5. **Trust tiers.** The four-tier ladder (known / extended / self-claimed / unverified) is viewer-relative via the follow graph. Any concerns about FOAF (`hops ≤ 2`) being the cutoff for the "extended" tier?
+
 ## Testing
 
 Add a test under `test/` following the pattern of existing tests:
@@ -175,3 +196,12 @@ Also add a visual Playwright check: render a log page where several commits reso
 - The feature degrades gracefully: if the indexer is still warming up, the UI shows raw emails rather than empty cells.
 - The `test/` suite includes the scenarios above and passes.
 - A new session screenshot of the log view at `docs/img/git-identity-tiers.png` shows the four trust tiers side by side.
+
+## Review & sign-off
+
+This work order is held until the schema and trust model are approved. Implementation may begin once the box below is checked.
+
+- [ ] **Approved by Charles Lehner (author of git-ssb)** — schema and trust model are sound; OK to implement Layer 1.
+
+_Reviewer date:_ ____________
+_Notes / requested changes:_
