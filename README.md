@@ -14,7 +14,7 @@ Try it before installing — same node, same network, two different interfaces:
 [decent.evbogue.com](https://decent.evbogue.com/) (the classic Decent client) or
 [ssbski.evbogue.com](https://ssbski.evbogue.com/) (ssbski, a Bluesky-style skin).
 
-<!-- screenshot: docs/img/feed.png -->
+![The Decent feed showing live git-over-SSB push activity](docs/img/feed.png)
 
 ---
 
@@ -106,7 +106,7 @@ node bin.js invite.accept "CODE"     # accept an invite from another pub
 Your git repositories live in your SSB log. Anyone who follows you can clone them.
 No GitHub, no GitLab, no server to admin — just your node and the network.
 
-<!-- screenshot: docs/img/git-forge.png -->
+![The Decent git-forge browsing a repository's file tree](docs/img/git-forge.png)
 
 ### Create a repo
 
@@ -130,6 +130,8 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 ---
 
 ## Web UI: Decent and ssbski
+
+![A Decent profile page with avatar, bio, and feed](docs/img/decent.png)
 
 The browser UI ships in two skins, both built from `decent/`:
 

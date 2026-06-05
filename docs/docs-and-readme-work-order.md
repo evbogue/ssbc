@@ -239,13 +239,13 @@ If possible, expose invite-acceptance in the UI so newcomers do not have to drop
 
 ## Done when
 
-- [ ] `docs/img/` exists and is tracked
-- [ ] Live demo flow at `decent.evbogue.com` is confirmed and documented
-- [ ] `README.md` follows the nine-section order above with all sections present
-- [ ] Three screenshots in `docs/img/` render correctly in the README
-- [ ] All README internal links resolve
+- [x] `docs/img/` exists and is tracked
+- [x] Live demo flow at `decent.evbogue.com` is confirmed and documented
+- [x] `README.md` follows the nine-section order above with all sections present
+- [x] Three screenshots in `docs/img/` render correctly in the README — `feed.png`, `git-forge.png`, `decent.png` captured 2026-06-05 from the local node (real feed/profile, avatars render; sidesteps the demo's empty-avatar caveat)
+- [x] All README internal links resolve
 - [ ] Every README command runs against the current repo without modification
-- [ ] README credits Dominic Tarr and Paul Frazee explicitly and warmly
+- [x] README credits Dominic Tarr and Paul Frazee explicitly and warmly
 - [ ] Archive framing note is present at `/docs` entry point
 - [ ] `version()` drift is resolved (code or docs)
 - [ ] `createFeedStream` range filter drift is resolved (code or docs)
