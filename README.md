@@ -142,6 +142,8 @@ The browser UI ships in two skins, both built from `decent/`:
   (default `8990`), with Discover/Following feed tabs, a trending sidebar, and a sticky
   centre-column header. Public instance: [ssbski.evbogue.com](https://ssbski.evbogue.com/).
 
+![The ssbski skin: Discover/Following tabs and an Active people sidebar](docs/img/ssbski.png)
+
 Both skins are the **same JavaScript bundle** talking to the **same local SSB node** — only
 the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski). When you run
 `npm start`, both are served at once: open `http://127.0.0.1:8989/` for Decent or
