@@ -1,255 +1,302 @@
-# Work Order: Docs and README overhaul
+# Work Order: Documentation overhaul and accuracy
 
 **Status:** In progress
-**Consolidates:** the prior `readme-prep`, `readme-overhaul`, `docs-alignment`, and `scuttlebot-doc-drift` work orders, which have been folded into this one and removed. This is the single source of truth for docs and README work.
+**Single source of truth:** This order consolidates all repository-wide README and
+documentation work, including the former `docs-serving-work-order.md` and the earlier
+`readme-prep`, `readme-overhaul`, `docs-alignment`, and `scuttlebot-doc-drift` orders.
 
----
+Feature-specific documentation remains in its feature work order. For example,
+`git-identity-work-order.md` owns documentation of the proposed `git-identity` message if
+that feature is approved and implemented.
 
-## Part 1: Remaining prep
+## Objective
+
+Make the documentation explain how this repository works **now**.
 
-These must be done or decided before the README overhaul.
+A developer new to SSB should be able to:
+- understand what `ssbc`, Decent, and ssbski are,
+- install and run the server,
+- use commands and supported APIs,
+- understand the current architecture,
+- find a complete built-in static RPC reference,
+- and distinguish current behavior from historical reference material and proposals.
 
-### 1a. Create `docs/img/`
+Accuracy is more important than breadth. Do not publish proposed, legacy, or assumed behavior
+as current behavior.
 
-Add `docs/img/.gitkeep` so the directory is tracked. Screenshots captured during the README overhaul live here.
+## Documentation hierarchy
 
-### 1b. Confirm the live demo at decent.evbogue.com
+Use this order of authority:
 
-Open `https://decent.evbogue.com/` in a private window and record what a first-time visitor actually sees:
-- Does it land on a usable Decent feed, or a login/invite wall?
-- Is there a public invite code worth linking from the README?
-- Is there enough feed activity that screenshots from the live instance are richer than a fresh local node?
+1. Current code, tests, and runtime behavior
+2. CLI help and generated built-in API reference
+3. `README.md` and canonical current docs
+4. Archived scuttlebot.io material
+5. Proposals and work orders
 
-Record the answer in a short note before writing the README call-to-action copy. Do not guess.
+When documentation and code disagree, verify behavior and either fix the documentation or,
+only when justified, fix the implementation. Do not preserve inaccurate copy for historical
+continuity.
 
-**Findings (2026-06-02, loaded cold with no identity):**
-- **No wall.** `https://decent.evbogue.com/` lands directly on the public feed; read-only browsing works with no login or invite. Safe to link from the hero as "see a live feed."
-- **Rich, current activity.** The feed's top items are live `git-update` push messages (commit lists, branch refs, `+/−` file diffs) replicating in real time over git-over-SSB — richer than a fresh local node, and ideal source material for `git-forge.png` / `feed.png`.
-- **Default skin is Decent** (page title "Decent SSB — Public"), not ssbski, so live screenshots match the README's Decent-based screenshot plan.
-- **Two caveats before capturing screenshots / writing the CTA:**
-  - The demo feed's avatars render as empty boxes (no `about.image` set). Set a display name + avatar on the demo identity first so screenshots look intentional.
-  - No public invite code is surfaced in the UI. Decide whether to (a) publish a long-lived public invite to link from the README, or (b) keep the README's join instructions CLI-only (`node bin.js invite.accept "<code>"`) and point readers at the node without a baked-in code. The order already warns against hard-coding an invite that will expire.
+## Canonical current docs
 
-### 1c. Decide: onboarding polish before or after README?
+These are the repository's public current-behavior documents:
 
-Two options:
-1. Do the empty-state onboarding improvement first (see Part 3, task 3e), then write the README against the improved state.
-2. Proceed to the README now and describe the current first-run experience honestly.
+- `README.md`
+- `docs/overview.md`
+- `docs/architecture.md`
+- `docs/api.md`
+- `docs/api-reference.md` (generated)
+- `docs/cli.md`
+- `docs/frontend.md`
+- `docs/docs-maintenance.md`
 
-Either is valid. Pick one and note it here before proceeding.
+The following are **not** current-behavior documentation:
 
-**Decision (2026-06-02): Option 2 — README now.** Write the README against the
-current first-run experience and describe it honestly. The empty-state
-onboarding polish (task 3f) is deferred to a separate follow-up. Rationale: the
-live demo already lands on a populated public feed, so most README readers click
-through to that rather than a fresh empty node — the onboarding panel is a nice
-improvement but not a blocker for an honest, useful README.
+- `docs/scuttlebot.io/` — generated historical archive
+- `vendor/scuttlebot.io/` — vendored source for that archive
+- work orders and proposals
+- `docs/http-replication.md` — proposal for an unimplemented transport
 
----
+Do not link proposals from the README or serve them as canonical docs.
 
-## Part 2: README overhaul
+## Tone and editing rules
 
-Replace the current README with one that pays respect to SSB's origins, gets newcomers oriented, and shows how to use `ssbc` with Decent — including the git-SSB story.
+- Make defensible claims grounded in current repository behavior.
+- Explain SSB terms the first time they appear.
+- Prefer concrete commands, method shapes, routes, defaults, and file references.
+- Keep historical framing brief and useful.
+- Treat git-over-SSB as an important working capability, not a gimmick.
+- Do not turn project documentation into manifesto or movement copy.
+- Do not invent commands or features.
+- Link to a focused canonical page rather than duplicating long explanations.
 
-### Audience
+## Completed foundation
 
-**Primary:** A developer who has never run an SSB node. Should finish the README understanding what the project is, why it exists, and how to try it — without being asked to buy into claims bigger than the software can support.
+The following work is already landed and should be preserved:
 
-**Secondary:** A returning SSB user who wants to know what changed and whether their classic workflow still works.
+- [x] README overhaul with project framing, quick start, git-over-SSB, UI overview,
+  architecture links, screenshots, credits, and license
+- [x] Live demo flow at `decent.evbogue.com` verified
+- [x] README screenshots captured in `docs/img/`
+- [x] README internal links verified at the time of the overhaul
+- [x] `version()` returns the package version instead of a hard-coded plugin version
+- [x] `createFeedStream` honors `gt`/`gte`/`lt`/`lte`
+- [x] `latest` CLI help matches its implementation
+- [x] `query.read` is documented as returning an empty stream in this setup
 
-Both readers should feel welcome.
+## Part 1: Audit current documentation
 
-### Tone
+Audit every canonical page against code, tests, help output, and a running server before
+promoting the pages at `/docs`.
 
-- Welcoming, not breathless. Excitement comes from the ideas, not adjectives.
-- No emojis.
-- No marketing filler. Every sentence teaches, orients, or invites action.
-- Plain language. Explain SSB terms (feed, blob, pub, invite) the first time they appear.
-- Short sentences. Short paragraphs. Code blocks for commands.
-- Claims grounded in current repo behavior only.
-- Do not turn the README into manifesto copy.
+### 1a. Remove inaccurate and proposed behavior
 
-### Sections (in order)
+- Remove `docs/http-replication.md` from the README architecture links.
+- Remove claims that HTTP replication is currently available.
+- Remove stale wording that the archive is the primary `/docs` surface.
+- Remove planning language such as "to be expanded" from canonical pages.
+- Verify claims about storage, replication, WebSocket access, git-over-HTTP, Decent, and
+  ssbski.
 
-**1. Hero**
-- One-line tagline in human terms.
-- Two or three sentences on what SSB is: an append-only log of signed messages, gossiped between peers, stored on each user's own computer. No central server, no algorithmic feed.
-- Call-to-action link to `https://decent.evbogue.com/` based on the confirmed demo flow from Part 1b.
-- One screenshot: `docs/img/feed.png` — Decent feed view, a few posts visible.
+### 1b. Verify commands and defaults
 
-**2. Why ssbc exists**
-- Credit Dominic Tarr for creating SSB and the original `scuttlebot`.
-- Credit Paul Frazee for Patchwork and the ecosystem work that shaped classic SSB clients.
-- State plainly: SSB was abandoned in 2024 and classic clients stopped working on modern Node.
-- State ssbc's mission: restore classic behavior on a modern stack so the network keeps working. A preservation project, not a reimagining.
+Run every README command without modification where practical. Verify:
 
-**3. What you can do**
+- installation and startup,
+- printed local URLs and default/configured ports,
+- common CLI commands,
+- invite creation and acceptance,
+- git repository creation, push, fetch, and clone,
+- frontend build,
+- archived-doc sync.
 
-Verb-first bullets, two to six words each:
-- Post and read a social feed that lives on your own computer
-- Follow people and build a social graph that syncs offline
-- Send end-to-end encrypted private messages
-- Share files through the peer network as blobs
-- Host git repositories on your own node (see below)
-- Join networks via invite codes from a pub
+Record any command that cannot be safely or deterministically exercised and explain why.
 
-**4. Git over SSB (spotlight section)**
+### 1c. Strengthen canonical pages
 
-Frame it: a decentralized git host. Repositories live in your SSB log. Anyone who follows you can clone them. No GitHub, no GitLab, no server admin.
+Add concrete examples, supported option shapes, caveats, and cross-links where they help a
+reader complete a real task. Prioritize:
 
-Walk through the real commands:
-1. `node bin.js git.create my-project` — returns a URL
-2. `git remote add ssb <url>` then `git push ssb main`
-3. A peer clones the same URL and receives objects via blob replication
+- `docs/overview.md` as the first current-docs entry point,
+- `docs/cli.md` for runnable commands and configuration overrides,
+- `docs/api.md` for practical API behavior and non-manifest core/transport methods,
+- `docs/architecture.md` for current components and data flow,
+- `docs/frontend.md` for the Decent/ssbski runtime and build model.
 
-Mention Decent's git-forge UI briefly. Include `docs/img/git-forge.png`.
+Do not center current docs around `query.read`, `links2.read`, flume, or old indexing
+assumptions. Mention legacy surfaces briefly only when needed.
 
-**5. Quick start**
+## Part 2: Serve current docs at `/docs`
 
-Three-command path:
-- Requirements: Node ≥ 22.5, git, npm
-- `npm install`
-- `npm start`
-- Open the local Decent URL printed at startup (usually `http://127.0.0.1:8989/`)
+Make each UI server expose current repository documentation while retaining the historical
+manual as a clearly labelled archive.
 
-One short paragraph on joining the network: `node bin.js invite.accept "<code>"`. Mention `decent.evbogue.com` as one public node for invites; avoid hard-coding an invite that will expire. Push detailed CLI usage to `docs/cli.md`.
+### 2a. Markdown renderer
 
-**6. Using Decent**
-- What it is: the built-in browser client, served by `plugins/decent-ui.js`.
-- Where it lives: `decent/`.
-- How to rebuild: `npm run build:web`.
-- One screenshot: `docs/img/decent.png` — compose or profile view.
-- One short paragraph on what newcomers see on first launch (based on actual state at time of writing).
+Add `markdown-it` as a direct dependency for repository documentation. Keep `ssb-markdown`
+for SSB post rendering; it is not suitable for docs because it rejects ordinary relative
+documentation links.
 
-**7. Architecture at a glance**
+The renderer must:
 
-One paragraph naming the pieces: SQLite-backed message store, secret-stack RPC surface, WebSocket bridge for browser clients, git-over-HTTP plugin, Decent frontend. Then a link list:
+- rewrite canonical relative `.md` links to `/docs/<slug>` while preserving anchors,
+- leave external links untouched,
+- render headings and fenced code blocks,
+- reject or neutralize raw HTML,
+- wrap output in a small accessible HTML page with readable light/dark styles,
+- include links to the docs index and historical archive.
 
-- [`docs/overview.md`](docs/overview.md)
-- [`docs/architecture.md`](docs/architecture.md)
-- [`docs/api.md`](docs/api.md)
-- [`docs/cli.md`](docs/cli.md)
-- [`docs/frontend.md`](docs/frontend.md)
-- [`docs/http-replication.md`](docs/http-replication.md)
+Implement link rewriting through the renderer's link rule, not regex over rendered HTML.
+Test relative links, anchors, external links, code blocks, and raw HTML handling.
 
-**8. What changed from classic scuttlebot**
-- Modern Node (≥ 22.5) and `node:sqlite` replace flume and native dependencies
-- Message storage is SQLite-backed
-- HTTP replication is available alongside classic muxrpc transport
-- The `ssb-server` / `sbot` CLI and most classic commands are preserved
+### 2b. Public allowlist and routing
 
-One short paragraph plus the bullets above. No dropped-plugin list.
+Expose only the canonical docs:
 
-**9. Contributing and license**
-- One sentence pointing at [`AGENTS.md`](AGENTS.md) for development conventions.
-- MIT license line.
+```js
+const DOC_PAGES = [
+  { slug: 'overview',         title: 'Overview' },
+  { slug: 'architecture',     title: 'Architecture' },
+  { slug: 'api',              title: 'API' },
+  { slug: 'api-reference',    title: 'API reference (generated)' },
+  { slug: 'cli',              title: 'CLI' },
+  { slug: 'frontend',         title: 'Frontend' },
+  { slug: 'docs-maintenance', title: 'Documentation maintenance' },
+]
+```
 
-### Screenshots
+Routing:
 
-Capture and commit to `docs/img/`:
+- `/docs` and `/docs/` render an index of current docs plus a labelled archive link.
+- `/docs/<allowed-slug>` renders the corresponding Markdown page.
+- `/docs/archive` and descendants serve `docs/scuttlebot.io/` with a visible historical
+  archive banner and archive-local links.
+- Other `/docs/*` paths return 404, preventing work orders and proposals from being
+  accidentally published.
 
-| File | What to show |
-|---|---|
-| `feed.png` | Decent feed with a few posts visible |
-| `git-forge.png` | Git-forge tab with a branch list or commit log |
-| `decent.png` | Compose or profile view |
+Update README and canonical-page wording to describe `/docs` as current documentation and
+`/docs/archive` as the historical scuttlebot.io manual.
 
-Use the live instance if it has richer content and is appropriate for a public README. Keep each image under 500 KB.
+## Part 3: Generate a complete built-in API reference
 
-### Editing rules
+Generate the reference from the repository's built-in static manifests. This completeness
+claim deliberately excludes dynamically installed user plugins and non-manifest secret-stack
+methods; explain both boundaries in `docs/api.md` and the generated reference.
 
-- Link into existing docs rather than re-explaining their content.
-- Do not invent commands or features. Every command must already work.
-- No CI badges, stars widgets, or contributor lists in this pass.
-- Preserve the MIT license.
+### 3a. Share the built-in plugin registry
 
----
+Extract the built-in `.use(...)` entries from `bin.js` into one ordered shared registry, such
+as `lib/builtin-plugins.js`. Server startup and API generation must consume the same registry.
 
-## Part 3: Docs alignment
+The registry must distinguish:
 
-Make `docs/*.md` describe current `ssbc` behavior accurately. The archived scuttlebot.io docs remain as reference material — do not rewrite them wholesale.
+- RPC-bearing modules,
+- zero-manifest infrastructure/UI modules,
+- stub and compatibility modules.
 
-### 3a. Add archive framing at `/docs` entry points
+Preserve exact mount order. Because this changes server bootstrap as part of documentation
+work, add a startup smoke test that confirms the server still produces the expected manifest.
 
-Add a visible note near the `/docs` entry point clarifying:
-- these are archived scuttlebot.io docs,
-- they are useful reference,
-- they may not exactly match the behavior of this repository,
-- repo-specific behavior defers to local README, help output, and `docs/*.md`.
+### 3b. Coverage boundary and baseline
 
-This is the highest-value, lowest-risk fix.
+Include `lib/db` plus every RPC-bearing built-in registry entry. At the time of this order,
+the audited baseline is **83 built-in static manifest methods**:
 
-### 3b. Fix the most misleading doc-to-code drifts
+- root `lib/db`: 26
+- `plugins`: 5
+- `gossip`: 12
+- `replicate`: 2
+- `ebt`: 4
+- `friends`: 9
+- `blobs`: 13
+- `invite`: 3
+- `git`: 1
+- `query`: 3
+- `links2`: 2
+- `ooo`: 3
 
-**`version()`** — `lib/db.js` returns `'1.0.0'`, which is the SQLite plugin version, not a meaningful server version. Either document that `version` is implementation-defined in this repo, or change it to return something more meaningful (e.g. from `package.json`).
+Derive the count rather than hard-coding it. Include `plugins.*`, `git.create`, `ooo.*`, and
+`replicate.*`. Clearly mark stubs and no-ops. Audit `links2.read` before assigning its status.
 
-**`createFeedStream` range filters** — Current `lib/db.js` ignores `gt/gte/lt/lte`; only `limit` and `reverse` are applied. Fix the implementation to honor range filters, or document explicitly that they are unsupported.
+### 3c. Generator and prose sidecar
 
-**`latest` help text** — `lib/cli-help.js` says "every feed this server follows" but the implementation returns latest sequence for every author in the DB regardless of follow state. Fix the help text to match the implementation.
+Create:
 
-**Browser client wording** — Archived docs say the API client is Node.js only. This repo serves browser clients through Decent via `ssb-ws`. Add a repo-specific note clarifying the ws-enabled browser access.
+- `scripts/gen-api-reference.js`
+- `docs/api-notes.json`
+- generated and committed `docs/api-reference.md`
+- npm script `gen:api-reference`
 
-**`query.read`** — Document explicitly that `sbot.query.read` returns empty results in this setup and should not be relied on.
+The generator must list every built-in static manifest method with namespace, RPC type, and
+status. Hand-written summaries, arguments, and examples live in `docs/api-notes.json`.
+Undocumented methods remain visible as `_Not yet documented._`, with a coverage count in the
+generated footer.
 
-### 3c. Tighten `docs/*.md` with concrete behavior
+Prioritize prose for:
 
-Expand existing pages with:
-- Real command examples
-- Practical API call examples with shapes
-- Clear notes on what is actually supported
-- Cross-links between overview, CLI, API, and frontend docs
+1. the nine core methods currently missing from `docs/api.md`,
+2. methods used by Decent, ssbski, and common CLI workflows,
+3. remaining methods as they are touched.
 
-### 3d. De-emphasize legacy surfaces
+### 3d. Drift guards
 
-Do not center docs around:
-- `query.read`
-- `links2.read`
-- Old indexing assumptions from historical implementations
+Add a test that:
 
-If still present, mention briefly and only where necessary.
+- regenerates the reference in memory and byte-compares it with the committed file,
+- asserts every RPC-bearing shared-registry manifest appears,
+- includes stub modules and `git.create`,
+- confirms `bin.js` mounts through the shared registry rather than maintaining a second list.
 
-### 3e. Add docs maintenance guidance
+## Part 4: Documentation maintenance
 
 Create `docs/docs-maintenance.md` explaining:
-- `docs/*.md` are the primary source of truth for current behavior
-- `docs/scuttlebot.io/` is archived reference material
-- Vendored scuttlebot source lives in `vendor/scuttlebot.io/`
-- Archived docs are regenerated with `npm run sync:scuttlebot-docs`
 
-### 3f. Onboarding empty state (optional but recommended before README)
+- the documentation hierarchy and canonical-page allowlist,
+- how to verify claims against code and runtime behavior,
+- how `/docs` and `/docs/archive` are served,
+- how to regenerate and verify the API reference,
+- how `docs/scuttlebot.io/` is regenerated from `vendor/scuttlebot.io/`,
+- how feature work orders retain ownership of feature-specific docs until the feature lands.
 
-When the user's feed and follow graph are empty, show a "Welcome to Decent" panel in place of the blank feed with 2–3 concrete next steps:
-1. Set a display name and avatar (link to profile editor)
-2. Write a first post (link to compose)
-3. Accept an invite code to join a network (short explanation + pointer to `decent.evbogue.com`)
+## Testing and verification
 
-If possible, expose invite-acceptance in the UI so newcomers do not have to drop to the CLI. Keep scope tight — a clean empty state plus a visible invite field is enough.
-
----
+- `npm test` passes.
+- Every README command is exercised or explicitly accounted for.
+- Each allowed `/docs/<slug>` returns rendered HTML.
+- Non-allowlisted work orders and proposals return 404.
+- Relative links, anchors, external links, fenced code, and raw HTML handling are tested.
+- `/docs/archive` and a deep archive asset load with archive-local links and a visible banner.
+- API-reference drift tests pass.
+- Server-startup smoke test passes after registry extraction.
+- `/docs`, `/docs/api-reference`, and `/docs/archive` are visually checked in light and dark
+  mode.
 
 ## Non-goals
 
-- Rewriting the entire archived scuttlebot.io docs set
-- Changing SSB server, sync, or git-over-HTTP behavior (unless fixing a `createFeedStream` range filter)
-- Adding compatibility theater for features nobody uses
-- Designing a project logo or favicon
-- Marketing copy beyond the hero section
-
----
+- Rewriting the archived scuttlebot.io manual
+- Publishing proposals or work orders as current documentation
+- Implementing `docs/http-replication.md`
+- Documenting dynamically installed user plugins in the committed generated reference
+- Documenting third-party libraries covered by the historical archive
+- Adding a static-site generator or Markdown build step
+- Onboarding UI changes; those belong in a separate feature work order
 
 ## Done when
 
-- [x] `docs/img/` exists and is tracked
-- [x] Live demo flow at `decent.evbogue.com` is confirmed and documented
-- [x] `README.md` follows the nine-section order above with all sections present
-- [x] Three screenshots in `docs/img/` render correctly in the README — `feed.png`, `git-forge.png`, `decent.png` captured 2026-06-05 from the local node (real feed/profile, avatars render; sidesteps the demo's empty-avatar caveat)
-- [x] All README internal links resolve
-- [ ] Every README command runs against the current repo without modification
-- [x] README credits Dominic Tarr and Paul Frazee explicitly and warmly
-- [ ] Archive framing note is present at `/docs` entry point
-- [x] `version()` drift is resolved (code or docs) — now returns the package version (16.0.1) instead of a hard-coded `1.0.0`
-- [x] `createFeedStream` range filter drift is resolved (code or docs) — implementation now honors `gt`/`gte`/`lt`/`lte` on the timestamp column
-- [x] `latest` CLI help text matches implementation — corrected to "every feed in the local database (not only followed feeds)"
-- [x] `query.read` status is documented — `docs/api.md` notes it returns an empty stream and points to the SQLite-backed alternatives
-- [ ] `docs/*.md` pages have real examples and cross-links
-- [ ] `docs/docs-maintenance.md` exists
+- [ ] Every canonical page has been audited against current code and behavior.
+- [ ] Every README command runs as written or has an explicit verification note.
+- [ ] README and canonical docs contain no claim that the proposed HTTP replication layer is
+  implemented.
+- [ ] Canonical docs have practical examples, accurate caveats, and useful cross-links.
+- [ ] `GET /docs` serves the current-docs index.
+- [ ] Canonical pages render at allowlisted `/docs/<slug>` routes with working links and
+  light/dark styles.
+- [ ] Work orders and proposals return 404 under `/docs`.
+- [ ] The scuttlebot.io archive works at `/docs/archive` with clear historical framing.
+- [ ] Server startup and API generation consume one shared built-in plugin registry.
+- [ ] The generated API reference covers every built-in static manifest method and clearly
+  marks stubs.
+- [ ] API-reference and startup drift guards pass under `npm test`.
+- [ ] `docs/docs-maintenance.md` exists and describes the maintenance workflow.
+- [ ] README and all canonical docs describe `/docs` and `/docs/archive` accurately.
