@@ -52,7 +52,7 @@
   /* Layout */
   --sky-rail-width: 240px;
   --sky-right-width: 320px;
-  --sky-feed-width: 600px;
+  --sky-feed-width: none;       /* feed fills the band between the rail and right column */
 }
 
 @media (prefers-color-scheme: dark) {
