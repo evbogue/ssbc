@@ -29,7 +29,11 @@ exports.create = function (api) {
     var xhr = new XMLHttpRequest()
     xhr.open('GET', url)
     xhr.onload = function () {
-      if (xhr.status !== 200) return cb(new Error('HTTP ' + xhr.status))
+      if (xhr.status !== 200) {
+        var e = new Error('HTTP ' + xhr.status)
+        e.status = xhr.status
+        return cb(e)
+      }
       try { cb(null, JSON.parse(xhr.responseText)) }
       catch (e) { cb(e) }
     }
@@ -651,12 +655,50 @@ exports.create = function (api) {
     return banner
   }
 
+  // Centered placeholder reusing the feed's empty-state styles. Used when a
+  // tree fetch 404s — most often a repo whose objects haven't been replicated
+  // to this node yet, or one with no commits at all — so we explain that
+  // instead of dumping a raw "Error: HTTP 404".
+  function gitEmptyState(opts) {
+    return h('div.feed-empty',
+      h('span.feed-empty__icon.material-symbols-outlined', opts.icon || 'inventory_2'),
+      h('div.feed-empty__title', opts.title),
+      opts.body ? h('div.feed-empty__body', opts.body) : null,
+      opts.extra || null)
+  }
+
   function renderTreeScreen(repoId, ref, pathParts, container) {
     container.textContent = 'Loading…'
     var apiPath = 'tree/' + encodeURIComponent(ref) +
       (pathParts.length ? '/' + pathParts.join('/') : '')
     fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
-      if (err) { container.textContent = 'Error: ' + err.message; return }
+      if (err) {
+        container.innerHTML = ''
+        if (err.status === 404 && pathParts.length === 0) {
+          // Whole repo has nothing browsable at this ref.
+          container.appendChild(gitEmptyState({
+            icon: 'cloud_off',
+            title: 'Nothing to show here yet',
+            body: 'This repository has no files at ' + ref + ' on this node — it may ' +
+                  'be empty, or its history hasn’t been replicated here yet.',
+            extra: renderCloneButton(repoId)
+          }))
+        } else if (err.status === 404) {
+          // A subpath that doesn't exist at this ref.
+          container.appendChild(gitEmptyState({
+            icon: 'folder_off',
+            title: 'Path not found',
+            body: 'There’s no “' + pathParts.join('/') + '” at ' + ref + '.'
+          }))
+        } else {
+          container.appendChild(gitEmptyState({
+            icon: 'error',
+            title: 'Couldn’t load this tree',
+            body: err.message
+          }))
+        }
+        return
+      }
       var entries = ((data && data.entries) || []).slice().sort(function (a, b) {
         if (a.isDir && !b.isDir) return -1
         if (!a.isDir && b.isDir) return 1
@@ -1395,7 +1437,18 @@ exports.create = function (api) {
       if (!sub) {
         content.textContent = 'Loading…'
         getRepoRefs(repoId, function (err, data) {
-          if (err) { content.textContent = 'Error: ' + err.message; return }
+          if (err) {
+            content.innerHTML = ''
+            content.appendChild(gitEmptyState({
+              icon: err.status === 404 ? 'cloud_off' : 'error',
+              title: err.status === 404 ? 'Nothing to show here yet' : 'Couldn’t load this repository',
+              body: err.status === 404
+                ? 'This repository hasn’t been replicated to this node yet, so there’s nothing to browse.'
+                : err.message,
+              extra: renderCloneButton(repoId)
+            }))
+            return
+          }
           renderTreeScreen(repoId, getDefaultRef(data), [], content)
         })
       } else if (sub === 'tree') {
