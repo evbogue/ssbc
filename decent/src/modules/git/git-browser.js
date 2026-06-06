@@ -521,18 +521,22 @@ exports.create = function (api) {
     return div
   }
 
-  function fetchReadme(repoId, ref, cb) {
-    var candidates = ['README.md', 'readme.md', 'Readme.md', 'README.txt', 'README']
-    var i = 0
-    function tryNext() {
-      if (i >= candidates.length) return cb(null, null)
-      var name = candidates[i++]
-      fetchJson(gitApiUrl(repoId, 'blob/' + encodeURIComponent(ref) + '/' + name), function (err, data) {
-        if (!err && data && data.content != null) return cb(null, data.content)
-        tryNext()
-      })
-    }
-    tryNext()
+  // Pick the README from the already-loaded tree entries (preferring .md) and
+  // fetch only that blob. Probing fixed filenames logged a 404 for every repo
+  // without a README and for each casing that missed.
+  var README_ORDER = ['readme.md', 'readme.txt', 'readme']
+  function fetchReadme(repoId, ref, entries, cb) {
+    var name = null, rank = Infinity
+    ;(entries || []).forEach(function (e) {
+      if (!e || e.isDir) return
+      var r = README_ORDER.indexOf(String(e.name).toLowerCase())
+      if (r !== -1 && r < rank) { rank = r; name = e.name }
+    })
+    if (!name) return cb(null, null)
+    fetchJson(gitApiUrl(repoId, 'blob/' + encodeURIComponent(ref) + '/' + name), function (err, data) {
+      if (!err && data && data.content != null) return cb(null, data.content)
+      cb(null, null)
+    })
   }
 
   // Clone URL lives inside a popover (GitHub-style) so the toolbar stays tidy.
@@ -718,7 +722,7 @@ exports.create = function (api) {
 
       if (atRoot) {
         var readmeEl = h('div')
-        fetchReadme(repoId, ref, function (err, content) {
+        fetchReadme(repoId, ref, entries, function (err, content) {
           if (content) {
             readmeEl.className = 'git-readme'
             readmeEl.appendChild(renderReadme(content))

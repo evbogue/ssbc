@@ -44,6 +44,20 @@ function shortRefName(ref) {
   return ref.replace(/^refs\/(heads|tags)\//, '')
 }
 
+// Pick the README filename from a tree listing's entries, preferring .md.
+// Returns null when the tree has no README so callers can skip the blob fetch
+// entirely instead of probing (and 404-ing on) fixed candidate names.
+var README_ORDER = ['readme.md', 'readme.txt', 'readme']
+function pickReadmeName(entries) {
+  var name = null, rank = Infinity
+  ;(entries || []).forEach(function (e) {
+    if (!e || e.isDir) return
+    var r = README_ORDER.indexOf(String(e.name).toLowerCase())
+    if (r !== -1 && r < rank) { rank = r; name = e.name }
+  })
+  return name
+}
+
 exports.create = function (api) {
 
   function getRefs(msg) {
@@ -483,31 +497,33 @@ exports.create = function (api) {
         // Async README preview - will be populated after render
         var readmeEl = h('div')
         ;(function fetchReadme() {
-          var candidates = ['README.md', 'readme.md', 'Readme.md', 'README']
-          var i = 0
-          function tryNext() {
-            if (i >= candidates.length) return
-            var name = candidates[i++]
-            var url = window.location.origin + '/git/' + encodeURIComponent(msg.key) +
-              '/json/blob/HEAD/' + name
+          var base = window.location.origin + '/git/' + encodeURIComponent(msg.key) + '/json/'
+          function getJson(path, cb) {
             var xhr = new XMLHttpRequest()
-            xhr.open('GET', url)
+            xhr.open('GET', base + path)
             xhr.onload = function () {
-              if (xhr.status !== 200) return tryNext()
-              var data
-              try { data = JSON.parse(xhr.responseText) } catch (_) { return tryNext() }
-              if (!data || data.content == null) return tryNext()
+              if (xhr.status !== 200) return cb(null)
+              try { cb(JSON.parse(xhr.responseText)) } catch (_) { cb(null) }
+            }
+            xhr.onerror = function () { cb(null) }
+            xhr.send()
+          }
+          // List the tree at HEAD and request the README that actually exists,
+          // rather than probing fixed filenames — probing logged a 404 for every
+          // repo without a README (and for each casing that didn't match).
+          getJson('tree/HEAD', function (tree) {
+            var name = pickReadmeName(tree && tree.entries)
+            if (!name) return
+            getJson('blob/HEAD/' + encodeURIComponent(name), function (data) {
+              if (!data || data.content == null) return
               // Truncate to first ~500 chars to avoid huge inline previews
               var preview = data.content.length > 500
                 ? data.content.substr(0, 500) + '\n…'
                 : data.content
               readmeEl.className = 'git-readme'
               readmeEl.appendChild(h('pre', preview))
-            }
-            xhr.onerror = tryNext
-            xhr.send()
-          }
-          tryNext()
+            })
+          })
         }())
 
         var div = h('div',
