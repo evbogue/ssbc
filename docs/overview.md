@@ -8,7 +8,8 @@ At a high level, this repository provides:
 - websocket/browser access for local web clients,
 - the Decent browser UI, plus ssbski, a second skin of the same UI,
 - a git-over-HTTP bridge backed by SSB messages and blobs,
-- and archived scuttlebot reference docs served locally at `/docs`.
+- this repository's current documentation served locally at `/docs`, with the
+  historical scuttlebot manual at `/docs/archive`.
 
 ## What this repo is for
 
@@ -64,7 +65,7 @@ The two public instances on the network are
 The same HTTP server (per skin) also serves:
 - blob upload/download routes,
 - the git smart HTTP endpoints,
-- archived docs at `/docs`.
+- current documentation at `/docs` and the historical archive at `/docs/archive`.
 
 ### 4. Browser/websocket access
 
@@ -78,12 +79,15 @@ The server exposes websocket-compatible access for local/browser clients, and th
 
 This lets the repo use SSB messages and blobs as storage for git repositories while preserving ordinary git push/fetch/clone workflows over HTTP.
 
-### 6. Archived scuttlebot reference docs
+### 6. Documentation
 
-The archived scuttlebot docs are served at:
-- `/docs`
+The running server serves this repository's current documentation at `/docs`,
+rendered from the canonical Markdown pages in `docs/`. The original scuttlebot
+manual is preserved as a clearly labelled historical archive at `/docs/archive`;
+it is useful reference material but does not describe how this server works now.
 
-These are useful reference material, but they are not the primary source of truth for how this repository works now. The current docs in `docs/` should describe the current implementation directly.
+See [`docs/docs-maintenance.md`](docs-maintenance.md) for how the documentation is
+organized, served, and kept accurate.
 
 ## Typical flow
 
@@ -100,4 +104,5 @@ A normal local run looks like this:
 - `docs/architecture.md` for how the pieces fit together
 - `README.md` for setup and command examples
 - `docs/frontend.md` for Decent and ssbski frontend details
-- `docs/api.md` for current RPC/API behavior (to be expanded)
+- `docs/api.md` for current RPC/API behavior, and `docs/api-reference.md` for the
+  generated reference of every built-in RPC method

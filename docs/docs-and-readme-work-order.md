@@ -1,6 +1,7 @@
 # Work Order: Documentation overhaul and accuracy
 
-**Status:** In progress
+**Status:** Parts 2–4 implemented (serving, generated reference, maintenance doc);
+Part 1 audit of every canonical page and every README command is ongoing.
 **Single source of truth:** This order consolidates all repository-wide README and
 documentation work, including the former `docs-serving-work-order.md` and the earlier
 `readme-prep`, `readme-overhaul`, `docs-alignment`, and `scuttlebot-doc-drift` orders.
@@ -284,19 +285,21 @@ Create `docs/docs-maintenance.md` explaining:
 
 ## Done when
 
-- [ ] Every canonical page has been audited against current code and behavior.
-- [ ] Every README command runs as written or has an explicit verification note.
-- [ ] README and canonical docs contain no claim that the proposed HTTP replication layer is
+- [ ] Every canonical page has been audited against current code and behavior. (Pages
+  touching `/docs`, the API surface, and the HTTP-replication claim were audited; a full
+  command-by-command pass remains.)
+- [ ] Every README command runs as written or has an explicit verification note. (Ongoing.)
+- [x] README and canonical docs contain no claim that the proposed HTTP replication layer is
   implemented.
-- [ ] Canonical docs have practical examples, accurate caveats, and useful cross-links.
-- [ ] `GET /docs` serves the current-docs index.
-- [ ] Canonical pages render at allowlisted `/docs/<slug>` routes with working links and
+- [x] Canonical docs have practical examples, accurate caveats, and useful cross-links.
+- [x] `GET /docs` serves the current-docs index.
+- [x] Canonical pages render at allowlisted `/docs/<slug>` routes with working links and
   light/dark styles.
-- [ ] Work orders and proposals return 404 under `/docs`.
-- [ ] The scuttlebot.io archive works at `/docs/archive` with clear historical framing.
-- [ ] Server startup and API generation consume one shared built-in plugin registry.
-- [ ] The generated API reference covers every built-in static manifest method and clearly
+- [x] Work orders and proposals return 404 under `/docs`.
+- [x] The scuttlebot.io archive works at `/docs/archive` with clear historical framing.
+- [x] Server startup and API generation consume one shared built-in plugin registry.
+- [x] The generated API reference covers every built-in static manifest method and clearly
   marks stubs.
-- [ ] API-reference and startup drift guards pass under `npm test`.
-- [ ] `docs/docs-maintenance.md` exists and describes the maintenance workflow.
-- [ ] README and all canonical docs describe `/docs` and `/docs/archive` accurately.
+- [x] API-reference and startup drift guards pass under `npm test`.
+- [x] `docs/docs-maintenance.md` exists and describes the maintenance workflow.
+- [x] README and all canonical docs describe `/docs` and `/docs/archive` accurately.

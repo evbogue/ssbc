@@ -102,7 +102,7 @@ It serves:
 - the Decent bundle,
 - `style.css`,
 - blob upload/download routes,
-- archived docs under `/docs`,
+- current documentation under `/docs` and the historical archive under `/docs/archive`,
 - git HTTP requests by delegating to the git server plugin.
 
 It also attaches websocket handling to the HTTP server so the frontend can connect through the same general web surface.
@@ -122,7 +122,8 @@ Important routes include:
 - `/` → Decent UI
 - `/blobs/add` → blob upload
 - `/blobs/get/:hash` → blob fetch
-- `/docs` → archived scuttlebot docs
+- `/docs` → current documentation (canonical Markdown pages)
+- `/docs/archive` → historical scuttlebot manual
 - `/git/...` → git smart HTTP behavior
 
 ## 5. Frontend
@@ -165,11 +166,11 @@ There are now two documentation layers in the repo:
 
 These should describe how the repository works now.
 
-### Archived docs
-- `docs/scuttlebot.io/`
+### Historical archive
+- `docs/scuttlebot.io/` (served at `/docs/archive`)
 - source in `vendor/scuttlebot.io/`
 
-These are historical/reference material and are served for convenience, but they should not be treated as the primary architectural spec for the repo.
+These are historical/reference material, served behind a labelled archive banner. They describe the original Secure Scuttlebutt project and should not be treated as the architectural spec for this repo.
 
 ## Practical mental model
 

@@ -164,11 +164,19 @@ Build output: `decent/build/index.html`, `decent/build/style.css`, `decent/build
 
 ### Local docs
 
-Archived Scuttlebot documentation is also served at:
+The running server serves this repository's current documentation at:
 
 - **http://127.0.0.1:8989/docs**
 
-Those docs are served from `docs/scuttlebot.io/`. Their vendored source lives in
+That index links the canonical pages (overview, architecture, API, the generated
+API reference, CLI, frontend, and documentation maintenance), each rendered from
+the Markdown in `docs/`.
+
+The original Scuttlebot manual is kept as a clearly labelled historical archive at:
+
+- **http://127.0.0.1:8989/docs/archive**
+
+The archive is served from `docs/scuttlebot.io/`. Its vendored source lives in
 `vendor/scuttlebot.io/`, and you can resync generated output with:
 
 ```bash
@@ -200,11 +208,14 @@ Or set it permanently in `~/.ssb/config`:
 - [`docs/overview.md`](docs/overview.md) — what the pieces are
 - [`docs/architecture.md`](docs/architecture.md) — how they fit together
 - [`docs/api.md`](docs/api.md) — RPC surface and message shapes
+- [`docs/api-reference.md`](docs/api-reference.md) — generated reference of every built-in RPC method
 - [`docs/cli.md`](docs/cli.md) — full command reference
 - [`docs/frontend.md`](docs/frontend.md) — Decent and ssbski frontend internals
-- [`docs/http-replication.md`](docs/http-replication.md) — replication protocol
+- [`docs/docs-maintenance.md`](docs/docs-maintenance.md) — how the docs are organized, served, and kept accurate
 
-Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8989/docs` but `docs/` is the primary source of truth for how this repo works now.
+These current-behavior docs are also served by the running server at
+`http://127.0.0.1:8989/docs`. The historical Scuttlebot manual lives at
+`http://127.0.0.1:8989/docs/archive`.
 
 ---
 
@@ -212,7 +223,7 @@ Archived scuttlebot reference docs are served locally at `http://127.0.0.1:8989/
 
 - `node:sqlite` replaces flume and all native dependencies — no more build failures on modern Node
 - Message storage is SQLite-backed; the flume indexes are gone
-- HTTP replication is available alongside the classic muxrpc transport
+- A WebSocket bridge and git-over-HTTP run alongside the classic muxrpc transport (feed replication still rides muxrpc/EBT)
 - The `sbot` / `ssb-server` CLI and most classic plugin commands are preserved
 
 ---

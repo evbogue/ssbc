@@ -1,0 +1,301 @@
+{
+  "_comment": "Hand-written prose for docs/api-reference.md. Keys are fully-qualified method names (bare for the root database, namespaced for plugins). Each entry may have: summary (string), args (object of name->description), example (string). Run `npm run gen:api-reference` after editing.",
+
+  "publish": {
+    "summary": "Publish a new message to the local feed using the current identity, signing and appending it to the log.",
+    "args": { "content": "the message content object; must include a `type` string" },
+    "example": "ssb-server publish --type post --text 'hello world'"
+  },
+  "add": {
+    "summary": "Append an already-formed, validly-signed message to the local store without re-signing it. Used when ingesting messages from other feeds.",
+    "args": { "msg": "a complete signed SSB message" }
+  },
+  "get": {
+    "summary": "Fetch a single message by its key (message id).",
+    "args": { "key": "the message id (`%...sha256`), or an options object" },
+    "example": "ssb-server get '%abc...=.sha256'"
+  },
+  "del": {
+    "summary": "Delete a message or feed from the local store. Destructive and local-only; it does not unpublish anything that has already been replicated to peers."
+  },
+  "queue": {
+    "summary": "Queue a raw message for validation and storage without immediately flushing it to disk."
+  },
+  "flush": {
+    "summary": "Flush any queued writes, calling back once they are durably stored."
+  },
+  "search": {
+    "summary": "Low-level full-store search hook exposed by the database. Most callers should prefer `messagesByType` or `links`."
+  },
+  "createLogStream": {
+    "summary": "Stream messages in the order the local node received them. Supports `limit`, `reverse`, `live`, `gt`/`gte`/`lt`/`lte`, and `keys`/`values` options.",
+    "example": "ssb-server createLogStream --limit 10 --reverse"
+  },
+  "createFeedStream": {
+    "summary": "Stream messages ordered by their claimed `timestamp`. Honors `gt`/`gte`/`lt`/`lte` range filters on the timestamp, plus `limit`, `reverse`, and `live`."
+  },
+  "createHistoryStream": {
+    "summary": "Stream the messages of a single feed in sequence order, optionally starting from a given sequence. This is the core replication read used over the wire.",
+    "args": { "id": "the feed id (`@...ed25519`)", "seq": "start at this sequence number", "live": "keep the stream open for new messages" },
+    "example": "ssb-server createHistoryStream --id '@me=.ed25519' --seq 1"
+  },
+  "createUserStream": {
+    "summary": "Stream one feed's messages much like `createHistoryStream`, with the log-stream option shape (`limit`, `reverse`, `gt`/`lt` on sequence)."
+  },
+  "createWriteStream": {
+    "summary": "Sink that accepts messages and adds each one to the local store, the streaming counterpart of `add`."
+  },
+  "createSequenceStream": {
+    "summary": "Stream the local store's overall sequence as it advances; useful for tracking write progress."
+  },
+  "messagesByType": {
+    "summary": "Stream every message of a given `type` across all known feeds. This is the primary index used by Decent and ssbski to build their feeds.",
+    "args": { "type": "the message `type` to filter on", "live": "keep streaming new matches", "reverse": "newest first" },
+    "example": "ssb-server messagesByType --type post --reverse --limit 20"
+  },
+  "links": {
+    "summary": "Traverse link relationships between messages and feeds (e.g. who mentioned a message). Filter by `source`, `dest`, `rel`, and `values`."
+  },
+  "latest": {
+    "summary": "Stream the latest sequence for every feed in the local database (not only followed feeds), emitting `{ id, sequence, ts }` records."
+  },
+  "getLatest": {
+    "summary": "Get the latest message for a single feed.",
+    "args": { "id": "the feed id" }
+  },
+  "latestSequence": {
+    "summary": "Get the latest known sequence number (and timestamp) for a feed without returning the whole message.",
+    "args": { "id": "the feed id" }
+  },
+  "getVectorClock": {
+    "summary": "Return a map of every known feed to its latest sequence — a vector clock of local replication state."
+  },
+  "getAtSequence": {
+    "summary": "Fetch the message at a specific `[feedId, sequence]` position.",
+    "args": { "seq": "a `[feedId, sequence]` pair" }
+  },
+  "whoami": {
+    "summary": "Return the current local identity as `{ id }`.",
+    "example": "ssb-server whoami"
+  },
+  "ready": {
+    "summary": "Report whether the database has finished its initial load and is ready to serve reads."
+  },
+  "progress": {
+    "summary": "Return indexing/replication progress counters, used to drive the startup progress bar."
+  },
+  "status": {
+    "summary": "Return a snapshot of runtime status, including database and (when available) local-peer state."
+  },
+  "version": {
+    "summary": "Return the running server version (the package version)."
+  },
+  "help": {
+    "summary": "Return inline help describing the methods available on the root object."
+  },
+
+  "plugins.install": {
+    "summary": "Install a user plugin from npm into the configuration directory and stream installation output. Restart is required for it to load."
+  },
+  "plugins.uninstall": {
+    "summary": "Remove a previously installed user plugin, streaming the npm output."
+  },
+  "plugins.enable": {
+    "summary": "Mark an installed user plugin as enabled so it loads on the next start."
+  },
+  "plugins.disable": {
+    "summary": "Mark an installed user plugin as disabled so it is skipped on the next start."
+  },
+  "plugins.help": {
+    "summary": "Return inline help for the `plugins` namespace."
+  },
+
+  "gossip.add": {
+    "summary": "Register a peer address in the gossip table so the server may connect to it.",
+    "args": { "addr": "a multiserver address", "source": "where the address came from (e.g. `manual`)" }
+  },
+  "gossip.remove": {
+    "summary": "Remove a peer from the gossip table."
+  },
+  "gossip.connect": {
+    "summary": "Connect immediately to a peer by multiserver address.",
+    "args": { "addr": "a multiserver address" },
+    "example": "ssb-server gossip.connect 'net:1.2.3.4:8008~shs:KEY'"
+  },
+  "gossip.disconnect": {
+    "summary": "Drop an existing connection to a peer."
+  },
+  "gossip.changes": {
+    "summary": "Stream gossip table change events as peers are added, connected, or dropped."
+  },
+  "gossip.reconnect": {
+    "summary": "Reset connections so the server retries peers from scratch."
+  },
+  "gossip.disable": {
+    "summary": "Disable a gossip transport or behavior at runtime."
+  },
+  "gossip.enable": {
+    "summary": "Enable a gossip transport or behavior at runtime."
+  },
+  "gossip.ping": {
+    "summary": "Duplex keep-alive used between connected peers to measure liveness and clock skew."
+  },
+  "gossip.get": {
+    "summary": "Look up the gossip table entry for a specific peer."
+  },
+  "gossip.peers": {
+    "summary": "Return the current list of known peers and their connection state.",
+    "example": "ssb-server gossip.peers"
+  },
+  "gossip.help": {
+    "summary": "Return inline help for the `gossip` namespace."
+  },
+
+  "replicate.request": {
+    "summary": "Historically, ask the replicator to (stop) replicating a feed. Replication here is handled by `ebt`."
+  },
+  "replicate.block": {
+    "summary": "Historically, mark a feed as blocked from replication. Retained for compatibility; blocking is expressed through the social graph."
+  },
+
+  "ebt.replicate": {
+    "summary": "Epidemic broadcast tree replication: the duplex stream peers use to exchange feed updates efficiently."
+  },
+  "ebt.request": {
+    "summary": "Tell EBT to start or stop replicating a given feed.",
+    "args": { "id": "the feed id", "replicate": "boolean: whether to replicate it" }
+  },
+  "ebt.block": {
+    "summary": "Tell EBT to refuse replicating a feed for a given peer relationship."
+  },
+  "ebt.peerStatus": {
+    "summary": "Return EBT's view of replication progress for each peer and feed."
+  },
+
+  "friends.hopStream": {
+    "summary": "Stream changes to the hop-distance graph as follows and blocks are processed."
+  },
+  "friends.onEdge": {
+    "summary": "Subscribe to individual follow/block edge changes in the social graph."
+  },
+  "friends.isFollowing": {
+    "summary": "Report whether one feed follows another.",
+    "args": { "source": "the follower feed id", "dest": "the followed feed id" }
+  },
+  "friends.isBlocking": {
+    "summary": "Report whether one feed blocks another.",
+    "args": { "source": "the blocking feed id", "dest": "the blocked feed id" }
+  },
+  "friends.hops": {
+    "summary": "Return a map of feed id to hop distance from the local identity (0 = self, 1 = followed, etc.), the set used to decide what to replicate.",
+    "example": "ssb-server friends.hops"
+  },
+  "friends.get": {
+    "summary": "Return the raw follow/block graph as nested `{ source: { dest: state } }` maps.",
+    "example": "ssb-server friends.get"
+  },
+  "friends.createFriendStream": {
+    "summary": "Stream feed ids within a hop range, optionally live, as the graph grows."
+  },
+  "friends.stream": {
+    "summary": "Stream the full hops state and subsequent updates as a single live view."
+  },
+  "friends.help": {
+    "summary": "Return inline help for the `friends` namespace."
+  },
+
+  "blobs.get": {
+    "summary": "Stream the bytes of a blob by its hash id.",
+    "args": { "hash": "the blob id (`&...sha256`)" },
+    "example": "ssb-server blobs.get '&abc...=.sha256'"
+  },
+  "blobs.getSlice": {
+    "summary": "Stream a byte range of a blob, given `{ key, start, end }`."
+  },
+  "blobs.add": {
+    "summary": "Sink that stores incoming bytes as a content-addressed blob and calls back with its hash. The CLI `blobs.add` wrapper feeds a file or stdin into it.",
+    "example": "cat photo.png | ssb-server blobs.add"
+  },
+  "blobs.rm": {
+    "summary": "Remove a blob from the local store."
+  },
+  "blobs.ls": {
+    "summary": "Stream the hashes of all blobs currently held locally."
+  },
+  "blobs.has": {
+    "summary": "Report whether one or more blobs are present locally.",
+    "args": { "hash": "a blob id or array of ids" }
+  },
+  "blobs.size": {
+    "summary": "Return the byte size of a locally-held blob, or null if absent."
+  },
+  "blobs.meta": {
+    "summary": "Return metadata about the blob store or a specific blob."
+  },
+  "blobs.want": {
+    "summary": "Register interest in a blob so the server fetches it from peers that have it, calling back when it arrives.",
+    "args": { "hash": "the blob id to fetch" },
+    "example": "ssb-server blobs.want '&abc...=.sha256'"
+  },
+  "blobs.push": {
+    "summary": "Actively push a blob out to peers rather than waiting for them to want it."
+  },
+  "blobs.changes": {
+    "summary": "Stream notifications as blobs are added to the local store."
+  },
+  "blobs.createWants": {
+    "summary": "Stream the current want-list — blobs this node is seeking — used during peer exchange."
+  },
+  "blobs.help": {
+    "summary": "Return inline help for the `blobs` namespace."
+  },
+
+  "invite.create": {
+    "summary": "Create an invite code that another peer can redeem to connect to and be followed by this server.",
+    "args": { "opts": "a number of uses, or an options object such as `{ uses, modern }`" },
+    "example": "ssb-server invite.create 1"
+  },
+  "invite.use": {
+    "summary": "Server side of redemption: accept a redeeming peer, follow them, and confirm the invite.",
+    "args": { "req": "the redemption request `{ feed }`" }
+  },
+  "invite.accept": {
+    "summary": "Client side of redemption: connect to the inviting pub using an invite code, request access, and publish a follow.",
+    "args": { "invite": "the invite code string" },
+    "example": "ssb-server invite.accept 'host:port:@key=.ed25519~SEED'"
+  },
+
+  "git.create": {
+    "summary": "Create a new git repository feed message, returning the repo id used by the git-over-SSB / git-over-HTTP server.",
+    "example": "ssb-server git.create --name my-repo"
+  },
+
+  "query.read": {
+    "summary": "Flume-style query stream over indexed messages. In this server's default configuration the underlying index is not populated, so this returns an empty stream — use `messagesByType` or `links2.read` instead.",
+    "args": { "query": "a flumeview-query spec (`$filter`, `$map`, etc.)" }
+  },
+  "query.explain": {
+    "summary": "Return the index and plan a given query would use, for debugging query selection."
+  },
+  "query.help": {
+    "summary": "Return inline help for the `query` namespace."
+  },
+
+  "links2.read": {
+    "summary": "Stream link relationships between messages and feeds with filtering on `source`, `dest`, and `rel`. This is the working link index in this build (`links` on the root delegates to the same data).",
+    "args": { "query": "a links query, e.g. `{ source, dest, rel, values: true }`" }
+  },
+  "links2.help": {
+    "summary": "Return inline help for the `links2` namespace."
+  },
+
+  "ooo.stream": {
+    "summary": "Out-of-order message stream. This build ships a stub, so the stream yields nothing."
+  },
+  "ooo.get": {
+    "summary": "Fetch an out-of-order message by id. Stubbed in this build."
+  },
+  "ooo.help": {
+    "summary": "Return inline help for the `ooo` namespace."
+  }
+}

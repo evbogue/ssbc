@@ -98,7 +98,7 @@ That plugin serves:
 - the HTML and assets for its skin
 - stylesheet fallback handling
 - blob upload and download routes
-- archived docs at `/docs`
+- current documentation at `/docs` and the historical archive at `/docs/archive`
 - git HTTP routes through the git server plugin
 
 ## Websocket integration

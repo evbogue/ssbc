@@ -4,6 +4,15 @@ This document describes the current API surface of this repository at a practica
 
 The repository exposes an SSB-style RPC surface through the server created in `index.js`, the database implementation in `lib/db.js`, and the loaded plugins wired by `bin.js`.
 
+For a complete, generated listing of every built-in method with its RPC type, see
+[`docs/api-reference.md`](api-reference.md). That reference is generated from the
+server's static plugin manifests, so it covers the full built-in surface — the
+root database plus every RPC-bearing built-in plugin. It deliberately **excludes**
+two things: dynamically installed user plugins (loaded by `ssb-plugins` at
+runtime), and non-manifest secret-stack core methods (such as `auth`, `address`,
+and `multiserver`) that a live server adds but does not declare in a manifest. This
+page covers the same surface at a more practical, hand-written level.
+
 ## Core message APIs
 
 These are the main methods used to read and write message data.
@@ -105,7 +114,7 @@ This matters because current users may interact with the API surface through the
 While the main RPC surface remains SSB-style, the running server also exposes HTTP routes for related functionality:
 - `/blobs/add`
 - `/blobs/get/:hash`
-- `/docs`
+- `/docs` (current documentation) and `/docs/archive` (historical scuttlebot manual)
 - git smart HTTP routes
 
 These are part of the effective public surface of the repo even when they are not traditional RPC methods.

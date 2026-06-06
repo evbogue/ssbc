@@ -249,27 +249,9 @@ if (argv[0] === 'start') {
   console.log(packageJson.name, packageJson.version, config.path, 'logging.level:' + config.logging.level)
   console.log('my key ID:', config.keys.public)
 
-  const createSsbServer = require('./')
-    .use(require('ssb-private1'))
-    .use(require('./lib/vendor/ssb-unix-socket'))
-    .use(require('./lib/vendor/ssb-no-auth'))
-    .use(require('ssb-plugins'))
-    .use(require('./lib/vendor/ssb-master'))
-    .use(require('ssb-gossip'))
-    .use(require('./lib/vendor/ssb-replicate-stub'))
-    .use(require('ssb-ebt'))
-    .use(require('./plugins/friends'))
-    .use(require('ssb-blobs'))
-    .use(require('./plugins/invite'))
-    .use(require('./plugins/git-server'))
-    .use(require('./plugins/decent-ui'))
-    .use(require('./plugins/ssbski-ui'))
-    .use(require('./lib/vendor/ssb-local'))
-    .use(require('./lib/vendor/ssb-logging'))
-    .use(require('ssb-query'))
-    .use(require('ssb-links'))
-    .use(require('ssb-ws'))
-    .use(require('./lib/vendor/ssb-ooo-stub'))
+  // Mount the built-in plugins through the shared registry so server startup and
+  // the API-reference generator can never drift apart. See lib/builtin-plugins.js.
+  const createSsbServer = require('./lib/builtin-plugins').applyTo(require('./'))
 
   require('ssb-plugins').loadUserPlugins(createSsbServer, config)
 
