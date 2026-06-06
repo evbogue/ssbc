@@ -133,7 +133,11 @@ exports.create = function (api) {
         if(!ta.value) {
           ta.style.height = '200px'
         }
-        accessories.style.display = 'block'
+        // Reveal via '' (not 'block') so the stylesheet's own display governs —
+        // ssbski lays this row out as flex to vertically center the Browse and
+        // Preview buttons; a hard 'block' here overrode that and left them
+        // baseline-aligned (misaligned).
+        accessories.style.display = ''
       })
       ta.addEventListener('blur', function () {
         //don't shrink right away, so there is time

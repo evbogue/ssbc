@@ -1412,6 +1412,15 @@ button { border-radius: 999px; }
   margin-top: 4px;
 }
 
+/* The Browse (attach) control reuses the left-rail .nav__icon, whose 1.65rem
+ * glyph is sized for the nav rail. At button scale it made the Browse label
+ * taller than the icon-less action button beside it, so the two didn't line up.
+ * Size the icon to the button's own text so their heights match. */
+.compose .btn .nav__icon {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
 /* Preview/confirm step (the Publish/Cancel buttons under the rendered message).
  * These render as a raw Bootstrap .row inside the message-card, so without this
  * they collapse flush against the message body and against each other. Give the
