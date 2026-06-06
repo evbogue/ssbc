@@ -1412,6 +1412,27 @@ button { border-radius: 999px; }
   margin-top: 4px;
 }
 
+/* Preview/confirm step (the Publish/Cancel buttons under the rendered message).
+ * These render as a raw Bootstrap .row inside the message-card, so without this
+ * they collapse flush against the message body and against each other. Give the
+ * row real separation from the body and a gap between the two buttons. */
+.message-confirm__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* The preview reuses the feed .message-card (square, borderless) so on the dark
+ * overlay it read as a flat white rectangle next to the rounded compose dialog
+ * it follows. Give it the same dialog chrome so both steps of the publish flow
+ * match. */
+.message-confirm .message-card {
+  border-radius: 16px;
+  border: 1px solid var(--sky-border);
+  box-shadow: var(--sky-shadow);
+}
+
 .compose textarea {
   width: 100%;
   min-height: 140px;
