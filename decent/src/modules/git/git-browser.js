@@ -658,15 +658,44 @@ exports.create = function (api) {
         if (!a.isDir && b.isDir) return 1
         return a.name.localeCompare(b.name)
       })
+      var metaCells = {}
       var rows = entries.map(function (e) {
         var icon  = e.isDir ? 'folder' : 'description'
         var href  = e.isDir
           ? gitBrowseRoute(repoId, 'tree', ref, pathParts.concat([e.name]))
           : gitBrowseRoute(repoId, 'blob', ref, pathParts.concat([e.name]))
+        // Message + age cells start empty; populated by the log-per-path fetch below.
+        var msgCell = h('td.git-tree-commit')
+        var ageCell = h('td.git-tree-age')
+        metaCells[e.name] = {msg: msgCell, age: ageCell}
         return h('tr',
           h('td.git-tree-icon', h('span.material-symbols-outlined', icon)),
           h('td.git-tree-name', h('a', {href: href}, e.name)),
-          h('td.git-tree-meta', ' '))
+          msgCell,
+          ageCell)
+      })
+
+      // Last commit per direct entry — served by a native git walk on the
+      // server, so it can lag the tree listing without blocking it.
+      var lpPath = 'log-per-path/' + encodeURIComponent(ref) +
+        (pathParts.length ? '/' + pathParts.join('/') : '')
+      fetchJson(gitApiUrl(repoId, lpPath), function (err, data) {
+        if (err || !data || !data.entries) return
+        Object.keys(metaCells).forEach(function (name) {
+          var info = data.entries[name]
+          if (!info) return
+          var cell  = metaCells[name]
+          var title = info.title || ''
+          var short = title.length > 60 ? title.slice(0, 57) + '…' : title
+          cell.msg.appendChild(h('a.git-tree-commit-link', {
+            href: gitBrowseRoute(repoId, 'commit', info.sha1),
+            title: title
+          }, short))
+          if (info.date) {
+            var d = new Date(info.date)
+            cell.age.appendChild(h('span', {title: d.toISOString()}, human(d)))
+          }
+        })
       })
 
       var atRoot = pathParts.length === 0

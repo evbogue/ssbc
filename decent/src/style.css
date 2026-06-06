@@ -1756,6 +1756,10 @@ textarea {
   vertical-align: middle;
 }
 
+.git-tree-name {
+  white-space: nowrap;
+}
+
 .git-tree-name a {
   color: #1e40af;
   text-decoration: none;
@@ -1763,6 +1767,33 @@ textarea {
 
 .git-tree-name a:hover {
   text-decoration: underline;
+}
+
+/* Last-commit columns in the tree table (populated by log-per-path). */
+.git-tree-commit {
+  width: 100%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.git-tree-commit-link {
+  color: #57606a;
+  text-decoration: none;
+}
+
+.git-tree-commit-link:hover {
+  color: #1e40af;
+  text-decoration: underline;
+}
+
+.git-tree-age {
+  width: 7em;
+  text-align: right;
+  white-space: nowrap;
+  color: #8c959f;
+  font-size: 0.85em;
 }
 
 .git-blob-content {

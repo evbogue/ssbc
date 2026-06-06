@@ -1,6 +1,10 @@
 # Work Order: Git forge UI polish
 
-**Status:** Tasks 1–3 essentially shipped. Only Option-B per-path last-commit columns remain, tracked separately.
+**Status:** Complete. Tasks 1–3 shipped, and the Option-B per-path last-commit
+columns now ship too: the tree table shows each entry's last commit message
+(linking to that commit) and relative age, populated by a new
+`json/log-per-path/:ref[/:dir]` endpoint (one native `git log --name-status` walk
+against the materialized repo). Covered by `test/git-history-blame.js`.
 
 ## Session log — 2026-04-19 (late)
 

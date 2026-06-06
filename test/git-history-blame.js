@@ -132,6 +132,15 @@ test('git json history and blame endpoints', async (t) => {
     t.notEqual(blame.lines[0].sha1, blame.lines[1].sha1, 'the two lines come from different commits')
     t.ok(blame.lines[0].date, 'blame carries a commit date')
 
+    // ── log-per-path (tree last-commit columns) ───────────────────────────────
+    const lppRes = await getJson(remoteUrl + '/json/log-per-path/main')
+    t.equal(lppRes.status, 200, 'log-per-path returns 200')
+    const lpp = JSON.parse(lppRes.body)
+    t.ok(lpp.entries && lpp.entries['file.txt'], 'log-per-path has an entry for the file')
+    t.equal(lpp.entries['file.txt'].title, 'Second commit',
+      'entry reports the newest commit that touched the file')
+    t.ok(lpp.entries['file.txt'].date, 'log-per-path entry carries a date')
+
     // ── error cases ──────────────────────────────────────────────────────────
     const blameNoPath = await getJson(remoteUrl + '/json/blame/main/')
     t.ok(blameNoPath.status >= 400, 'blame without a path errors')

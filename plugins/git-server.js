@@ -16,6 +16,7 @@
 //   GET  /git/:repoId/json/blob/:ref/:path...
 //   GET  /git/:repoId/json/history/:ref/:path...   (native git log -- path)
 //   GET  /git/:repoId/json/blame/:ref/:path...     (native git blame)
+//   GET  /git/:repoId/json/log-per-path/:ref[/:dir...]  (last commit per entry)
 //
 // SSB RPC:
 //   git.create(name, cb) → HTTP URL for the new repo
@@ -888,6 +889,58 @@ function handleJsonBlame(sbot, repoId, ref, filePath, res) {
   })
 }
 
+// Last commit to touch each direct child of a directory, for the tree table.
+// One native `git log --name-status` walk over the dir against a materialized
+// repo; the first (newest) commit seen for each direct child wins.
+function handleJsonLogPerPath(sbot, repoId, ref, dirParts, res) {
+  const dir = (dirParts || []).join('/')
+
+  materializeRepo(sbot, repoId, (err, repoDir, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not available: ' + err.message)
+    repo.resolveRef(ref, (err, sha) => {
+      if (err || !sha) return jsonErr(res, 404, 'Ref not found: ' + ref)
+
+      // Separators must be non-null (spawn args cannot contain \x00) and must
+      // not collide with name-status lines (which start with a status letter).
+      const REC   = '\x1e' // marks a commit header line
+      const FIELD = '\x1f'
+      const args  = [
+        '-C', repoDir, 'log', '--no-color', '--name-status',
+        '--max-count=2000',
+        '--format=' + REC + '%H' + FIELD + '%aI' + FIELD + '%s', sha
+      ]
+      if (dir) args.push('--', dir + '/')
+
+      execFileBuffer('git', args, (err, out) => {
+        if (err) return jsonErr(res, 500, err.message)
+
+        const entries = {}
+        const prefix  = dir ? dir + '/' : ''
+        let cur = null
+        out.toString('utf8').split('\n').forEach(line => {
+          if (line[0] === REC) {
+            const f = line.slice(1).split(FIELD)
+            cur = { sha1: f[0], date: f[1] || null, title: f[2] || '' }
+            return
+          }
+          if (!cur || !/^[A-Z]\d*\t/.test(line)) return
+          // name-status: "M\tpath", or for rename/copy "R100\told\tnew".
+          const cols   = line.split('\t')
+          const status = cols[0][0]
+          const p      = (status === 'R' || status === 'C') ? cols[2] : cols[1]
+          if (!p || p.indexOf(prefix) !== 0) return
+          const restPath = p.slice(prefix.length)
+          const slash    = restPath.indexOf('/')
+          const child    = slash === -1 ? restPath : restPath.slice(0, slash)
+          if (child && !entries[child]) entries[child] = cur
+        })
+
+        sendJson(res, { ref, dir, entries })
+      })
+    })
+  })
+}
+
 function handleJsonCommit(sbot, repoId, sha1, res) {
   gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
     if (err) return jsonErr(res, 404, 'Repository not found')
@@ -1212,6 +1265,11 @@ function parseJsonRoute(req) {
     try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
     return { repoId, sub: 'blame', ref: ref, path: parts.slice(2) }
   }
+  if (parts[0] === 'log-per-path' && parts.length >= 2) {
+    let ref
+    try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
+    return { repoId, sub: 'log-per-path', ref: ref, path: parts.slice(2) }
+  }
   if (parts[0] === 'tree'   && parts.length >= 2) {
     let ref
     try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
@@ -1287,6 +1345,7 @@ module.exports.handleGitRequest = function (sbot, req, res) {
       else if (sub === 'blob')   handleJsonBlob(sbot, repoId, ref, path || [], res)
       else if (sub === 'history') handleJsonHistory(sbot, repoId, ref, path || [], res)
       else if (sub === 'blame')   handleJsonBlame(sbot, repoId, ref, path || [], res)
+      else if (sub === 'log-per-path') handleJsonLogPerPath(sbot, repoId, ref, path || [], res)
       return true
     }
 
