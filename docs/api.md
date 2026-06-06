@@ -22,7 +22,7 @@ These are the main methods used to read and write message data.
 - `createLogStream(opts)`
   - stream messages ordered by local receive time
 - `createFeedStream(opts)`
-  - stream messages ordered by claimed timestamp
+  - stream messages ordered by claimed timestamp; honors `gt`/`gte`/`lt`/`lte` range filters (on the timestamp), `limit`, `reverse`, and `live`
 - `createHistoryStream(opts)`
   - stream messages from a specific feed ordered by sequence
 - `createUserStream(opts)`
@@ -34,7 +34,7 @@ These are the main methods used to read and write message data.
 - `links(opts)`
   - traverse link relationships
 - `latest()`
-  - stream latest seen feed positions
+  - stream the latest sequence for every feed in the local database (not only followed feeds)
 - `getLatest(feedId, cb)`
   - get latest message for a feed
 - `latestSequence(feedId, cb)`
@@ -124,6 +124,17 @@ They should not force readers to learn historical storage/index internals in ord
 Unless intentionally promoted back into first-class supported use, legacy indexing-oriented interfaces should not be the center of the API docs.
 
 The main API documentation should instead emphasize the methods backed by the current implementation and current intended workflows.
+
+### `query.read` is not backed by an index
+
+`sbot.query.read` (the legacy `ssb-query` / jitdb surface) is registered only as a
+no-op flume view in this repo and **returns an empty stream**. Do not rely on it for
+reading messages. Use the methods backed by SQLite instead:
+
+- filter by content type → `messagesByType({ type })`
+- traverse references between messages/feeds/blobs → `links(opts)`
+- stream a single feed → `createHistoryStream({ id })`
+- stream everything by timestamp → `createFeedStream(opts)`
 
 ## Next expansion
 

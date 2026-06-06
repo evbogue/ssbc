@@ -247,9 +247,9 @@ If possible, expose invite-acceptance in the UI so newcomers do not have to drop
 - [ ] Every README command runs against the current repo without modification
 - [x] README credits Dominic Tarr and Paul Frazee explicitly and warmly
 - [ ] Archive framing note is present at `/docs` entry point
-- [ ] `version()` drift is resolved (code or docs)
-- [ ] `createFeedStream` range filter drift is resolved (code or docs)
-- [ ] `latest` CLI help text matches implementation
-- [ ] `query.read` status is documented
+- [x] `version()` drift is resolved (code or docs) — now returns the package version (16.0.1) instead of a hard-coded `1.0.0`
+- [x] `createFeedStream` range filter drift is resolved (code or docs) — implementation now honors `gt`/`gte`/`lt`/`lte` on the timestamp column
+- [x] `latest` CLI help text matches implementation — corrected to "every feed in the local database (not only followed feeds)"
+- [x] `query.read` status is documented — `docs/api.md` notes it returns an empty stream and points to the SQLite-backed alternatives
 - [ ] `docs/*.md` pages have real examples and cross-links
 - [ ] `docs/docs-maintenance.md` exists
