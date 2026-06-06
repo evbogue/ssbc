@@ -58,7 +58,7 @@ test('renderer neutralizes raw HTML in Markdown source', (t) => {
 })
 
 test('renderDocPage returns null for non-allowlisted slugs', (t) => {
-  t.equal(docs.renderDocPage('docs-and-readme-work-order'), null)
+  t.equal(docs.renderDocPage('http-replication'), null)
   t.equal(docs.renderDocPage('git-identity-work-order'), null)
   t.equal(docs.renderDocPage('nonexistent'), null)
   t.end()
@@ -114,7 +114,7 @@ test('/docs routes are served, work orders 404, archive is bannered', (t) => {
       const ref = await get(port, '/docs/api-reference')
       t.equal(ref.status, 200, 'GET /docs/api-reference is 200')
 
-      const workOrder = await get(port, '/docs/docs-and-readme-work-order')
+      const workOrder = await get(port, '/docs/git-identity-work-order')
       t.equal(workOrder.status, 404, 'work order slug returns 404')
 
       const junk = await get(port, '/docs/does-not-exist')

@@ -2,7 +2,7 @@
 
 **Status:** Awaiting design sign-off
 **Reviewer:** Charles Lehner (author of git-ssb)
-**Depends on:** none strictly, but `git-ui-polish-work-order.md` should land first so author slots exist on tree/log/commit/blame screens to plug into.
+**Depends on:** none strictly. The git forge UI polish that provides author slots on the tree/log/commit/blame screens has since landed, so that prerequisite is satisfied.
 **Intent:** Let Decent display a commit's author as the SSB identity that authored it, using self-claim messages and the viewer's follow graph. This is the foundational layer for every later "who actually made this change" feature. It is read-only from the git side — commits are not re-written, and SSH signing is **not** in scope here.
 
 ## Summary for the reviewer
