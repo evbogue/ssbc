@@ -23,6 +23,10 @@ module.exports = {
       var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
 
       window.addEventListener('error', window.onError = function (e) {
+        // "ResizeObserver loop completed with undelivered notifications" is a
+        // benign browser notification (no Error object), not an app fault —
+        // Chrome dispatches it as a window 'error'. Don't paint a banner for it.
+        if (e && e.message && /ResizeObserver loop/.test(e.message)) return
         document.body.appendChild(h('div.error',
           h('h1', e.message),
           h('big', h('code', e.filename + ':' + e.lineno)),

@@ -269,16 +269,29 @@ exports.create = function (api) {
       return Math.max(0, Math.floor(snap))
     }
 
+    var clampPx = null // the CSS clamp height (.collapsible max-height), cached once
+
     function update () {
       if (expanded) return
-      // Measure against the CSS clamp, not a previously snapped cap.
-      content.style.maxHeight = ''
-      var capPx = content.clientHeight
-      // Tolerance so a post only ~1 line over the clamp shows in full rather
-      // than a near-useless "Show more" that reveals almost nothing.
-      var over = content.scrollHeight > capPx + 24
+      // Read the CSS clamp once, before we ever apply an inline cap (after which
+      // getComputedStyle would echo our own value back). It's a constant.
+      if (clampPx == null) {
+        var css = parseFloat(getComputedStyle(content).maxHeight)
+        clampPx = isNaN(css) ? content.clientHeight : css
+      }
+      // scrollHeight is the full content height regardless of the cap, and text
+      // rects keep their positions under overflow:hidden, so we can measure and
+      // snap WITHOUT clearing maxHeight. Clearing it on every observer callback
+      // resized the observed element and span the ResizeObserver in a loop
+      // ("loop completed with undelivered notifications"). Tolerance so a post
+      // only ~1 line over the clamp shows in full rather than a near-useless
+      // "Show more" that reveals almost nothing.
+      var over = content.scrollHeight > clampPx + 24
       content.classList.toggle('is-overflowing', over)
-      if (over) content.style.maxHeight = snapHeight(capPx) + 'px'
+      var target = over ? snapHeight(clampPx) + 'px' : ''
+      // Only write when it actually changes, so a steady state stops feeding the
+      // observer new size mutations.
+      if (content.style.maxHeight !== target) content.style.maxHeight = target
     }
 
     expandBtn.addEventListener('click', function (ev) {
