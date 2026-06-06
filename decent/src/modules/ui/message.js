@@ -243,12 +243,42 @@ exports.create = function (api) {
     var label = expandBtn.firstChild
     var expanded = false
 
+    // The CSS clamp is a fixed pixel height, but a card mixes rows of different
+    // heights (badges, commit meta, body text), so that height almost never
+    // lands on a body-text line boundary — it slices a row in half and you see
+    // the tops of letters at the cut. Given the clamp height, find the tallest
+    // height that doesn't bisect any text line: the top of the first text run
+    // that crosses the clamp. Returns the clamp unchanged if nothing straddles.
+    function snapHeight (capPx) {
+      var top = content.getBoundingClientRect().top
+      var cap = top + capPx
+      var snap = capPx
+      var walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, null)
+      var node
+      while ((node = walker.nextNode())) {
+        if (!node.textContent || !node.textContent.trim()) continue
+        var rects = document.createRange()
+        rects.selectNodeContents(node)
+        rects = rects.getClientRects()
+        for (var i = 0; i < rects.length; i++) {
+          var r = rects[i]
+          if (r.top < cap - 0.5 && r.bottom > cap + 0.5 && r.top - top < snap)
+            snap = r.top - top
+        }
+      }
+      return Math.max(0, Math.floor(snap))
+    }
+
     function update () {
       if (expanded) return
+      // Measure against the CSS clamp, not a previously snapped cap.
+      content.style.maxHeight = ''
+      var capPx = content.clientHeight
       // Tolerance so a post only ~1 line over the clamp shows in full rather
       // than a near-useless "Show more" that reveals almost nothing.
-      var over = content.scrollHeight > content.clientHeight + 24
+      var over = content.scrollHeight > capPx + 24
       content.classList.toggle('is-overflowing', over)
+      if (over) content.style.maxHeight = snapHeight(capPx) + 'px'
     }
 
     expandBtn.addEventListener('click', function (ev) {
@@ -258,7 +288,10 @@ exports.create = function (api) {
       content.classList.toggle('collapsible--expanded', expanded)
       expandBtn.setAttribute('aria-expanded', String(expanded))
       label.textContent = expanded ? 'Show less' : 'Show more'
-      if (!expanded) {
+      if (expanded) {
+        // Drop the snapped inline cap so the body can grow to full height.
+        content.style.maxHeight = ''
+      } else {
         update()
         content.scrollIntoView({block: 'nearest'})
       }

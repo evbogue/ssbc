@@ -780,7 +780,9 @@ button { border-radius: 999px; }
  * so short posts aren't clamped and never show the button. */
 .message-card .message_content.collapsible {
   position: relative;
-  max-height: 11.5rem;   /* ~8 lines — skeet-sized */
+  /* Base clamp (~9 lines). message.js snaps the real cut down from here to the
+   * last whole text row so the toggle never bisects a line of text. */
+  max-height: 11.5rem;
   overflow: hidden;
 }
 
