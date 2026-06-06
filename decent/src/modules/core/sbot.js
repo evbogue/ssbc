@@ -57,7 +57,23 @@ module.exports = {
         }
         sbot = _sbot
         console.log('Decent remote connected:', remote || '(no remote configured)')
+
+        // secret-stack reaps an rpc connection after 10 minutes of inactivity
+        // (timers.inactivity, default 600e3). For the browser UI we want the
+        // connection to live as long as the tab is open — the live feed stream
+        // rides on it — so send a cheap heartbeat well within that window. This
+        // keeps the connection from dropping every 10 minutes, which otherwise
+        // interrupts the live stream and spews packet-stream teardown errors
+        // ("stream ended with:4 but wanted:9") as the muxrpc substreams abort.
+        const heartbeat = setInterval(function () {
+          if (sbot) sbot.whoami(function (err) {
+            if (err) console.warn('Decent heartbeat failed:', err.message || err)
+          })
+        }, 4 * 60 * 1000)
+        if (heartbeat && heartbeat.unref) heartbeat.unref()
+
         sbot.on('closed', function () {
+          clearInterval(heartbeat)
           sbot = null
           console.warn('Decent remote closed:', remote || '(no remote configured)')
           notify(new Error('closed'))
