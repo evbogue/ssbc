@@ -1,7 +1,8 @@
 # Work Order: Documentation overhaul and accuracy
 
-**Status:** Parts 2–4 implemented (serving, generated reference, maintenance doc);
-Part 1 audit of every canonical page and every README command is ongoing.
+**Status:** Complete. Parts 1–4 done: canonical pages audited against current behavior,
+every README command verified or noted, `/docs` serving, the generated API reference, and
+the maintenance doc all landed.
 **Single source of truth:** This order consolidates all repository-wide README and
 documentation work, including the former `docs-serving-work-order.md` and the earlier
 `readme-prep`, `readme-overhaul`, `docs-alignment`, and `scuttlebot-doc-drift` orders.
@@ -113,6 +114,34 @@ Run every README command without modification where practical. Verify:
 - archived-doc sync.
 
 Record any command that cannot be safely or deterministically exercised and explain why.
+
+#### Verification log (2026-06-06)
+
+- **Startup / launch output / ports** — verified live and by `test/bin.js` (64
+  assertions: default ws+http server, `--ws.port`, shared Decent/ws port, ssbski on
+  its own port, `Decent launched at` / `ssbski launched at`, app-dir lock). Fixed a
+  drift: the startup line prints `ssbc <version> …`, not `ssb-server <version> …`.
+- **`whoami`, `version`, `gossip.peers`, `help`, `help <command>`, `list-commands`**
+  — exercised live (valid output) and covered by `test/bin.js` / `test/cli-help.js`.
+- **`git.create` / push / fetch / clone / branches** — covered end-to-end by
+  `test/git-server.js` (36 assertions, real git over smart HTTP). `git.create` also
+  returns a smart-HTTP repo URL live.
+- **`invite.create`** — returns a valid invite code live.
+- **`invite.accept`** — *not exercised live*: redemption requires a second reachable
+  pub to accept an invite from, which is non-deterministic in a local audit. Behavior
+  is documented from `plugins/invite/index.js`.
+- **`npm run build:web`** — runs clean; emits `decent/build/index.html`, `style.css`,
+  and `ssbski-style.css`. Finding: `decent/build/` is gitignored and not shipped via
+  npm, so the README's "built frontend is committed / no rebuild needed" claim was
+  wrong. Resolved by documentation: install steps now include `npm run build:web`.
+- **`npm run sync:scuttlebot-docs`** — *not run here*: it does a full `npm install`
+  plus static-site build inside `vendor/scuttlebot.io/`, which is network-dependent
+  and slow. Left to the maintainer/CI; the script and its source/target paths were
+  read and confirmed.
+- **Isolation note:** client CLI commands on this machine routed to the already-running
+  default server even with `--path/--port/--host` overrides (likely the unix socket at
+  the default path), so live mutation is not a safe audit method here. Prefer the
+  isolated-subprocess tests for any feed-mutating command.
 
 ### 1c. Strengthen canonical pages
 
@@ -285,10 +314,10 @@ Create `docs/docs-maintenance.md` explaining:
 
 ## Done when
 
-- [ ] Every canonical page has been audited against current code and behavior. (Pages
-  touching `/docs`, the API surface, and the HTTP-replication claim were audited; a full
-  command-by-command pass remains.)
-- [ ] Every README command runs as written or has an explicit verification note. (Ongoing.)
+- [x] Every canonical page has been audited against current code and behavior.
+- [x] Every README command runs as written or has an explicit verification note. (See the
+  Part 1b verification log; `invite.accept` and `sync:scuttlebot-docs` carry explicit
+  not-run-live notes.)
 - [x] README and canonical docs contain no claim that the proposed HTTP replication layer is
   implemented.
 - [x] Canonical docs have practical examples, accurate caveats, and useful cross-links.

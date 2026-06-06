@@ -40,6 +40,10 @@ npm run build:web
 That produces the built frontend under:
 - `decent/build/`
 
+This directory is generated and is **not** committed to the repository (it is listed
+in `decent/.gitignore`), so a fresh clone must run `npm run build:web` once before the
+web UI will serve.
+
 The current build flow browserifies the frontend entrypoint and generates the served
 `index.html` and stylesheet assets. Because Decent and ssbski share one JS bundle and differ
 only in CSS, this single command builds **both** skins — it emits `style.css` for Decent and

@@ -43,7 +43,11 @@ Try it before installing — same node, same network, two different interfaces:
 git clone https://github.com/evbogue/ssbc.git
 cd ssbc
 npm install
+npm run build:web   # build the web UI bundle (not committed to the repo)
 ```
+
+The web UI bundle in `decent/build/` is generated, not checked in, so build it once
+after installing (and again whenever you change the frontend source in `decent/`).
 
 ---
 
@@ -58,8 +62,8 @@ npm start
 
 Output:
 ```
-ssb-server <version> <path> logging.level:<level>
-my key ID: <@yourPublicKey>
+ssbc <version> <path> logging.level:<level>
+my key ID: <yourPublicKey>
 Decent launched at http://127.0.0.1:8989/
 ```
 
@@ -152,7 +156,7 @@ the same feed.
 
 ### Rebuilding the frontend
 
-The built frontend is committed to the repo — you do not need to rebuild it to run `ssbc`. If you are making changes to the source in `decent/`, rebuild with:
+The web UI bundle (`decent/build/`) is generated and **not** committed to the repo, so you build it once during installation. Rebuild it whenever you change the source in `decent/`:
 
 ```bash
 npm run build:web
