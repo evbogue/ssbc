@@ -224,6 +224,28 @@ function publishReceivePackUpdate(repo, updates, idxStream, packStream, objectId
     })
   }
 
+  // Decide what HEAD should point to after this push. Git's smart-HTTP push
+  // protocol never transmits HEAD, so the receiving end has to set it: keep the
+  // existing HEAD if its branch survives the push, otherwise adopt the first
+  // branch pushed (as git does on an initial push). Without this, ssb-git falls
+  // back to a heuristic that prefers refs/heads/master and otherwise picks an
+  // arbitrary branch, so the forge shows the wrong default branch.
+  function resolveHead(currentByName, currentHead) {
+    const isBranch = name => /^refs\/heads\//.test(name)
+    const live = {}
+    Object.keys(currentByName).forEach(name => { live[name] = true })
+    updates.forEach(u => {
+      if (u.new === null) delete live[u.name]
+      else live[u.name] = true
+    })
+    if (currentHead && isBranch(currentHead) && live[currentHead]) return currentHead
+    const pushed = updates
+      .filter(u => isBranch(u.name) && u.new !== null)
+      .map(u => u.name)[0]
+    if (pushed) return pushed
+    return Object.keys(live).filter(isBranch)[0]
+  }
+
   function complete(err) {
     if (finished) return
     if (err) {
@@ -240,16 +262,20 @@ function publishReceivePackUpdate(repo, updates, idxStream, packStream, objectId
         console.error('git-server: push is already up-to-date; skipping publish')
         return cb(null)
       }
-      buildAndPublish()
+      repo.getHead((headErr, currentHead) => {
+        if (headErr) return cb(headErr)
+        buildAndPublish(resolveHead(currentByName, currentHead))
+      })
     }))
   }
 
-  function buildAndPublish() {
+  function buildAndPublish(head) {
     const msg = {
       type: 'git-update',
       recps: repo.recps,
       repo: repo.id,
       refs,
+      head: head || undefined,
       packs: [packLink],
       indexes: [idxLink],
       num_objects: objectIds.length || undefined,

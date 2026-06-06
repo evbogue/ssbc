@@ -204,8 +204,45 @@ test('git smart http server supports create push clone and json api', function (
                                   const log = JSON.parse(body)
                                   t.equal(log.ref, 'main', 'json log returns requested ref')
                                   t.equal(log.commits[0].title, 'Initial test commit', 'json log returns pushed commit title')
-                                  cleanup()
-                                  t.end()
+
+                                  // Push a second branch and confirm HEAD stays on
+                                  // main rather than jumping to the new branch.
+                                  run('git', ['checkout', '-b', 'feature'], { cwd: workPath, env }, function (err) {
+                                    t.error(err, 'git checkout -b feature succeeds')
+                                    if (err) return
+
+                                    fs.writeFileSync(join(workPath, 'FEATURE.md'), '# feature\n')
+
+                                    run('git', ['add', 'FEATURE.md'], { cwd: workPath, env }, function (err) {
+                                      t.error(err, 'git add on feature branch succeeds')
+                                      if (err) return
+
+                                      run('git', ['commit', '-m', 'Feature commit'], { cwd: workPath, env }, function (err) {
+                                        t.error(err, 'git commit on feature branch succeeds')
+                                        if (err) return
+
+                                        run('git', ['push', 'ssb', 'feature'], { cwd: workPath, env }, function (err) {
+                                          t.error(err, 'git push feature branch succeeds')
+                                          if (err) return
+
+                                          getText(remoteUrl + '/json/refs', function (err, res, body) {
+                                            t.error(err, 'json refs request after second push succeeds')
+                                            if (err) return
+                                            t.equal(res.statusCode, 200, 'json refs returns 200 after second push')
+
+                                            const refs2 = JSON.parse(body)
+                                            const names = refs2.refs.map(function (r) { return r.name })
+                                            t.ok(names.indexOf('refs/heads/feature') !== -1, 'json refs exposes the second branch')
+                                            t.equal(refs2.symrefs[0].name, 'HEAD', 'json refs still exposes HEAD symref')
+                                            t.equal(refs2.symrefs[0].ref, 'refs/heads/main', 'HEAD stays on main after pushing a second branch')
+
+                                            cleanup()
+                                            t.end()
+                                          })
+                                        })
+                                      })
+                                    })
+                                  })
                                 })
                               })
                             })

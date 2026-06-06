@@ -55,16 +55,27 @@ exports.create = function (api) {
 
   function getDefaultRef(data) {
     var refs = (data && data.refs) || []
+    var heads = refs.filter(function (r) {
+      return /^refs\/heads\/(.+)$/.test(r.name)
+    }).map(function (r) { return shortRefName(r.name) })
+
     var symHead = (data && data.symrefs && data.symrefs.filter(function (r) {
       return r.name === 'HEAD'
     })[0])
-    if (symHead && symHead.ref) return shortRefName(symHead.ref)
+    var head = symHead && symHead.ref ? shortRefName(symHead.ref) : null
 
-    var firstHead = refs.filter(function (r) {
-      return /^refs\/heads\/(.+)$/.test(r.name)
-    })[0]
+    // Trust HEAD when it already points to a conventional default branch.
+    if (head === 'main' || head === 'master') return head
 
-    return firstHead ? shortRefName(firstHead.name) : 'HEAD'
+    // Otherwise prefer main/master when the repo has one. This heals repos
+    // pushed before the server recorded HEAD, where HEAD was guessed and may
+    // point at an arbitrary branch (see plugins/git-server.js resolveHead).
+    if (heads.indexOf('main') !== -1) return 'main'
+    if (heads.indexOf('master') !== -1) return 'master'
+
+    // Fall back to the recorded HEAD, then the first branch.
+    if (head) return head
+    return heads[0] || 'HEAD'
   }
 
   function getRepoRefs(repoId, cb) {
