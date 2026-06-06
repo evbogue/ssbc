@@ -1836,6 +1836,87 @@ textarea {
   font-size: 1.1em;
 }
 
+/* Per-path history / blame screens */
+.git-path-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px;
+  font-size: 0.92em;
+  color: #57606a;
+}
+
+.git-path-head code {
+  font-family: monospace;
+  background: #eef1f4;
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: #24292f;
+}
+
+.git-path-head .material-symbols-outlined {
+  font-size: 1.15em;
+}
+
+.git-path-head-sep {
+  color: #afb8c1;
+}
+
+.git-blame-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: monospace;
+  font-size: 0.82em;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.git-blame-row td {
+  vertical-align: top;
+  padding: 0 8px;
+  line-height: 1.55;
+  border-top: 1px solid #f0f0f0;
+}
+
+.git-blame-row.git-blame-group-start td {
+  border-top: 1px solid #e0e0e0;
+}
+
+.git-blame-commit {
+  width: 13em;
+  white-space: nowrap;
+  background: #f8f9fa;
+  border-right: 1px solid #eaecef;
+  color: #57606a;
+}
+
+.git-blame-age {
+  margin-left: 6px;
+  color: #8c959f;
+}
+
+.git-blame-lineno {
+  width: 3em;
+  text-align: right;
+  color: #aab0b6;
+  background: #fbfbfb;
+  border-right: 1px solid #eaecef;
+  user-select: none;
+}
+
+.git-blame-code {
+  white-space: pre;
+  tab-size: 4;
+  width: 100%;
+}
+
+.git-empty {
+  padding: 16px 4px;
+  color: #8c959f;
+  font-style: italic;
+}
+
 .git-blob-pane {
   margin-top: 0;
   border-top: none;

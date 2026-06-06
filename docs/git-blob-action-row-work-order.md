@@ -1,6 +1,11 @@
 # Work Order: Blob view action row
 
-**Status:** Partially shipped
+**Status:** Shipped, including History and Blame. The follow-up server work this
+order deferred has now landed (strategy B): `plugins/git-server.js` materializes a
+bare repo on disk from the SSB pack and serves `json/history/:ref/:path` (native
+`git log -- path`) and `json/blame/:ref/:path` (native `git blame --porcelain`).
+The client un-hides History/Blame, which open dedicated path-history and blame
+screens. Covered end-to-end by `test/git-history-blame.js`.
 **Depends on:** `git-ui-polish-work-order.md` has landed Tasks 1 and 2 (shared subheader, ref picker, clone card). Task 3 from that order is otherwise untouched by this work — only the blob-view portion is in scope here.
 **Intent:** Add the flat row of file-level actions that every mature git forge places above a file's contents. Ship the live actions now and hide the actions that still need server work until their backend/API support lands.
 

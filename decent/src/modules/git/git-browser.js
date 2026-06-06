@@ -869,6 +869,25 @@ exports.create = function (api) {
     })
 
     var buttons = [rawBtn]
+
+    // History and Blame are backed by native git on the server and only make
+    // sense for text/markdown blobs, not images.
+    if (!isImage) {
+      buttons.push(h('a.git-blob-action', {
+        href: gitBrowseRoute(repoId, 'history', ref, pathParts),
+        title: 'Commit history for this file'
+      },
+      h('span.material-symbols-outlined', 'history'),
+      h('span.git-blob-action-label', 'History')))
+
+      buttons.push(h('a.git-blob-action', {
+        href: gitBrowseRoute(repoId, 'blame', ref, pathParts),
+        title: 'Blame — who last changed each line'
+      },
+      h('span.material-symbols-outlined', 'manage_search'),
+      h('span.git-blob-action-label', 'Blame')))
+    }
+
     buttons.push(copyBtn)
 
     return h('div.git-blob-actions',
@@ -946,6 +965,82 @@ exports.create = function (api) {
         )
       )
       container.appendChild(main)
+    })
+  }
+
+  // Per-path commit history (server runs native `git log -- path`).
+  function renderHistoryScreen(repoId, ref, pathParts, container) {
+    container.textContent = 'Loading history…'
+    var pathStr = pathParts.join('/')
+    var apiPath = 'history/' + encodeURIComponent(ref) + '/' + pathParts.join('/')
+    fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
+      container.innerHTML = ''
+      var inner
+      if (err) {
+        inner = h('div.git-browser', h('em', 'Error: ' + err.message))
+      } else {
+        var commits = (data && data.commits) || []
+        inner = h('div.git-browser',
+          renderRepoSubheader(repoId, {screen: 'blob', ref: ref, pathParts: pathParts}),
+          h('div.git-path-head',
+            h('span.material-symbols-outlined', 'history'),
+            h('span', 'History for '),
+            h('a', {href: gitBrowseRoute(repoId, 'blob', ref, pathParts)}, h('code', pathStr))
+          ),
+          commits.length
+            ? renderLog(repoId, commits)
+            : h('div.git-empty', 'No history for this path.')
+        )
+      }
+      container.appendChild(h('div.git-forge-main', h('div.git-forge-content', inner)))
+    })
+  }
+
+  // Per-line blame (server runs native `git blame --porcelain`).
+  function renderBlameScreen(repoId, ref, pathParts, container) {
+    container.textContent = 'Loading blame…'
+    var pathStr = pathParts.join('/')
+    var apiPath = 'blame/' + encodeURIComponent(ref) + '/' + pathParts.join('/')
+    fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
+      container.innerHTML = ''
+      var inner
+      if (err) {
+        inner = h('div.git-browser', h('em', 'Error: ' + err.message))
+      } else {
+        var lines = (data && data.lines) || []
+        var rows = []
+        var prevSha = null
+        lines.forEach(function (ln) {
+          var newGroup = ln.sha1 !== prevSha
+          prevSha = ln.sha1
+          var date = ln.date ? new Date(ln.date) : null
+          var commitCell = newGroup
+            ? h('td.git-blame-commit', {title: ln.summary || ''},
+                h('a', {href: gitBrowseRoute(repoId, 'commit', ln.sha1)},
+                  h('code.git-sha', (ln.sha1 || '').substr(0, 7))),
+                date ? h('span.git-blame-age', human(date)) : null)
+            : h('td.git-blame-commit.git-blame-commit-cont')
+          rows.push(h('tr.git-blame-row' + (newGroup ? '.git-blame-group-start' : ''),
+            commitCell,
+            h('td.git-blame-lineno', String(ln.line)),
+            h('td.git-blame-code', ln.content)
+          ))
+        })
+        inner = h('div.git-browser',
+          renderRepoSubheader(repoId, {screen: 'blob', ref: ref, pathParts: pathParts}),
+          h('div.git-path-head',
+            h('span.material-symbols-outlined', 'manage_search'),
+            h('span', 'Blame for '),
+            h('a', {href: gitBrowseRoute(repoId, 'blob', ref, pathParts)}, h('code', pathStr)),
+            h('span.git-path-head-sep', ' · '),
+            h('a', {href: gitBrowseRoute(repoId, 'history', ref, pathParts)}, 'History')
+          ),
+          lines.length
+            ? h('table.git-blame-table', h('tbody', rows))
+            : h('div.git-empty', 'No blame data for this path.')
+        )
+      }
+      container.appendChild(h('div.git-forge-main', h('div.git-forge-content', inner)))
     })
   }
 
@@ -1278,6 +1373,14 @@ exports.create = function (api) {
         var blobRef   = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
         var blobPath  = parts.slice(4).map(decodeURIComponent)
         renderBlobScreen(repoId, blobRef, blobPath, content)
+      } else if (sub === 'history') {
+        var histRef  = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
+        var histPath = parts.slice(4).map(decodeURIComponent)
+        renderHistoryScreen(repoId, histRef, histPath, content)
+      } else if (sub === 'blame') {
+        var blameRef  = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
+        var blamePath = parts.slice(4).map(decodeURIComponent)
+        renderBlameScreen(repoId, blameRef, blamePath, content)
       } else if (sub === 'commit') {
         renderCommitScreen(repoId, parts[3] || '', content)
       } else if (sub === 'log') {

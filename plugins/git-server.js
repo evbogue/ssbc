@@ -14,6 +14,8 @@
 //   GET  /git/:repoId/json/commit/:sha1
 //   GET  /git/:repoId/json/tree/:ref[/:path...]
 //   GET  /git/:repoId/json/blob/:ref/:path...
+//   GET  /git/:repoId/json/history/:ref/:path...   (native git log -- path)
+//   GET  /git/:repoId/json/blame/:ref/:path...     (native git blame)
 //
 // SSB RPC:
 //   git.create(name, cb) → HTTP URL for the new repo
@@ -137,6 +139,145 @@ function execFileBuffer(file, args, opts, cb) {
 
 function cleanupDir(dir, cb) {
   fs.rm(dir, { recursive: true, force: true }, () => cb && cb())
+}
+
+// ── on-disk materialization (for native git log/blame) ───────────────────────
+//
+// The JSON read API normally reads git objects straight from SSB blobs. A few
+// queries — per-path history and blame — are far simpler and more correct to
+// answer with native `git`, which needs the objects on disk. materializeRepo
+// reconstructs a real bare repo in a temp dir by pulling the repo's full pack
+// (the same pack clone uses) through `git unpack-objects`.
+//
+// Results are cached per repo and keyed on the current ref set, so a push
+// (which changes a ref hash) transparently invalidates the cache. Refs are not
+// written into the temp repo; callers resolve a ref to a commit sha in JS and
+// pass that sha to git, which is enough for log/blame.
+
+const materializedRepos   = new Map() // repoId -> { key, dir }
+const materializeInFlight  = new Map() // repoId -> [cb, …]
+const materializeTempDirs  = new Set()
+
+process.once('exit', () => {
+  for (const dir of materializeTempDirs) {
+    try { fs.rmSync(dir, { recursive: true, force: true }) } catch (_) {}
+  }
+})
+
+function refsCacheKey(refs) {
+  return refs
+    .map(r => r.name + ':' + r.hash)
+    .sort()
+    .join('\n')
+}
+
+function materializeRepo(sbot, repoId, cb) {
+  gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
+    if (err) return cb(err)
+    GitRepo(repo)
+    collectRefs(repo, (err, refs) => {
+      if (err) return cb(err)
+      if (!refs || !refs.length) return cb(new Error('repository has no refs'))
+
+      const key    = refsCacheKey(refs)
+      const cached  = materializedRepos.get(repoId)
+      if (cached && cached.key === key && fs.existsSync(cached.dir)) {
+        return cb(null, cached.dir, repo)
+      }
+
+      // Coalesce concurrent materializations of the same repo.
+      const waiters = materializeInFlight.get(repoId)
+      if (waiters) { waiters.push({ cb, repo }); return }
+      materializeInFlight.set(repoId, [])
+
+      function finish(err, dir) {
+        const queued = materializeInFlight.get(repoId) || []
+        materializeInFlight.delete(repoId)
+        cb(err, dir, repo)
+        for (const w of queued) w.cb(err, dir, w.repo)
+      }
+
+      fs.mkdtemp(path.join(os.tmpdir(), 'ssbc-git-materialize-'), (err, dir) => {
+        if (err) return finish(err)
+        materializeTempDirs.add(dir)
+
+        execFileBuffer('git', ['init', '--bare', '-q', dir], (err) => {
+          if (err) { cleanupDir(dir); materializeTempDirs.delete(dir); return finish(err) }
+
+          const wants = {}
+          refs.forEach(r => { if (r.hash) wants[r.hash] = true })
+
+          repo.getPack(wants, {}, {}, (err, packStream) => {
+            if (err) { cleanupDir(dir); materializeTempDirs.delete(dir); return finish(err) }
+
+            const child = cp.spawn('git', ['unpack-objects', '-q'], {
+              cwd: dir,
+              env: Object.assign({}, process.env, { GIT_DIR: dir }),
+              stdio: ['pipe', 'ignore', 'pipe']
+            })
+            let stderr = Buffer.alloc(0)
+            child.stderr.on('data', c => { stderr = Buffer.concat([stderr, c]) })
+            child.on('error', err => { cleanupDir(dir); materializeTempDirs.delete(dir); finish(err) })
+            child.on('close', code => {
+              if (code) {
+                cleanupDir(dir); materializeTempDirs.delete(dir)
+                return finish(new Error('git unpack-objects: ' +
+                  (stderr.toString('utf8').trim() || ('exit ' + code))))
+              }
+              const old = materializedRepos.get(repoId)
+              materializedRepos.set(repoId, { key, dir })
+              if (old && old.dir && old.dir !== dir) {
+                materializeTempDirs.delete(old.dir)
+                cleanupDir(old.dir)
+              }
+              finish(null, dir)
+            })
+
+            pull(packStream, toPull.sink(child.stdin, () => {}))
+          })
+        })
+      })
+    })
+  })
+}
+
+// Parse `git blame --porcelain` output into per-line attribution records.
+function parseBlamePorcelain(text) {
+  const lines   = text.split('\n')
+  const commits = {} // sha -> { author, email, time, summary }
+  const out     = []
+  let i = 0
+  while (i < lines.length) {
+    const m = lines[i].match(/^([0-9a-f]{40}) \d+ (\d+)(?: \d+)?$/)
+    if (!m) { i++; continue }
+    const sha       = m[1]
+    const finalLine = parseInt(m[2], 10)
+    i++
+    const c = commits[sha] || (commits[sha] = {})
+    while (i < lines.length && lines[i][0] !== '\t') {
+      const line = lines[i]
+      const sp   = line.indexOf(' ')
+      const k    = sp === -1 ? line : line.slice(0, sp)
+      const v    = sp === -1 ? ''   : line.slice(sp + 1)
+      if      (k === 'author')      c.author  = v
+      else if (k === 'author-mail') c.email   = v.replace(/^<|>$/g, '')
+      else if (k === 'author-time') c.time    = parseInt(v, 10)
+      else if (k === 'summary')     c.summary = v
+      i++
+    }
+    const content = (i < lines.length && lines[i][0] === '\t') ? lines[i].slice(1) : ''
+    i++
+    out.push({
+      line:    finalLine,
+      sha1:    sha,
+      content: content,
+      author:  c.author  || '',
+      email:   c.email   || '',
+      date:    c.time ? new Date(c.time * 1000).toISOString() : null,
+      summary: c.summary || ''
+    })
+  }
+  return out
 }
 
 
@@ -688,6 +829,65 @@ function handleJsonLog(sbot, repoId, ref, res) {
   })
 }
 
+// Per-path commit history: native `git log <sha> -- <path>` against a
+// materialized copy of the repo.
+function handleJsonHistory(sbot, repoId, ref, filePath, res) {
+  const pathStr = (filePath || []).join('/')
+  if (!pathStr) return jsonErr(res, 400, 'Path required')
+
+  materializeRepo(sbot, repoId, (err, dir, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not available: ' + err.message)
+    repo.resolveRef(ref, (err, sha) => {
+      if (err || !sha) return jsonErr(res, 404, 'Ref not found: ' + ref)
+
+      const FIELD = '\x1f' // unit separator between commit fields
+      const REC   = '\x1e' // record separator between commits
+      const fmt   = ['%H', '%an', '%ae', '%aI', '%s', '%b'].join(FIELD) + REC
+      const args  = [
+        '-C', dir, 'log', '--no-color', '--max-count=200',
+        '--pretty=format:' + fmt, sha, '--', pathStr
+      ]
+      execFileBuffer('git', args, (err, out) => {
+        if (err) return jsonErr(res, 500, err.message)
+        const commits = out.toString('utf8')
+          .split(REC)
+          .map(rec => rec.replace(/^\n/, ''))
+          .filter(Boolean)
+          .map(rec => {
+            const f = rec.split(FIELD)
+            return {
+              sha1:   f[0] || '',
+              title:  f[4] || '',
+              body:   f[5] || '',
+              author: { name: f[1] || '', email: f[2] || '', date: f[3] || null }
+            }
+          })
+        sendJson(res, { ref, path: pathStr, commits })
+      })
+    })
+  })
+}
+
+// Per-line blame: native `git blame --porcelain <sha> -- <path>` against a
+// materialized copy of the repo.
+function handleJsonBlame(sbot, repoId, ref, filePath, res) {
+  const pathStr = (filePath || []).join('/')
+  if (!pathStr) return jsonErr(res, 400, 'Path required')
+
+  materializeRepo(sbot, repoId, (err, dir, repo) => {
+    if (err) return jsonErr(res, 404, 'Repository not available: ' + err.message)
+    repo.resolveRef(ref, (err, sha) => {
+      if (err || !sha) return jsonErr(res, 404, 'Ref not found: ' + ref)
+
+      const args = ['-C', dir, 'blame', '--porcelain', sha, '--', pathStr]
+      execFileBuffer('git', args, (err, out) => {
+        if (err) return jsonErr(res, 500, err.message)
+        sendJson(res, { ref, path: pathStr, lines: parseBlamePorcelain(out.toString('utf8')) })
+      })
+    })
+  })
+}
+
 function handleJsonCommit(sbot, repoId, sha1, res) {
   gitRepo.getRepo(sbot, repoId, {}, (err, repo) => {
     if (err) return jsonErr(res, 404, 'Repository not found')
@@ -1002,6 +1202,16 @@ function parseJsonRoute(req) {
   }
   if (parts[0] === 'commit' && parts.length === 2) return { repoId, sub: 'commit', sha1: parts[1] }
   if (parts[0] === 'diff'   && parts.length === 2) return { repoId, sub: 'diff',   sha1: parts[1] }
+  if (parts[0] === 'history' && parts.length >= 3) {
+    let ref
+    try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
+    return { repoId, sub: 'history', ref: ref, path: parts.slice(2) }
+  }
+  if (parts[0] === 'blame'  && parts.length >= 3) {
+    let ref
+    try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
+    return { repoId, sub: 'blame', ref: ref, path: parts.slice(2) }
+  }
   if (parts[0] === 'tree'   && parts.length >= 2) {
     let ref
     try { ref = decodeURIComponent(parts[1]) } catch (_) { ref = parts[1] }
@@ -1075,6 +1285,8 @@ module.exports.handleGitRequest = function (sbot, req, res) {
       else if (sub === 'diff')   handleJsonDiff(sbot, repoId, sha1, res)
       else if (sub === 'tree')   handleJsonTree(sbot, repoId, ref, path || [], res)
       else if (sub === 'blob')   handleJsonBlob(sbot, repoId, ref, path || [], res)
+      else if (sub === 'history') handleJsonHistory(sbot, repoId, ref, path || [], res)
+      else if (sub === 'blame')   handleJsonBlame(sbot, repoId, ref, path || [], res)
       return true
     }
 
