@@ -44,7 +44,7 @@ exports.create = function (api) {
                   h('p', {innerHTML: 'Your secret key is: <pre><code>' + (storedSecret || '') + '</code></pre>'}),
                   h('form',
                     importKey,
-                    h('button.btn.btn-primary', {onclick: function (e){
+                    h('button.btn.btn-primary', {title: 'Replace your identity with the pasted secret key', onclick: function (e){
                       localStorage[BROWSER_SECRET_KEY] = importKey.value.replace(/\s+/g, ' ')
                       alert('Your public/private key has been updated')
                       e.preventDefault()

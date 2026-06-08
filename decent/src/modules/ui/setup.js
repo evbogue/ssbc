@@ -53,7 +53,7 @@ exports.create = function (api) {
   }
 
   function invite_form (status) {
-    var accept = h('button', 'enter code', {disabled: true, onclick: function () {
+    var accept = h('button', 'enter code', {disabled: true, title: 'Redeem this invite code to join the pub', onclick: function () {
       api.invite_accept(input.value, function (msg) {
         status.textContent = msg
       }, function (err) {

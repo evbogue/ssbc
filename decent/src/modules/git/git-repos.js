@@ -102,6 +102,7 @@ exports.create = function (api) {
       var header = h('div.repos-header', {style: {display: 'flex', 'justify-content': 'space-between', 'align-items': 'center'}},
         h('h2.repos-heading', 'Repositories'),
         h('button.git-forge-btn-primary', {
+          title: 'Create a new git repository',
           onclick: function () {
             this.style.display = 'none'
             renderCreateForm(createArea, function (msg) {

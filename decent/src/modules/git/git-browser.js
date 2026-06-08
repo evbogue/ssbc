@@ -224,6 +224,7 @@ exports.create = function (api) {
       popover.appendChild(h('div.git-ref-picker-tabs',
         h('button.git-ref-picker-tab', {
           type: 'button',
+          title: 'List branches',
           className: state.kind === 'branches' ? 'active' : '',
           onclick: function () {
             state.kind = 'branches'
@@ -233,6 +234,7 @@ exports.create = function (api) {
         }, 'Branches'),
         h('button.git-ref-picker-tab', {
           type: 'button',
+          title: 'List tags',
           className: state.kind === 'tags' ? 'active' : '',
           onclick: function () {
             state.kind = 'tags'
@@ -288,6 +290,7 @@ exports.create = function (api) {
         state.items.forEach(function (item, index) {
           list.appendChild(h('button.git-ref-picker-item', {
             type: 'button',
+            title: 'Browse this repository at ' + item.name,
             className: index === state.index ? 'active' : '',
             onclick: function () {
               navigateToRef(item.name)
@@ -577,6 +580,7 @@ exports.create = function (api) {
 
     var trigger = h('button.git-clone-button-trigger', {
       type: 'button',
+      title: 'Show the command to clone this repository',
       'aria-expanded': 'false'
     },
       h('span.material-symbols-outlined.git-clone-button-icon', 'content_copy'),
@@ -919,7 +923,7 @@ exports.create = function (api) {
     var copyIcon = h('span.material-symbols-outlined', 'content_copy')
     var copyLabel = h('span.git-blob-action-label', 'Copy path')
     var copyReset = null
-    var copyBtn = h('button.git-blob-action', {type: 'button'},
+    var copyBtn = h('button.git-blob-action', {type: 'button', title: 'Copy this file path to the clipboard'},
       copyIcon,
       copyLabel)
     copyBtn.addEventListener('click', function () {
@@ -1299,6 +1303,7 @@ exports.create = function (api) {
     container.appendChild(h('div',
       h('div.git-forge-list-actions',
         h('button.git-forge-btn-primary', {
+          title: isPR ? 'Open a new pull request' : 'Open a new issue',
           onclick: function () {
             this.style.display = 'none'
             composerWrap.appendChild(api.message_compose(
@@ -1406,6 +1411,7 @@ exports.create = function (api) {
           h('p', 'Currently, repositories cannot be deleted from the SSB log, but you can signal that it is archived.'),
           h('button.git-forge-btn-primary', {
             style: {background: '#cf222e'},
+            title: 'Signal that this repository is archived',
             onclick: function () { alert('Archiving logic will be implemented in a future update.') }
           }, 'Archive Repository')
         )

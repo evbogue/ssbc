@@ -177,7 +177,7 @@ exports.create = function (api) {
             h('div.compose-modal__title', h('div.avatar',
               api.avatar(selfId, 'thumbnail')
             )),
-            h('button.btn.compose-modal__close', 'Close', {onclick: closeModal})
+            h('button.btn.compose-modal__close', 'Close', {title: 'Close the composer without posting', onclick: closeModal})
           ),
           createReplyHintEl('compose-modal__hint'),
           createQuoteHintEl('compose-modal__quote-hint'),
@@ -260,7 +260,7 @@ exports.create = function (api) {
     }
 
 
-    var publishBtn = h('button.btn.btn-primary', 'Preview', {onclick: publish})
+    var publishBtn = h('button.btn.btn-primary', 'Preview', {title: 'Preview your message before publishing it', onclick: publish})
     var composerChildren = [ta,
       accessories = h('div.row.compose__controls',
         //hidden until you focus the textarea
@@ -462,8 +462,8 @@ exports.create = function (api) {
           h('div.column',
             promptField,
             h('div.row.compose-prompt__controls',
-              h('button.btn', 'Browse', {type: 'button', onclick: openModal}),
-              h('button.btn.btn-primary', 'Preview', {type: 'button', onclick: openModal})
+              h('button.btn', 'Browse', {type: 'button', title: 'Open the composer to attach a file or image', onclick: openModal}),
+              h('button.btn.btn-primary', 'Preview', {type: 'button', title: 'Open the composer to write and preview a message', onclick: openModal})
             )
           )
         )

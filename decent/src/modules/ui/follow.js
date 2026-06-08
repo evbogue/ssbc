@@ -58,6 +58,7 @@ exports.create = function (api) {
     var follows_you, you_follow
     var state = h('label')
     var label = h('span')
+    var actionLink
 
     var self_id = require('../../keys').id
     api.follower_of(self_id, id, function (err, f) {
@@ -78,10 +79,14 @@ exports.create = function (api) {
       )
 
       label.textContent = you_follow ? 'unfollow' : 'follow'
+      if (actionLink)
+        actionLink.title = you_follow
+          ? 'Stop following this person (publishes a public unfollow)'
+          : 'Follow this person to replicate their posts (publishes a public follow)'
     }
 
     return h('div', state,
-      h('a', {href:'#', onclick: function () {
+      actionLink = h('a', {href:'#', title: 'Follow or unfollow this person', onclick: function () {
         api.message_confirm({
           type: 'contact',
           contact: id,

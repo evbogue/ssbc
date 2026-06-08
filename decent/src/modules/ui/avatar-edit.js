@@ -21,11 +21,11 @@ var self_id = require('../../keys').id
 function crop (d, cb) {
   var canvas
   var controls = h('div.row.avatar_pic__controls',
-    h('button', 'okay', {onclick: function () {
+    h('button', 'okay', {title: 'Use the selected crop of this image', onclick: function () {
       if (!canvas || !canvas.selection) return cb(new Error('image not ready'))
       cb(null, canvas.selection.toDataURL())
     }}),
-    h('button', 'cancel', {onclick: function () {
+    h('button', 'cancel', {title: 'Cancel and keep your current picture', onclick: function () {
       cb(new Error('canceled'))
     }})
   )
@@ -139,7 +139,7 @@ exports.create = function (api) {
           })
           lb.show(el)
         }),
-        h('button', 'update', {onclick: function () {
+        h('button', 'update', {title: 'Save your name and picture changes', onclick: function () {
           if(name_input.value)
             name.textContent = name_input.value
 

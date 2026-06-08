@@ -220,8 +220,8 @@ exports.create = function (api) {
           dc,
           hintText ? h('p.profile-crop-hint', hintText) : null,
           h('div.profile-crop-buttons',
-            h('button.btn',             {type: 'button', onclick: doCancel},  'Cancel'),
-            h('button.btn.btn-primary', {type: 'button', onclick: doConfirm}, 'Use this banner')
+            h('button.btn',             {type: 'button', title: 'Cancel and keep your current banner', onclick: doCancel},  'Cancel'),
+            h('button.btn.btn-primary', {type: 'button', title: 'Set this image as your profile banner', onclick: doConfirm}, 'Use this banner')
           )
         )
         getLightbox().show(modal)
@@ -322,8 +322,8 @@ exports.create = function (api) {
       var input  = h('input.petname-input', {
         type: 'text', value: petnameName || '', placeholder: 'Your name for them'
       })
-      var save   = h('button.btn.btn-primary.btn-sm.petname-save',  {type: 'button'}, 'Save')
-      var cancel = h('button.btn.btn-sm.petname-cancel',            {type: 'button'}, 'Cancel')
+      var save   = h('button.btn.btn-primary.btn-sm.petname-save',  {type: 'button', title: 'Save your private nickname for this person'}, 'Save')
+      var cancel = h('button.btn.btn-sm.petname-cancel',            {type: 'button', title: 'Cancel editing the nickname'}, 'Cancel')
 
       function syncSave () { save.disabled = !input.value.trim() }
       function commit () {
@@ -359,7 +359,7 @@ exports.create = function (api) {
       petnameEl.innerHTML = ''
       petnameEl.classList.remove('petname--editing')
       petnameEl.appendChild(
-        h('button.petname-trigger', {type: 'button', onclick: renderPetnameEditing},
+        h('button.petname-trigger', {type: 'button', title: petnameName ? 'Edit your private nickname for this person' : 'Add a private nickname for this person', onclick: renderPetnameEditing},
           h('span.material-symbols-outlined', {style: {fontSize: '15px'}},
             petnameName ? 'edit' : 'add'),
           h('span.petname-trigger-label', petnameName ? 'Edit nickname' : 'Add nickname')
@@ -373,7 +373,7 @@ exports.create = function (api) {
     var editBtn
 
     if (isSelf) {
-      editBtn = h('button.btn.profile-edit-btn', {type: 'button', onclick: enterEdit},
+      editBtn = h('button.btn.profile-edit-btn', {type: 'button', title: 'Edit your name, picture, and bio', onclick: enterEdit},
         'Edit profile')
       actionsEl.appendChild(editBtn)
     } else {
@@ -403,8 +403,8 @@ exports.create = function (api) {
         h('label.profile-edit-label', 'Bio'),  bioInput
       ))
       editFormEl.appendChild(h('div.profile-edit-footer',
-        h('button.btn.btn-sm', {type: 'button', onclick: cancelEdit}, 'Cancel'),
-        h('button.btn.btn-primary.btn-sm', {type: 'button', onclick: saveEdit}, 'Save')
+        h('button.btn.btn-sm', {type: 'button', title: 'Discard your profile changes', onclick: cancelEdit}, 'Cancel'),
+        h('button.btn.btn-primary.btn-sm', {type: 'button', title: 'Publish your profile changes', onclick: saveEdit}, 'Save')
       ))
 
       // Banner: click to open crop modal, then upload 1600×534 JPEG
@@ -441,8 +441,8 @@ exports.create = function (api) {
             )
           )
           var btnRow = h('div.profile-crop-buttons',
-            h('button.btn', {type: 'button', onclick: function () { getLightbox().close() }}, 'Cancel'),
-            h('button.btn.btn-primary', {type: 'button', onclick: function () {
+            h('button.btn', {type: 'button', title: 'Cancel and keep your current picture', onclick: function () { getLightbox().close() }}, 'Cancel'),
+            h('button.btn.btn-primary', {type: 'button', title: 'Set this image as your profile picture', onclick: function () {
               if (!cropCanvas || !cropCanvas.selection) return
               // Draw selection onto a 512×512 canvas (spec-recommended size) and export as JPEG 85%
               var out = document.createElement('canvas')

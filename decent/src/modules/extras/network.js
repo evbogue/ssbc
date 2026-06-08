@@ -153,7 +153,7 @@ exports.create = function (api) {
                 ),
                 'source:'+peer.source,
                 h('pre', legacyToMultiServer(peer)),
-                h('button', 'connect', {onclick: function () {
+                h('button', 'connect', {title: 'Connect to this peer now', onclick: function () {
                   api.sbot_gossip_connect(peer, function (err) {
                     if(err) console.error(err)
                     else console.log('connected to', peer)

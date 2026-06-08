@@ -86,7 +86,7 @@ exports.create = function (api) {
           "you have been invited to join:", h('br'),
           h('code', data.invite)
         ),
-        h('button', 'accept', {onclick: attempt}),
+        h('button', 'accept', {title: 'Accept this invite and join the pub', onclick: attempt}),
         progress
       )
 

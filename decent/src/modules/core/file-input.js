@@ -63,7 +63,7 @@ module.exports = {
       })
 
       return h('span', [
-        h('label.btn', {htmlFor: id}, [
+        h('label.btn', {htmlFor: id, title: 'Attach a file or image to your message'}, [
           h('span.material-symbols-outlined.nav__icon', 'attach_file'),
           'Browse'
         ]),
