@@ -2845,6 +2845,30 @@ textarea {
   color: #536471;
 }
 
+/* Send actions (Message / Mention) on another user's profile. Buttons inherit
+ * Bootstrap's .btn styling here; this just lays them out and sizes the
+ * lightbox-hosted composer. */
+.profile-send-actions { display: inline-flex; align-items: center; gap: 8px; }
+.profile-action-btn { display: inline-flex; align-items: center; gap: 6px; }
+.profile-action-btn .material-symbols-outlined { font-size: 16px; }
+.profile-compose-lightbox { z-index: 1000; }
+.profile-compose {
+  width: min(92vw, 560px);
+  margin: 32px auto;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #cfd9de;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.profile-compose__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.profile-compose__title { font-weight: 700; font-size: 1.05em; }
+
 /* ── Git Forge UI Extensions ────────────────────────────────────────────── */
 
 .git-forge-header {

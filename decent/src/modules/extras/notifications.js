@@ -155,6 +155,34 @@ exports.create = function (api) {
         )
         div.setAttribute('data-icon', 'notifications')
 
+        // ssbski: offer to enable native browser notifications for mentions and
+        // private messages. Explicit opt-in (never prompt on load); the banner
+        // hides once the choice is made or where the API is unavailable.
+        var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+        if (isSsbski && typeof window !== 'undefined' && 'Notification' in window) {
+          var banner = h('div.notify-permission')
+          var renderBanner = function () {
+            banner.innerHTML = ''
+            if (Notification.permission === 'granted') { banner.style.display = 'none'; return }
+            if (Notification.permission === 'denied') {
+              banner.style.display = ''
+              banner.appendChild(h('span.notify-permission__text',
+                'Notifications are blocked. Enable them for this site in your browser settings.'))
+              return
+            }
+            banner.style.display = ''
+            banner.appendChild(h('span.notify-permission__text',
+              'Get notified about new mentions and private messages.'))
+            banner.appendChild(h('button.notify-permission__btn',
+              { onclick: function () {
+                  Notification.requestPermission().then(renderBanner, renderBanner)
+                } },
+              'Enable notifications'))
+          }
+          renderBanner()
+          content.appendChild(banner)
+        }
+
         emptyState(content, {
           icon: 'notifications',
           title: 'No notifications yet',

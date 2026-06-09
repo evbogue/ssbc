@@ -126,6 +126,10 @@ exports.create = function (api) {
       style: {height: opts.shrink === false ? '200px' : ''}
     })
 
+    // Optional seed text (e.g. a pre-filled @mention when composing from a
+    // profile). Set before suggest-box wires up so it's plain editable text.
+    if (opts.initialText) ta.value = opts.initialText
+
     if(opts.shrink !== false) {
       var blur
       ta.addEventListener('focus', function () {

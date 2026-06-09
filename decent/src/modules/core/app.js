@@ -9,7 +9,8 @@ module.exports = {
     avatar_image: 'first',
     avatar_name: 'first',
     sbot_log: 'first',
-    sbot_messagesByType: 'first'
+    sbot_messagesByType: 'first',
+    notify_start: 'first'
   },
   gives: 'app',
   create: function (api) {
@@ -327,6 +328,10 @@ module.exports = {
       }
 
       document.body.appendChild(screen)
+
+      // Start foreground mention/DM notifications (ssbski only; no-op elsewhere
+      // and until the user grants permission from the notifications tab).
+      api.notify_start()
 
       // Shell is mounted — fade out the ssbski launch splash (no-op elsewhere).
       if (isSsbski && typeof window.__ssbskiHideSplash === 'function')

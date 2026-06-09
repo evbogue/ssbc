@@ -13,6 +13,7 @@ module.exports = {
   "repost.js": require('./repost.js'),
   "like.js":  require('./like.js'),
   "markdown.js":  require('./markdown.js'),
+  "message-action.js":  require('./message-action.js'),
   "message-link.js":  require('./message-link.js'),
   "message-name.js":  require('./message-name.js'),
   "message.js":  require('./message.js'),

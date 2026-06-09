@@ -129,6 +129,31 @@ textarea, input, button { font-family: inherit; }
 
 button { border-radius: 999px; }
 
+/* Opt-in banner for native mention/DM notifications, shown atop the
+ * notifications tab until the user grants or denies permission. */
+.notify-permission {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px;
+  padding: 12px 16px;
+  background: var(--sky-blue-soft);
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+}
+.notify-permission__text { color: var(--sky-text); font-size: 14px; }
+.notify-permission__btn {
+  margin-left: auto;
+  padding: 6px 16px;
+  background: var(--sky-blue);
+  color: #fff;
+  border: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+.notify-permission__btn:hover { background: var(--sky-blue-hover); }
+
 /* Bootstrap used to supply the base button look; re-establish it for ssbski */
 .btn {
   display: inline-flex;
@@ -3102,6 +3127,63 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 
 /* The link wraps its label after a <br>; the pill wants it on one line. */
 .profile-card-actions a br { display: none; }
+
+/* ── Send actions (Message / Mention) on another user's profile ─────────── */
+.profile-send-actions { display: inline-flex; align-items: center; gap: 8px; }
+
+.profile-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.profile-action-btn:hover { background: var(--sky-hover); }
+.profile-action-btn.btn-primary {
+  border-color: transparent;
+  background: var(--sky-blue);
+  color: #fff;
+}
+.profile-action-btn.btn-primary:hover { background: var(--sky-blue-hover); }
+
+/* Composer hosted in a lightbox when messaging from a profile. The app's nav
+ * rail is position:fixed; z-index:50, so lift this lightbox above it. */
+.profile-compose-lightbox { z-index: 1000; }
+.profile-compose {
+  width: min(92vw, 560px);
+  margin: 32px auto;
+  padding: 16px;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.profile-compose .compose { margin: 0; }
+.profile-compose__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.profile-compose__title { font-weight: 800; font-size: 1.05em; color: var(--sky-text); }
+.profile-compose__close {
+  padding: 5px 14px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.profile-compose__close:hover { background: var(--sky-hover); }
 
 /* ── Petname control (your name for another feed) ───────────────────────── */
 /* Unstyled in ssbski before; the input also rendered unconditionally. Hide it
