@@ -442,10 +442,39 @@ button { border-radius: 999px; }
 .navbar-avatar:hover { background: var(--sky-hover); }
 
 .navbar-avatar img {
+  flex: 0 0 auto;
   width: 40px;
   height: 40px;
   border-radius: 50%;
   border: 1px solid var(--sky-border);
+}
+
+/* Account chip text beside the avatar. min-width:0 lets the flex child shrink
+ * so long names truncate instead of widening the fixed-width rail. */
+.navbar-avatar__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.navbar-avatar__name,
+.navbar-avatar__handle {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.navbar-avatar__name {
+  font-weight: 700;
+  color: var(--sky-text);
+}
+
+.navbar-avatar__handle {
+  font-size: 0.85rem;
+  color: var(--sky-muted);
 }
 
 /* ============================================================
@@ -1332,7 +1361,9 @@ button { border-radius: 999px; }
 
 .lightbox__content {
   max-width: 600px;
-  margin: 48px auto;
+  /* Clear the 53px sticky feed-header so the modal sits below it, not tucked
+   * under its edge. Bottom stays smaller so tall modals still breathe. */
+  margin: 88px auto 48px;
   padding: 0 16px;
 }
 
@@ -1424,9 +1455,13 @@ button { border-radius: 999px; }
 /* Preview/confirm step (the Publish/Cancel buttons under the rendered message).
  * These render as a raw Bootstrap .row inside the message-card, so without this
  * they collapse flush against the message body and against each other. Give the
- * row real separation from the body and a gap between the two buttons. */
+ * row real separation from the body and a gap between the two buttons.
+ * row-reverse right-packs the group and puts Publish (first in the DOM) at the
+ * far right with Cancel to its left, matching the compose step where the primary
+ * Preview button sits at the bottom-right. */
 .message-confirm__controls {
   display: flex;
+  flex-direction: row-reverse;
   align-items: center;
   gap: 8px;
   margin-top: 14px;
@@ -1680,6 +1715,15 @@ button { border-radius: 999px; }
 .git-clone-command { color: var(--sky-text); font-weight: 600; }
 
 .lightbox { background: rgba(15, 20, 25, 0.62); }
+
+/* hyperlightbox centres .lightbox__content with margin:auto against the whole
+ * window, so the modal drifts left and overlaps the fixed navbar. Inset the
+ * centring box by the rail/right-column widths so popovers sit centred in the
+ * content column. The backdrop still fills the screen (padding shows the dim). */
+.lightbox {
+  padding-left: var(--sky-rail-width);
+  padding-right: var(--sky-right-width);
+}
 
 /* Avatar size classes (used by repos, lists, embeds, etc.). ssbski never
  * loaded these from Decent, so unsized avatars rendered at natural size. */
@@ -3223,6 +3267,7 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   .nav__label { display: none; }
 
   .navbar-avatar { justify-content: center; padding: 8px 0; }
+  .navbar-avatar__meta { display: none; }
 
   .compose-trigger {
     left: 14px;
@@ -3236,12 +3281,16 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 /* Drop the right column */
 @media (max-width: 1100px) {
   .navbar .pull-right { display: none; }
+  .lightbox { padding-right: 0; }
   .screen__content,
   .screen__content.column { margin-right: 0; }
 }
 
 /* Mobile: the left rail becomes a bottom tab bar (Bluesky mobile layout) */
 @media (max-width: 600px) {
+  /* Rail is now a 56px bottom bar: drop the left inset, clear the bar height. */
+  .lightbox { padding-left: 0; padding-bottom: 56px; }
+
   .navbar {
     top: auto;
     bottom: 0;

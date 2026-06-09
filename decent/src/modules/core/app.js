@@ -101,11 +101,20 @@ module.exports = {
         }
       })
 
+      // ssbski fills the bottom-of-rail pill with a Bluesky-style account chip
+      // (avatar + display name + short handle); Decent keeps the bare avatar in
+      // its horizontal header, so the name/handle only render for the skin.
       var profileLink = h('a.navbar-avatar', {
         href: '#' + selfId,
         title: 'Profile',
         'aria-label': 'Profile'
-      }, api.avatar_image(selfId, 'thumbnail'))
+      }, [
+        api.avatar_image(selfId, 'thumbnail'),
+        isSsbski ? h('span.navbar-avatar__meta',
+          h('span.navbar-avatar__name', api.avatar_name(selfId)),
+          h('span.navbar-avatar__handle', selfId.slice(0, 9) + '…')
+        ) : null
+      ])
 
       // ssbski brand: hermit-crab logo + wordmark at the top of the rail. Decent
       // keeps its own header, so this only renders for the ssbski skin.
