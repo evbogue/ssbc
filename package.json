@@ -20,8 +20,9 @@
     "sync:scuttlebot-docs": "bash scripts/sync-scuttlebot-docs.sh",
     "gen:api-reference": "node scripts/gen-api-reference.js",
     "prepublishOnly": "npm test",
-    "test": "set -e; for t in test/*.js; do echo TEST $t; node $t; done",
-    "test:pretty": "npm run test | tap-spec",
+    "test": "tape test/*.js",
+    "test:pretty": "npm test | tap-spec",
+    "lint": "eslint lib plugins bin.js index.js",
     "reinstall": "rm -rf node_modules package-lock.json npm-shrinkwrap.json; export npm_config_package_lock=true; npm install && npm dedupe && npm shrinkwrap",
     "coverage": "nyc --reporter=lcov npm test"
   },
@@ -86,6 +87,7 @@
   },
   "devDependencies": {
     "browserify": "^16.5.2",
+    "eslint": "^8.57.0",
     "cat-names": "^2.0.0",
     "dog-names": "~1.0.2",
     "hexpp": "^2.0.0",
@@ -118,6 +120,6 @@
       "node_modules/{ssb-*,flume*,secret-stack,muxrpc,multiserver}/{util,lib,frame,indexes}/*.js"
     ]
   },
-  "author": "Paul Frazee <pfrazee@gmail.com>",
+  "author": "Ev Bogue <ev@evbogue.com>",
   "license": "MIT"
 }
