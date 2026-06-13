@@ -4,43 +4,23 @@
 **Origin:** This is a Fable-generated work order — produced by Claude Fable 5 from a full-project review on 2026-06-12. Every finding below was verified against the code (and, where noted, by experiment) before being written down.
 **Intent:** Fix the correctness bugs, close the public-instance security gaps, and clear the hygiene debt found in the review. No feature work. Each chunk below is a discrete, shippable change per the AGENTS.md rhythm: build, test, commit, push both remotes.
 
+> **Already landed:** the anonymous `search()` FTS5 crash (a remotely-triggerable uncaught throw — a lone `"` raised `unterminated string` out of `MATCH`) was fixed separately in `lib/db.js`: queries are now sanitized into quoted-phrase terms, the limit is clamped, and a try/catch backstops the handler. Covered by `test/search.js`. That chunk has been removed from the list below.
+
 ## Priorities at a glance
 
-1. **Chunk 1 — anonymous `search()` crash** (bug, remotely triggerable)
-2. **Chunk 2 — public-instance write exposure** (security: unauthenticated git push and blob upload)
-3. **Chunk 3 — CI on GitHub Actions** (nothing runs the suite on push today)
-4. **Chunk 4 — db.js write-path integrity** (transactions, FTS cleanup on `del`, hoisted statement)
-5. **Chunk 5 — stream memory behavior** (`.all()` → `iterate()`, `links()` limit)
-6. **Chunk 6 — `ssb-query` honesty** (mounted but silently returns empty)
-7. **Chunk 7 — dependency and repo hygiene** (unused devDeps, dead `.travis.yml`, stray files, small nits)
-8. **Chunk 8 (optional) — native crypto opt-in** (performance)
+1. **Chunk 1 — public-instance write exposure** (security: unauthenticated git push and blob upload)
+2. **Chunk 2 — CI on GitHub Actions** (nothing runs the suite on push today)
+3. **Chunk 3 — db.js write-path integrity** (transactions, FTS cleanup on `del`, hoisted statement)
+4. **Chunk 4 — stream memory behavior** (`.all()` → `iterate()`, `links()` limit)
+5. **Chunk 5 — `ssb-query` honesty** (mounted but silently returns empty)
+6. **Chunk 6 — dependency and repo hygiene** (unused devDeps, dead `.travis.yml`, stray files, small nits)
+7. **Chunk 7 (optional) — native crypto opt-in** (performance)
 
-Chunks 1–3 are the ones to do first. 4–7 are independent of each other and can land in any order. 8 needs a decision from Ev before starting.
+Chunks 1–2 are the ones to do first. 3–6 are independent of each other and can land in any order. 7 needs a decision from Ev before starting.
 
 ---
 
-## Chunk 1 — `search()` can be crashed by any anonymous peer
-
-**Where:** `lib/db.js` — `search()` (~line 652), permissions list (~line 750).
-
-`search()` passes the caller's query string straight into an FTS5 `MATCH`:
-
-```js
-).all(opts.query, limit)
-```
-
-FTS5 throws synchronously on malformed query syntax — verified: a lone `"` raises `unterminated string` from `.all()`. There is no try/catch, and `search` is in the **anonymous** permission allowlist, so any connected peer or any browser client can drive an uncaught throw into the RPC layer.
-
-**Fix:**
-
-- Wrap the prepare/all in try/catch; on error, `cb(err)` with a clean message (do not leak the SQLite error verbatim if it includes the query).
-- Decide the semantics: either surface FTS syntax errors to the caller as an error, or sanitize the input into a safe quoted-phrase query (escape embedded `"` and wrap each term). Sanitizing is friendlier for UI search boxes; erroring is simpler. Either is acceptable — pick one and document it in `docs/api.md` under `search`.
-
-**Test:** add cases to the db test coverage: a malformed query (`"`, `(`, `NEAR(`) must not throw and must call back; a normal query still returns hits; an empty query returns `[]` (existing behavior).
-
-**Done when** a malformed search query from an anonymous RPC client gets an error (or empty result) callback and the server keeps running.
-
-## Chunk 2 — unauthenticated writes reachable on public instances
+## Chunk 1 — unauthenticated writes reachable on public instances
 
 **Where:** `plugins/git-server.js` (`handleReceivePack`), `lib/ui-server.js` (`handleBlobAdd`, request routing in `handleRequest`).
 
@@ -63,7 +43,7 @@ Two HTTP endpoints mutate the node with no authentication:
 
 **Done when** a default-configured node refuses forwarded/non-loopback pushes and blob uploads, decent.evbogue.com can be redeployed with no proxy-level blocklist required, and the existing local `git push ssb` workflow still works.
 
-## Chunk 3 — real CI
+## Chunk 2 — real CI
 
 **Where:** new `.github/workflows/test.yml`; delete `.travis.yml`.
 
@@ -77,7 +57,7 @@ Two HTTP endpoints mutate the node with no authentication:
 
 **Done when** the badge-less minimum is true: a push to GitHub runs `npm test` and fails the commit status when the suite fails.
 
-## Chunk 4 — db.js write-path integrity
+## Chunk 3 — db.js write-path integrity
 
 **Where:** `lib/db.js` — `storeKVT()`, `del()`, `createWriteStream()`, `stmts`.
 
@@ -92,7 +72,7 @@ Three related fixes, one chunk:
 
 **Done when** a message write is atomic, replication writes are batched, `del` leaves no FTS residue, and no statement is prepared inside the per-message path.
 
-## Chunk 5 — stream memory behavior
+## Chunk 4 — stream memory behavior
 
 **Where:** `lib/db.js` — `createLogStream`, `createHistoryStream`, `createFeedStream`, `messagesByType`, `links`, `buildSource`.
 
@@ -107,7 +87,7 @@ Every stream method materializes its full result set with `.all()` and JSON-pars
 
 **Done when** non-live streams are lazy end-to-end and `links` honors `limit`. (If the iterate/write interleaving caveat proves nasty, the fallback is chunked `LIMIT/OFFSET` paging — lazy enough, boring, and safe.)
 
-## Chunk 6 — `ssb-query` is mounted but silently broken
+## Chunk 5 — `ssb-query` is mounted but silently broken
 
 **Where:** `lib/db.js` `_flumeUse` stub (~line 694), `lib/builtin-plugins.js` (~line 46), `docs/api-reference.md` generation.
 
@@ -120,7 +100,7 @@ Every stream method materializes its full result set with `.all()` and JSON-pars
 
 **Done when** calling `query.read` either works or fails loudly with a pointer to the supported alternative — it never again returns a silent empty stream — and the API reference reflects reality.
 
-## Chunk 7 — dependency and repo hygiene
+## Chunk 6 — dependency and repo hygiene
 
 Small, mechanical, one commit (or a few):
 
@@ -133,7 +113,7 @@ Small, mechanical, one commit (or a few):
 
 **Done when** `npm install && npm test` is green with the trimmed dependency set and the working tree has no stray screenshots.
 
-## Chunk 8 (optional, needs Ev's sign-off) — native crypto opt-in
+## Chunk 7 (optional, needs Ev's sign-off) — native crypto opt-in
 
 **Where:** `bin.js:4` (`process.env.CHLORIDE_JS = process.env.CHLORIDE_JS || '1'`), `.npmrc` (`optional=false`).
 
@@ -157,6 +137,6 @@ The zero-native-deps install is a core project thesis ("no more build failures o
 
 ## Done when (whole work order)
 
-- Chunks 1–7 are landed as individual commits on `main`, pushed to both `origin` and `ssb`, each leaving `npm test` green.
-- Chunk 8 has an explicit go/no-go decision from Ev recorded in this file (edit the Status line or strike the section).
+- Chunks 1–6 are landed as individual commits on `main`, pushed to both `origin` and `ssb`, each leaving `npm test` green.
+- Chunk 7 has an explicit go/no-go decision from Ev recorded in this file (edit the Status line or strike the section).
 - This file's **Status** line is updated to `Complete` and the file is either kept as a record or removed in the final commit, per Ev's preference for finished work orders (precedent: commit `0df8df1` removed finished work orders).
