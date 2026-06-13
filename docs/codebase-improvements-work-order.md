@@ -4,46 +4,26 @@
 **Origin:** This is a Fable-generated work order — produced by Claude Fable 5 from a full-project review on 2026-06-12. Every finding below was verified against the code (and, where noted, by experiment) before being written down.
 **Intent:** Fix the correctness bugs, close the public-instance security gaps, and clear the hygiene debt found in the review. No feature work. Each chunk below is a discrete, shippable change per the AGENTS.md rhythm: build, test, commit, push both remotes.
 
-> **Already landed:** the anonymous `search()` FTS5 crash (a remotely-triggerable uncaught throw — a lone `"` raised `unterminated string` out of `MATCH`) was fixed separately in `lib/db.js`: queries are now sanitized into quoted-phrase terms, the limit is clamped, and a try/catch backstops the handler. Covered by `test/search.js`. That chunk has been removed from the list below.
+> **Already landed (1/2):** the anonymous `search()` FTS5 crash (a remotely-triggerable uncaught throw — a lone `"` raised `unterminated string` out of `MATCH`) was fixed in `lib/db.js`: queries are now sanitized into quoted-phrase terms, the limit is clamped, and a try/catch backstops the handler. Covered by `test/search.js`.
+>
+> **Already landed (2/2):** the unauthenticated public-instance write exposure (git `git-receive-pack` and `POST /blobs/add`) is closed by a top-level `writes: 'local' | 'open' | 'off'` config gate (default `'local'`). Writes are honored only from a loopback peer with no `X-Forwarded-*` headers; the git-push refusal fires at the `info/refs` handshake; the `Access-Control-Allow-Origin: *` header was dropped from `/blobs/add`. Logic in `lib/ui-server.js` (`writesAllowed`) + `plugins/git-server.js`; documented in `docs/architecture.md`; covered by `test/write-policy.js`.
+>
+> Both chunks have been removed from the list below.
 
 ## Priorities at a glance
 
-1. **Chunk 1 — public-instance write exposure** (security: unauthenticated git push and blob upload)
-2. **Chunk 2 — CI on GitHub Actions** (nothing runs the suite on push today)
-3. **Chunk 3 — db.js write-path integrity** (transactions, FTS cleanup on `del`, hoisted statement)
-4. **Chunk 4 — stream memory behavior** (`.all()` → `iterate()`, `links()` limit)
-5. **Chunk 5 — `ssb-query` honesty** (mounted but silently returns empty)
-6. **Chunk 6 — dependency and repo hygiene** (unused devDeps, dead `.travis.yml`, stray files, small nits)
-7. **Chunk 7 (optional) — native crypto opt-in** (performance)
+1. **Chunk 1 — CI on GitHub Actions** (nothing runs the suite on push today)
+2. **Chunk 2 — db.js write-path integrity** (transactions, FTS cleanup on `del`, hoisted statement)
+3. **Chunk 3 — stream memory behavior** (`.all()` → `iterate()`, `links()` limit)
+4. **Chunk 4 — `ssb-query` honesty** (mounted but silently returns empty)
+5. **Chunk 5 — dependency and repo hygiene** (unused devDeps, dead `.travis.yml`, stray files, small nits)
+6. **Chunk 6 (optional) — native crypto opt-in** (performance)
 
-Chunks 1–2 are the ones to do first. 3–6 are independent of each other and can land in any order. 7 needs a decision from Ev before starting.
+Chunk 1 (CI) is the one to do first. 2–5 are independent of each other and can land in any order. 6 needs a decision from Ev before starting.
 
 ---
 
-## Chunk 1 — unauthenticated writes reachable on public instances
-
-**Where:** `plugins/git-server.js` (`handleReceivePack`), `lib/ui-server.js` (`handleBlobAdd`, request routing in `handleRequest`).
-
-Two HTTP endpoints mutate the node with no authentication:
-
-- `POST /git/:repoId/git-receive-pack` — accepts a push from anyone who can reach the port and **publishes `git-update` messages signed by the node's own key**. On `127.0.0.1` this is the intended dogfooding workflow. Behind the reverse proxies that serve decent.evbogue.com and ssbski.evbogue.com, it means anyone on the internet may be able to push commits into hosted repos *as the node identity*, unless the proxy blocks it.
-- `POST /blobs/add` — unauthenticated blob upload (disk-fill vector), and it sets `Access-Control-Allow-Origin: *`, so even a drive-by webpage can upload blobs through a visitor's local node.
-
-**Fix:**
-
-- Add a config gate, e.g. `decent.writes: 'local' | 'open' | 'off'` (default `'local'`).
-  - `'local'`: mutating endpoints (`git-receive-pack`, the receive-pack `info/refs` advertisement, `/blobs/add`) are only honored when the request arrives from a loopback peer **and** is not forwarded (`requestIsForwarded(req)` already exists in `ui-server.js` — reuse it). Forwarded or non-loopback requests get `403`.
-  - `'open'`: today's behavior, for deployments that intentionally accept pushes.
-  - `'off'`: read-only node; all mutating endpoints 403.
-- For the receive-pack advertisement specifically: when writes are denied, omit `git-receive-pack` from `info/refs` (return 403 on `?service=git-receive-pack`) so `git push` fails with a clear message instead of failing mid-pack.
-- Drop `Access-Control-Allow-Origin: *` from `/blobs/add` (keep it on `/blobs/get` — public reads are fine).
-- Document the new config key in `docs/api.md` / `docs/overview.md` wherever `decent.*` config is described, and call it out in the README section about public instances.
-
-**Test:** extend `test/git-server-protocol.js` (or a new `test/git-server-auth.js`): with `writes: 'local'`, a push with `X-Forwarded-Host` set is refused with 403 and publishes nothing; without forwarding headers from loopback it succeeds; with `writes: 'off'` both fail; `/blobs/add` follows the same matrix.
-
-**Done when** a default-configured node refuses forwarded/non-loopback pushes and blob uploads, decent.evbogue.com can be redeployed with no proxy-level blocklist required, and the existing local `git push ssb` workflow still works.
-
-## Chunk 2 — real CI
+## Chunk 1 — real CI
 
 **Where:** new `.github/workflows/test.yml`; delete `.travis.yml`.
 
@@ -57,7 +37,7 @@ Two HTTP endpoints mutate the node with no authentication:
 
 **Done when** the badge-less minimum is true: a push to GitHub runs `npm test` and fails the commit status when the suite fails.
 
-## Chunk 3 — db.js write-path integrity
+## Chunk 2 — db.js write-path integrity
 
 **Where:** `lib/db.js` — `storeKVT()`, `del()`, `createWriteStream()`, `stmts`.
 
@@ -72,7 +52,7 @@ Three related fixes, one chunk:
 
 **Done when** a message write is atomic, replication writes are batched, `del` leaves no FTS residue, and no statement is prepared inside the per-message path.
 
-## Chunk 4 — stream memory behavior
+## Chunk 3 — stream memory behavior
 
 **Where:** `lib/db.js` — `createLogStream`, `createHistoryStream`, `createFeedStream`, `messagesByType`, `links`, `buildSource`.
 
@@ -87,7 +67,7 @@ Every stream method materializes its full result set with `.all()` and JSON-pars
 
 **Done when** non-live streams are lazy end-to-end and `links` honors `limit`. (If the iterate/write interleaving caveat proves nasty, the fallback is chunked `LIMIT/OFFSET` paging — lazy enough, boring, and safe.)
 
-## Chunk 5 — `ssb-query` is mounted but silently broken
+## Chunk 4 — `ssb-query` is mounted but silently broken
 
 **Where:** `lib/db.js` `_flumeUse` stub (~line 694), `lib/builtin-plugins.js` (~line 46), `docs/api-reference.md` generation.
 
@@ -100,7 +80,7 @@ Every stream method materializes its full result set with `.all()` and JSON-pars
 
 **Done when** calling `query.read` either works or fails loudly with a pointer to the supported alternative — it never again returns a silent empty stream — and the API reference reflects reality.
 
-## Chunk 6 — dependency and repo hygiene
+## Chunk 5 — dependency and repo hygiene
 
 Small, mechanical, one commit (or a few):
 
@@ -113,7 +93,7 @@ Small, mechanical, one commit (or a few):
 
 **Done when** `npm install && npm test` is green with the trimmed dependency set and the working tree has no stray screenshots.
 
-## Chunk 7 (optional, needs Ev's sign-off) — native crypto opt-in
+## Chunk 6 (optional, needs Ev's sign-off) — native crypto opt-in
 
 **Where:** `bin.js:4` (`process.env.CHLORIDE_JS = process.env.CHLORIDE_JS || '1'`), `.npmrc` (`optional=false`).
 
@@ -137,6 +117,6 @@ The zero-native-deps install is a core project thesis ("no more build failures o
 
 ## Done when (whole work order)
 
-- Chunks 1–6 are landed as individual commits on `main`, pushed to both `origin` and `ssb`, each leaving `npm test` green.
-- Chunk 7 has an explicit go/no-go decision from Ev recorded in this file (edit the Status line or strike the section).
+- Chunks 1–5 are landed as individual commits on `main`, pushed to both `origin` and `ssb`, each leaving `npm test` green.
+- Chunk 6 has an explicit go/no-go decision from Ev recorded in this file (edit the Status line or strike the section).
 - This file's **Status** line is updated to `Complete` and the file is either kept as a record or removed in the final commit, per Ev's preference for finished work orders (precedent: commit `0df8df1` removed finished work orders).

@@ -120,11 +120,38 @@ delegate to `lib/ui-server.js` — and differs only in the stylesheet it serves
 
 Important routes include:
 - `/` → Decent UI
-- `/blobs/add` → blob upload
+- `/blobs/add` → blob upload *(write)*
 - `/blobs/get/:hash` → blob fetch
 - `/docs` → current documentation (canonical Markdown pages)
 - `/docs/archive` → historical scuttlebot manual
-- `/git/...` → git smart HTTP behavior
+- `/git/...` → git smart HTTP behavior (`git-upload-pack` reads; `git-receive-pack` *writes*)
+
+### Write policy
+
+The HTTP endpoints that mutate the node — `POST /blobs/add` and git
+`git-receive-pack` (push, plus its `info/refs` capability advertisement) —
+are governed by the top-level config key `writes`:
+
+- `'local'` *(default)* — writes are honored only from a **genuinely local**
+  request: a loopback TCP peer with no `X-Forwarded-*` headers. A request
+  arriving through a reverse proxy connects from loopback too, so the absence
+  of forwarding headers is what distinguishes the operator's own machine from
+  the outside world. This is the correct default for a public instance: you
+  author by pushing to your *own* local sbot, and the result reaches the
+  network through SSB replication — the internet only ever needs to read.
+- `'open'` — any request that reaches the endpoint may write. For a node
+  intentionally run as a push-accepting pub.
+- `'off'` — all write endpoints return `403`. A pure read-only mirror.
+
+When a write is refused the server responds `403`; for git push the refusal
+fires at the `info/refs` handshake so `git push` fails immediately with a clean
+message rather than partway through the pack. The policy is evaluated in
+`lib/ui-server.js` (`writesAllowed`) and enforced there for `/blobs/add` and in
+`plugins/git-server.js` for the git routes. Set it in `~/.ssb/config`:
+
+```json
+{ "writes": "local" }
+```
 
 ## 5. Frontend
 

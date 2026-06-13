@@ -1328,9 +1328,13 @@ module.exports = {
   }
 }
 
-// Called from decent-ui.js to handle /git/* requests.
+// Called from lib/ui-server.js to handle /git/* requests.
+// `canWrite` is the per-request write verdict computed by the UI server's write
+// policy; when false, the mutating routes (receive-pack and its advertisement)
+// are refused with 403 while reads (clone/fetch, JSON API, raw blobs) proceed.
 // Returns true if the request was handled, false otherwise.
-module.exports.handleGitRequest = function (sbot, req, res) {
+module.exports.handleGitRequest = function (sbot, req, res, canWrite) {
+  if (canWrite === undefined) canWrite = false
   // Try JSON API routes first (GET only, no auth needed)
   if (req.method === 'GET' || req.method === 'HEAD') {
     const json = parseJsonRoute(req)
@@ -1362,6 +1366,17 @@ module.exports.handleGitRequest = function (sbot, req, res) {
   if (!match) return false
 
   const { repoId, endpoint, service } = match
+
+  // git push is a write. Refuse it — and its capability advertisement — unless
+  // the request is permitted to write, so `git push` fails immediately at the
+  // info/refs handshake with a clean 403 rather than partway through the pack.
+  const isWrite = service === 'git-receive-pack'
+  if (isWrite && !canWrite) {
+    res.statusCode = 403
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.end('Pushing to this node is not permitted')
+    return true
+  }
 
   if (endpoint === 'info/refs') {
     handleInfoRefs(sbot, repoId, service, res)
