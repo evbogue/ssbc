@@ -567,7 +567,7 @@ const MIME = {
   pdf: 'application/pdf', wasm: 'application/wasm',
   js: 'text/javascript', ts: 'text/javascript', mjs: 'text/javascript',
   json: 'application/json', css: 'text/css',
-  html: 'text/html', xml: 'text/xml', svg: 'image/svg+xml',
+  html: 'text/html', xml: 'text/xml',
   txt: 'text/plain', md: 'text/plain',
   sh: 'text/plain', py: 'text/plain', rb: 'text/plain', go: 'text/plain',
   rs: 'text/plain', c: 'text/plain', h: 'text/plain', cpp: 'text/plain'
