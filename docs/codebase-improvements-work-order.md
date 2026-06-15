@@ -1,6 +1,6 @@
 # Work Order: Codebase improvement pass
 
-**Status:** Ready to implement
+**Status:** Chunks 1–5 complete; awaiting Chunk 6 go/no-go decision
 **Origin:** This is a Fable-generated work order — produced by Claude Fable 5 from a full-project review on 2026-06-12. Every finding below was verified against the code (and, where noted, by experiment) before being written down.
 **Intent:** Fix the correctness bugs, close the public-instance security gaps, and clear the hygiene debt found in the review. No feature work. Each chunk below is a discrete, shippable change per the AGENTS.md rhythm: build, test, commit, push both remotes.
 
@@ -10,16 +10,14 @@
 >
 > Both chunks have been removed from the list below.
 
-## Priorities at a glance
+## Completion record
 
-1. **Chunk 1 — CI on GitHub Actions** (nothing runs the suite on push today)
-2. **Chunk 2 — db.js write-path integrity** (transactions, FTS cleanup on `del`, hoisted statement)
-3. **Chunk 3 — stream memory behavior** (`.all()` → `iterate()`, `links()` limit)
-4. **Chunk 4 — `ssb-query` honesty** (mounted but silently returns empty)
-5. **Chunk 5 — dependency and repo hygiene** (unused devDeps, dead `.travis.yml`, stray files, small nits)
-6. **Chunk 6 (optional) — native crypto opt-in** (performance)
-
-Chunk 1 (CI) is the one to do first. 2–5 are independent of each other and can land in any order. 6 needs a decision from Ev before starting.
+- [x] **Chunk 1 — CI on GitHub Actions:** `bc550d0` (`Add GitHub Actions CI`)
+- [x] **Chunk 2 — db.js write-path integrity:** `9c30ad5` (`Make SQLite writes atomic`)
+- [x] **Chunk 3 — stream memory behavior:** `74c635a` (`Stream SQLite rows lazily`)
+- [x] **Chunk 4 — `ssb-query` honesty:** `0928e6e` (`Make query.read fail loudly`)
+- [x] **Chunk 5 — dependency and repo hygiene:** `7e9f1d2` (`Clean dependency and repository hygiene`)
+- [ ] **Chunk 6 (optional) — native crypto opt-in:** awaiting Ev's go/no-go decision
 
 ---
 
