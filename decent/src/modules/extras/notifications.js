@@ -172,6 +172,23 @@ exports.create = function (api) {
               (isError ? ' notify-permission__status--error' : '')
           }
 
+          function renderNotificationCard(iconName, title, description, action) {
+            banner.innerHTML = ''
+            banner.appendChild(h('span.material-symbols-outlined.notify-permission__icon',
+              {'aria-hidden': 'true'}, iconName))
+            banner.appendChild(h('div.notify-permission__body',
+              h('strong.notify-permission__title', title),
+              h('span.notify-permission__description', description),
+              deliveryStatus
+            ))
+            if (action) banner.appendChild(h('div.notify-permission__actions', action))
+          }
+
+          function primaryButton(label, onclick) {
+            return h('button.btn.btn-primary.notify-permission__action',
+              {type: 'button', onclick: onclick}, label)
+          }
+
           function showTestNotification() {
             var opts = {
               body: 'Desktop notifications are working. New activity will appear like this while the app is open.',
@@ -202,31 +219,35 @@ exports.create = function (api) {
           }
 
           var renderBanner = function () {
-            banner.innerHTML = ''
+            setDeliveryStatus('')
             if (Notification.permission === 'granted') {
               banner.style.display = ''
-              banner.appendChild(h('span.notify-permission__text',
-                'Desktop notifications are enabled. Popups arrive while this app is open.'))
-              banner.appendChild(h('button.notify-permission__btn',
-                { onclick: showTestNotification },
-                'Send test notification'))
-              banner.appendChild(deliveryStatus)
+              renderNotificationCard(
+                'notifications_active',
+                'Desktop notifications are on',
+                'New activity will appear as a popup while this app is open.',
+                primaryButton('Send test notification', showTestNotification)
+              )
               return
             }
             if (Notification.permission === 'denied') {
               banner.style.display = ''
-              banner.appendChild(h('span.notify-permission__text',
-                'Desktop notifications are blocked for this site. Enable them in your browser settings, then reload.'))
+              renderNotificationCard(
+                'notifications_off',
+                'Desktop notifications are blocked',
+                'Enable notifications for this site in your browser settings, then reload.'
+              )
               return
             }
             banner.style.display = ''
-            banner.appendChild(h('span.notify-permission__text',
-              'Get desktop notifications for mentions, replies, likes, follows, and git activity.'))
-            banner.appendChild(h('button.notify-permission__btn',
-              { onclick: function () {
+            renderNotificationCard(
+              'notifications',
+              'Never miss new activity',
+              'Get desktop popups for mentions, replies, likes, follows, and git activity.',
+              primaryButton('Enable notifications', function () {
                   Notification.requestPermission().then(renderBanner, renderBanner)
-                } },
-              'Enable notifications'))
+                })
+            )
           }
           renderBanner()
           content.appendChild(banner)

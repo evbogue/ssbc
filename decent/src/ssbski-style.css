@@ -129,36 +129,52 @@ textarea, input, button { font-family: inherit; }
 
 button { border-radius: 999px; }
 
-/* Opt-in banner for native mention/DM notifications, shown atop the
- * notifications tab until the user grants or denies permission. */
+/* Desktop notification settings card. Buttons reuse .btn/.btn-primary. */
 .notify-permission {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 14px;
   margin: 12px;
-  padding: 12px 16px;
-  background: var(--sky-blue-soft);
+  padding: 16px;
+  background: var(--sky-surface);
   border: 1px solid var(--sky-border);
-  border-radius: 12px;
+  border-radius: 16px;
+  box-shadow: var(--sky-shadow-sm);
 }
-.notify-permission__text { color: var(--sky-text); font-size: 14px; }
-.notify-permission__btn {
-  margin-left: auto;
-  padding: 6px 16px;
-  background: var(--sky-blue);
-  color: #fff;
-  border: 0;
-  font-weight: 600;
-  cursor: pointer;
+.notify-permission__icon {
+  color: var(--sky-blue);
+  font-size: 28px;
 }
-.notify-permission__btn:hover { background: var(--sky-blue-hover); }
+.notify-permission__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.notify-permission__title { color: var(--sky-text); font-size: 15px; }
+.notify-permission__description { color: var(--sky-text-secondary); font-size: 14px; }
+.notify-permission__actions { justify-self: end; }
+.notify-permission__action { white-space: nowrap; }
 .notify-permission__status {
-  flex-basis: 100%;
+  display: block;
+  margin-top: 5px;
   color: var(--sky-text-secondary);
   font-size: 12px;
 }
+.notify-permission__status:empty { display: none; }
 .notify-permission__status--error { color: #d93025; }
+
+@media (max-width: 640px) {
+  .notify-permission {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .notify-permission__actions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+  .notify-permission__action { width: 100%; }
+}
 
 /* Bootstrap used to supply the base button look; re-establish it for ssbski */
 .btn {
