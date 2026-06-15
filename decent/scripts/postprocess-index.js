@@ -4,6 +4,11 @@ var path = require('path')
 var htmlPath = path.join(__dirname, '..', 'build', 'index.html')
 if (!fs.existsSync(htmlPath)) process.exit(0)
 
+var iconsSource = path.join(__dirname, '..', 'src', 'icons')
+var iconsBuild = path.join(__dirname, '..', 'build', 'icons')
+if (fs.existsSync(iconsSource))
+  fs.cpSync(iconsSource, iconsBuild, {recursive: true})
+
 var html = fs.readFileSync(htmlPath, 'utf8')
 if (html.indexOf('decent-preload') !== -1) process.exit(0)
 

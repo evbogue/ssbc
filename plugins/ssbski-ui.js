@@ -17,7 +17,9 @@ exports.init = function (sbot, config) {
     defaultPort: DEFAULT_PORT,
     stylesheetName: 'ssbski-style.css',
     buildDir,
-    launchMessage: 'ssbski launched at'
+    launchMessage: 'ssbski launched at',
+    appName: 'ssbski',
+    themeColor: '#1185fe'
   })
   return { ssbski: { port: result.port, host: result.host } }
 }

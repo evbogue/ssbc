@@ -18,7 +18,9 @@ exports.init = function (sbot, config) {
     stylesheetName: 'style.css',
     buildDir,
     launchMessage: 'Decent launched at',
-    useWsPortFallback: true
+    useWsPortFallback: true,
+    appName: 'Decent',
+    themeColor: '#243447'
   })
   return { decent: { port: result.port, host: result.host } }
 }

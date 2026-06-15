@@ -1,19 +1,15 @@
 'use strict'
-// Minimal foreground browser notifications for ssbski: ping the user when a new
-// mention or private message arrives while an ssbski tab is open. No service
-// worker, no manifest, no push server — just the Notification API driven by the
-// same live log + unbox plumbing the notifications tab already uses.
-//
-// Scope is deliberately tiny: only mentions-of-us and private messages, which
-// are the two cases the classifier in notifications.js can decide synchronously
-// (no sbot_get round-trips). Everything else (votes/follows/replies/git) is out.
+// Foreground browser notifications for both skins. The app must be open, but it
+// may be backgrounded or minimized. The shared notification_filter decides
+// which events target us, keeping this emitter aligned with the in-app tab.
 var pull = require('pull-stream')
 var u = require('../../util')
 var keys = require('../../keys')
 
 exports.needs = {
   sbot_log: 'first',
-  message_unbox: 'first'
+  message_unbox: 'first',
+  notification_filter: 'first'
 }
 
 exports.gives = {
@@ -21,15 +17,38 @@ exports.gives = {
 }
 
 exports.create = function (api) {
+  function notificationDetails(msg, ourId) {
+    var c = msg.value.content
+    var title = 'New activity'
+    if (msg.private) title = 'New private message'
+    else if (Array.isArray(c.mentions) && c.mentions.some(function (link) {
+      return link && link.link === ourId
+    })) title = 'You were mentioned'
+    else if (c.type === 'post') title = 'New reply'
+    else if (c.type === 'contact') title = 'New follower'
+    else if (c.type === 'vote') title = 'New reaction'
+    else if (c.type === 'issue') title = 'New issue'
+    else if (c.type === 'pull-request') title = 'New pull request'
+    else if (c.type === 'issue-edit') title = 'Issue updated'
+    else if (c.type === 'git-update') title = 'Repository updated'
+    else if (c.type === 'git-comment') title = 'New git comment'
+    return {
+      title: title,
+      body: typeof c.text === 'string' ? c.text.slice(0, 140) : '',
+      route: '#' + msg.key
+    }
+  }
+
   return {
     notify_start: function () {
-      // ssbski skin only, and only where the Notification API exists.
-      var isSsbski = typeof document !== 'undefined' &&
-        !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
-      if (!isSsbski) return
       if (typeof window === 'undefined' || !('Notification' in window)) return
 
       var ourId = keys.id
+      var ourIds = {}
+      ourIds[ourId] = true
+      var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+      var skin = isSsbski ? 'ssbski' : 'decent'
+      var icon = isSsbski ? '/icons/ssbski-192.png' : '/icons/decent-192.png'
       // Only notify for messages that arrive after the app opened, so a reconnect
       // or backfill never replays a burst of already-seen history.
       var openedAt = Date.now()
@@ -42,43 +61,53 @@ exports.create = function (api) {
 
       pull(
         u.next(api.sbot_log, {old: false, limit: 100}),
+        pull.map(unbox),
+        pull.filter(Boolean),
+        api.notification_filter(ourIds),
+        pull.filter(Boolean),
         pull.drain(function (raw) {
           if (raw.sync) return
           if (Notification.permission !== 'granted') return
           // Don't ping the tab the user is already looking at.
           if (!document.hidden && document.hasFocus && document.hasFocus()) return
 
-          var msg = unbox(raw)
-          if (!msg) return
+          var msg = raw
           var v = msg.value
-          var c = v && v.content
-          if (!c || typeof c !== 'object') return       // still-encrypted or junk
-          if (v.author === ourId) return                // never our own messages
           if (seen[msg.key]) return
 
           var arrived = msg.timestamp || v.timestamp || 0
           if (arrived <= openedAt) return
 
-          var isPrivate = v.private === true
-          var isMention = !isPrivate &&
-            Array.isArray(c.mentions) &&
-            c.mentions.some(function (l) { return l && l.link === ourId })
-          if (!isPrivate && !isMention) return
-
           seen[msg.key] = true
-          var body = typeof c.text === 'string' ? c.text.slice(0, 140) : ''
-          var n = new Notification(
-            isPrivate ? 'New private message' : 'You were mentioned',
-            { body: body, tag: msg.key, icon: '/ssbski-logo.png' }
-          )
-          n.onclick = function () {
-            window.focus()
-            window.location.hash = '#' + msg.key
+          var details = notificationDetails(msg, ourId)
+          var opts = {
+            body: details.body,
+            tag: skin + ':' + msg.key,
+            icon: icon,
+            data: { route: details.route }
+          }
+
+          if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(function (registration) {
+              registration.showNotification(details.title, opts)
+            }, function () {
+              showWindowNotification(details, opts)
+            })
+          } else {
+            showWindowNotification(details, opts)
           }
         }, function (err) {
           if (err && err !== true) console.error('notify stream ended:', err)
         })
       )
+
+      function showWindowNotification(details, opts) {
+        var n = new Notification(details.title, opts)
+        n.onclick = function () {
+          window.focus()
+          window.location.hash = details.route
+        }
+      }
     }
   }
 }

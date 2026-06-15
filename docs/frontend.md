@@ -100,10 +100,28 @@ the ssbski skin, `plugins/ssbski-ui.js`; both share `lib/ui-server.js`).
 
 That plugin serves:
 - the HTML and assets for its skin
+- a per-skin installable web app manifest and notification-only service worker
 - stylesheet fallback handling
 - blob upload and download routes
 - current documentation at `/docs` and the historical archive at `/docs/archive`
 - git HTTP routes through the git server plugin
+
+## Installability and desktop notifications
+
+Both skins are installable Progressive Web Apps. `lib/ui-server.js` injects the
+per-skin manifest link and service-worker registration, and serves distinct names,
+theme colors, and icons for Decent and ssbski.
+
+The service worker does not cache the app shell. It exists to support installation
+and notification-click routing without risking a stale frontend against the live
+websocket connection.
+
+Desktop notifications are explicitly enabled by the user from the Notifications
+screen. While the app is open, including when backgrounded or minimized, the
+frontend uses the same notification classifier as the in-app tab for mentions,
+private messages, replies, votes, follows, and relevant git activity. Closed-app
+background push is not implemented; that would require a separate Web Push server
+and subscription model.
 
 ## Websocket integration
 

@@ -329,8 +329,8 @@ module.exports = {
 
       document.body.appendChild(screen)
 
-      // Start foreground mention/DM notifications (ssbski only; no-op elsewhere
-      // and until the user grants permission from the notifications tab).
+      // Start foreground notifications for both skins. This remains dormant
+      // until the user grants permission from the notifications tab.
       api.notify_start()
 
       // Shell is mounted — fade out the ssbski launch splash (no-op elsewhere).

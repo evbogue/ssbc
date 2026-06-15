@@ -3676,3 +3676,15 @@ tr:hover .git-diff-add-comment-btn {
     font-size: 0.8em;
   }
 }
+.notify-permission {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #f7f7f7;
+}
+.notify-permission__text { flex: 1; }
+.notify-permission__btn { white-space: nowrap; }

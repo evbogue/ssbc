@@ -26,7 +26,8 @@ exports.needs = {
 
 exports.gives = {
   builtin_tabs: true,
-  screen_view: true
+  screen_view: true,
+  notification_filter: true
 }
 
 exports.create = function (api) {
@@ -127,6 +128,8 @@ exports.create = function (api) {
   }
 
   return {
+    notification_filter: notifications,
+
     builtin_tabs: function () {
       return ['notifications']
     },
@@ -155,11 +158,9 @@ exports.create = function (api) {
         )
         div.setAttribute('data-icon', 'notifications')
 
-        // ssbski: offer to enable native browser notifications for mentions and
-        // private messages. Explicit opt-in (never prompt on load); the banner
-        // hides once the choice is made or where the API is unavailable.
-        var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
-        if (isSsbski && typeof window !== 'undefined' && 'Notification' in window) {
+        // Offer native foreground notifications behind an explicit opt-in.
+        // Never prompt on load; browsers require this to follow a user gesture.
+        if (typeof window !== 'undefined' && 'Notification' in window) {
           var banner = h('div.notify-permission')
           var renderBanner = function () {
             banner.innerHTML = ''
@@ -172,7 +173,7 @@ exports.create = function (api) {
             }
             banner.style.display = ''
             banner.appendChild(h('span.notify-permission__text',
-              'Get notified about new mentions and private messages.'))
+              'Get desktop notifications for mentions, replies, likes, follows, and git activity.'))
             banner.appendChild(h('button.notify-permission__btn',
               { onclick: function () {
                   Notification.requestPermission().then(renderBanner, renderBanner)
