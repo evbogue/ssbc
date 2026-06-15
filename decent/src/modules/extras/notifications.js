@@ -200,7 +200,7 @@ exports.create = function (api) {
               navigator.serviceWorker.ready.then(function (registration) {
                 return registration.showNotification('Test notification', opts)
               }).then(function () {
-                setDeliveryStatus('Test popup delivered.')
+                setDeliveryStatus('Test popup sent. If it does not appear, check system notification settings. On macOS, allow Chrome notifications.')
               }).catch(function (swErr) {
                 setDeliveryStatus('Test popup failed: ' + (swErr.message || swErr), true)
               })
@@ -212,7 +212,7 @@ exports.create = function (api) {
                 window.focus()
                 window.location.hash = '#notifications'
               }
-              setDeliveryStatus('Test popup delivered.')
+              setDeliveryStatus('Test popup sent. If it does not appear, check your operating system notification settings.')
             } catch (err) {
               setDeliveryStatus('Test popup failed: ' + (err.message || err), true)
             }
@@ -225,7 +225,7 @@ exports.create = function (api) {
               renderNotificationCard(
                 'notifications_active',
                 'Desktop notifications are on',
-                'New activity will appear as a popup while this app is open.',
+                'New activity will appear while this app is open. Your operating system must also allow Chrome notifications.',
                 primaryButton('Send test notification', showTestNotification)
               )
               return

@@ -123,6 +123,8 @@ private messages, replies, votes, follows, and relevant git activity. Closed-app
 background push is not implemented; that would require a separate Web Push server
 and subscription model. The Notifications screen displays the current browser
 permission state and provides a test-popup button after permission is granted.
+The browser can accept a notification even when the operating system suppresses
+it, so Chrome must also be allowed under macOS System Settings > Notifications.
 
 ## Websocket integration
 

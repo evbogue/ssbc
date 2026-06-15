@@ -85,13 +85,13 @@ exports.create = function (api) {
             data: { route: details.route }
           }
 
-          showWindowNotification(details, opts)
+          showDesktopNotification(details, opts)
         }, function (err) {
           if (err && err !== true) console.error('notify stream ended:', err)
         })
       )
 
-      function showWindowNotification(details, opts) {
+      function showDesktopNotification(details, opts) {
         if (navigator.serviceWorker && navigator.serviceWorker.ready) {
           navigator.serviceWorker.ready.then(function (registration) {
             return registration.showNotification(details.title, opts)
