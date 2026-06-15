@@ -68,8 +68,6 @@ exports.create = function (api) {
         pull.drain(function (raw) {
           if (raw.sync) return
           if (Notification.permission !== 'granted') return
-          // Don't ping the tab the user is already looking at.
-          if (!document.hidden && document.hasFocus && document.hasFocus()) return
 
           var msg = raw
           var v = msg.value

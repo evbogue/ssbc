@@ -121,7 +121,8 @@ screen. While the app is open, including when backgrounded or minimized, the
 frontend uses the same notification classifier as the in-app tab for mentions,
 private messages, replies, votes, follows, and relevant git activity. Closed-app
 background push is not implemented; that would require a separate Web Push server
-and subscription model.
+and subscription model. The Notifications screen displays the current browser
+permission state and provides a test-popup button after permission is granted.
 
 ## Websocket integration
 

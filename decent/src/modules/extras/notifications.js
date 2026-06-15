@@ -162,13 +162,43 @@ exports.create = function (api) {
         // Never prompt on load; browsers require this to follow a user gesture.
         if (typeof window !== 'undefined' && 'Notification' in window) {
           var banner = h('div.notify-permission')
+          var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+          var skin = isSsbski ? 'ssbski' : 'decent'
+          var icon = isSsbski ? '/icons/ssbski-192.png' : '/icons/decent-192.png'
+
+          function showTestNotification() {
+            var opts = {
+              body: 'Desktop notifications are working. New activity will appear like this while the app is open.',
+              tag: skin + ':notification-test',
+              icon: icon,
+              data: { route: '#notifications' }
+            }
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+              navigator.serviceWorker.ready.then(function (registration) {
+                registration.showNotification('Test notification', opts)
+              }, function () {
+                new Notification('Test notification', opts)
+              })
+            } else {
+              new Notification('Test notification', opts)
+            }
+          }
+
           var renderBanner = function () {
             banner.innerHTML = ''
-            if (Notification.permission === 'granted') { banner.style.display = 'none'; return }
+            if (Notification.permission === 'granted') {
+              banner.style.display = ''
+              banner.appendChild(h('span.notify-permission__text',
+                'Desktop notifications are enabled. Popups arrive while this app is open.'))
+              banner.appendChild(h('button.notify-permission__btn',
+                { onclick: showTestNotification },
+                'Send test notification'))
+              return
+            }
             if (Notification.permission === 'denied') {
               banner.style.display = ''
               banner.appendChild(h('span.notify-permission__text',
-                'Notifications are blocked. Enable them for this site in your browser settings.'))
+                'Desktop notifications are blocked for this site. Enable them in your browser settings, then reload.'))
               return
             }
             banner.style.display = ''
