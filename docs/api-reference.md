@@ -539,13 +539,13 @@ Create a new git repository feed message, returning the repo id used by the git-
 ssb-server git.create --name my-repo
 ```
 
-## `query`
+## `query` — stub
 
-Provided by the `ssb-query` plugin.
+Provided by the `ssb-query` plugin. This is a compatibility stub; its methods are present for protocol compatibility but do little or no work in this build.
 
 ### `query.read` — `source`
 
-Flume-style query stream over indexed messages. In this server's default configuration the underlying index is not populated, so this returns an empty stream — use `messagesByType` or `links2.read` instead.
+**Stub / no-op in this build.** Unsupported compatibility method. This fails with an explicit error in SQLite mode; use `messagesByType` or root `links` instead.
 
 **Arguments:**
 
@@ -553,11 +553,11 @@ Flume-style query stream over indexed messages. In this server's default configu
 
 ### `query.explain` — `sync`
 
-Return the index and plan a given query would use, for debugging query selection.
+**Stub / no-op in this build.** Return the index and plan a given query would use, for debugging query selection.
 
 ### `query.help` — `sync`
 
-Return inline help for the `query` namespace.
+**Stub / no-op in this build.** Return inline help for the `query` namespace.
 
 ## `links2`
 

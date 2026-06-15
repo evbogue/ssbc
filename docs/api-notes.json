@@ -271,7 +271,7 @@
   },
 
   "query.read": {
-    "summary": "Flume-style query stream over indexed messages. In this server's default configuration the underlying index is not populated, so this returns an empty stream — use `messagesByType` or `links2.read` instead.",
+    "summary": "Unsupported compatibility method. This fails with an explicit error in SQLite mode; use `messagesByType` or root `links` instead.",
     "args": { "query": "a flumeview-query spec (`$filter`, `$map`, etc.)" }
   },
   "query.explain": {

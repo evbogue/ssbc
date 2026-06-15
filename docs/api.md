@@ -137,8 +137,8 @@ The main API documentation should instead emphasize the methods backed by the cu
 ### `query.read` is not backed by an index
 
 `sbot.query.read` (the legacy `ssb-query` / jitdb surface) is registered only as a
-no-op flume view in this repo and **returns an empty stream**. Do not rely on it for
-reading messages. Use the methods backed by SQLite instead:
+compatibility stub in this repo and returns an explicit unsupported error. Do not
+rely on it for reading messages. Use the methods backed by SQLite instead:
 
 - filter by content type → `messagesByType({ type })`
 - traverse references between messages/feeds/blobs → `links(opts)`
