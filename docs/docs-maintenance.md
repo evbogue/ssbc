@@ -40,7 +40,6 @@ The following are **not** current-behavior documentation:
 - `docs/scuttlebot.io/` — generated historical archive (served at `/docs/archive`)
 - `vendor/scuttlebot.io/` — vendored source for that archive
 - work orders and proposals (e.g. `docs/*-work-order.md`)
-- `docs/http-replication.md` — a proposal for an unimplemented transport
 
 ## How `/docs` is served
 

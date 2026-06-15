@@ -58,7 +58,6 @@ test('renderer neutralizes raw HTML in Markdown source', (t) => {
 })
 
 test('renderDocPage returns null for non-allowlisted slugs', (t) => {
-  t.equal(docs.renderDocPage('http-replication'), null)
   t.equal(docs.renderDocPage('git-identity-work-order'), null)
   t.equal(docs.renderDocPage('nonexistent'), null)
   t.end()
