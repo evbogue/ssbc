@@ -85,25 +85,27 @@ exports.create = function (api) {
             data: { route: details.route }
           }
 
-          if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-            navigator.serviceWorker.ready.then(function (registration) {
-              registration.showNotification(details.title, opts)
-            }, function () {
-              showWindowNotification(details, opts)
-            })
-          } else {
-            showWindowNotification(details, opts)
-          }
+          showWindowNotification(details, opts)
         }, function (err) {
           if (err && err !== true) console.error('notify stream ended:', err)
         })
       )
 
       function showWindowNotification(details, opts) {
-        var n = new Notification(details.title, opts)
-        n.onclick = function () {
-          window.focus()
-          window.location.hash = details.route
+        try {
+          var n = new Notification(details.title, opts)
+          n.onclick = function () {
+            window.focus()
+            window.location.hash = details.route
+          }
+        } catch (err) {
+          if (!navigator.serviceWorker || !navigator.serviceWorker.ready)
+            return console.error('desktop notification failed:', err)
+          navigator.serviceWorker.ready.then(function (registration) {
+            return registration.showNotification(details.title, opts)
+          }).catch(function (swErr) {
+            console.error('desktop notification failed:', swErr)
+          })
         }
       }
     }

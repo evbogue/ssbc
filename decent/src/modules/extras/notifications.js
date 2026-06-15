@@ -163,24 +163,41 @@ exports.create = function (api) {
         if (typeof window !== 'undefined' && 'Notification' in window) {
           var banner = h('div.notify-permission')
           var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
-          var skin = isSsbski ? 'ssbski' : 'decent'
           var icon = isSsbski ? '/icons/ssbski-192.png' : '/icons/decent-192.png'
+          var deliveryStatus = h('span.notify-permission__status')
+
+          function setDeliveryStatus(message, isError) {
+            deliveryStatus.textContent = message
+            deliveryStatus.className = 'notify-permission__status' +
+              (isError ? ' notify-permission__status--error' : '')
+          }
 
           function showTestNotification() {
             var opts = {
               body: 'Desktop notifications are working. New activity will appear like this while the app is open.',
-              tag: skin + ':notification-test',
               icon: icon,
               data: { route: '#notifications' }
             }
-            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+            setDeliveryStatus('Sending test popup…')
+            try {
+              var notification = new Notification('Test notification', opts)
+              notification.onclick = function () {
+                window.focus()
+                window.location.hash = '#notifications'
+              }
+              setDeliveryStatus('Test popup sent. If it is not visible, check your operating system notification settings.')
+            } catch (err) {
+              if (!navigator.serviceWorker || !navigator.serviceWorker.ready) {
+                setDeliveryStatus('Test popup failed: ' + (err.message || err), true)
+                return
+              }
               navigator.serviceWorker.ready.then(function (registration) {
-                registration.showNotification('Test notification', opts)
-              }, function () {
-                new Notification('Test notification', opts)
+                return registration.showNotification('Test notification', opts)
+              }).then(function () {
+                setDeliveryStatus('Test popup sent. If it is not visible, check your operating system notification settings.')
+              }).catch(function (swErr) {
+                setDeliveryStatus('Test popup failed: ' + (swErr.message || swErr), true)
               })
-            } else {
-              new Notification('Test notification', opts)
             }
           }
 
@@ -193,6 +210,7 @@ exports.create = function (api) {
               banner.appendChild(h('button.notify-permission__btn',
                 { onclick: showTestNotification },
                 'Send test notification'))
+              banner.appendChild(deliveryStatus)
               return
             }
             if (Notification.permission === 'denied') {

@@ -153,6 +153,12 @@ button { border-radius: 999px; }
   cursor: pointer;
 }
 .notify-permission__btn:hover { background: var(--sky-blue-hover); }
+.notify-permission__status {
+  flex-basis: 100%;
+  color: var(--sky-text-secondary);
+  font-size: 12px;
+}
+.notify-permission__status--error { color: #d93025; }
 
 /* Bootstrap used to supply the base button look; re-establish it for ssbski */
 .btn {

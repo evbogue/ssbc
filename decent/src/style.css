@@ -1588,6 +1588,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -3688,3 +3689,9 @@ tr:hover .git-diff-add-comment-btn {
 }
 .notify-permission__text { flex: 1; }
 .notify-permission__btn { white-space: nowrap; }
+.notify-permission__status {
+  flex-basis: 100%;
+  color: #555;
+  font-size: 12px;
+}
+.notify-permission__status--error { color: #a00; }
