@@ -84,3 +84,36 @@ test('search clamps limit and handles empty queries', (t) => {
     })
   })
 })
+
+test('deleting a message removes its search index entry', (t) => {
+  const db = makeDb()
+  db.publish({ type: 'post', text: 'message-delete-marker' }, (err, kvt) => {
+    t.error(err, 'published indexed message')
+    db.del(kvt.key, (delErr) => {
+      t.error(delErr, 'deleted message')
+      db.search('message-delete-marker', (searchErr, hits) => {
+        t.error(searchErr, 'search after delete succeeded')
+        t.equal(hits.length, 0, 'deleted message is absent from search')
+        t.end()
+      })
+    })
+  })
+})
+
+test('deleting a feed removes its search index entries', (t) => {
+  const db = makeDb()
+  db.publish({ type: 'post', text: 'feed-delete-marker-one' }, (err) => {
+    t.error(err, 'published first indexed message')
+    db.publish({ type: 'post', text: 'feed-delete-marker-two' }, (err2, kvt) => {
+      t.error(err2, 'published second indexed message')
+      db.del(kvt.value.author, (delErr) => {
+        t.error(delErr, 'deleted feed')
+        db.search('feed-delete-marker', (searchErr, hits) => {
+          t.error(searchErr, 'search after feed delete succeeded')
+          t.equal(hits.length, 0, 'deleted feed is absent from search')
+          t.end()
+        })
+      })
+    })
+  })
+})
