@@ -131,7 +131,10 @@ exports.create = function (api) {
           })
 
           if(err) return content.appendChild(h('pre', err.stack))
-          sort(thread).map(api.message_render).filter(Boolean).forEach(function (el) {
+          sort(thread).map(function (msg) {
+            // Dedicated message page: show the whole post, no "Show more".
+            return api.message_render(msg, {full: true})
+          }).filter(Boolean).forEach(function (el) {
             content.appendChild(el)
           })
 

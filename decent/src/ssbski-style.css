@@ -1804,10 +1804,13 @@ button { border-radius: 999px; }
  * surfaces -> --sky-surface-soft, links -> --sky-blue, diff add/del -> green/red.
  * ============================================================ */
 
-/* Widen the centre column for forge screens (Decent caps the feed narrow). */
+/* Forge screens fill the centre column just like every other route. The feed
+ * is full-width here (--sky-feed-width: none), so let the forge track it rather
+ * than capping at a fixed 1120px (which left the git route narrower than the
+ * rest of the app). */
 .scroller__wrapper:has(> .git-forge-layout),
 .scroller__wrapper:has(.git-browser) {
-  max-width: 1120px;
+  max-width: var(--sky-feed-width);
 }
 
 .git-forge-layout {
@@ -2120,7 +2123,7 @@ button { border-radius: 999px; }
 .git-tree-latest-time { flex-shrink: 0; color: var(--sky-muted); }
 
 /* ── Breadcrumbs, subheader, section title, browser shell ───────────────── */
-.git-browser { width: 100%; max-width: 1120px; padding: 12px 0; }
+.git-browser { width: 100%; padding: 12px 0; }
 
 .git-browser-header {
   display: flex;

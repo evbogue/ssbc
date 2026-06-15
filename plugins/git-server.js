@@ -588,16 +588,24 @@ function handleRawBlob(sbot, repoId, ref, filePath, res) {
         if (err) { res.statusCode = 404; res.end('Commit not found'); return }
         repo.getFile(commit.tree, filePath, (err, file) => {
           if (err) { res.statusCode = 404; res.end('File not found'); return }
-          const ct = mimeForPath(filePath)
-          res.writeHead(200, {
-            'Content-Type': ct,
-            'Cache-Control': 'public, max-age=3600',
-            'Access-Control-Allow-Origin': '*'
+          // Collect the whole blob before writing. Streaming with pull.drain +
+          // res.write ignored socket backpressure: under it the git source's
+          // reused chunk buffers got mutated before the socket flushed, so
+          // images arrived corrupted/truncated. Buffer.concat gives a stable,
+          // complete copy and lets us send an accurate Content-Length.
+          collectStream(file.read, (err2, buf) => {
+            if (err2) {
+              console.error('raw blob error:', err2)
+              res.statusCode = 500; res.end('Error reading file'); return
+            }
+            res.writeHead(200, {
+              'Content-Type': mimeForPath(filePath),
+              'Content-Length': buf.length,
+              'Cache-Control': 'public, max-age=3600',
+              'Access-Control-Allow-Origin': '*'
+            })
+            res.end(buf)
           })
-          pull(file.read, pull.drain(
-            chunk => res.write(chunk),
-            err2 => { if (err2 && err2 !== true) console.error('raw blob error:', err2); res.end() }
-          ))
         })
       })
     })

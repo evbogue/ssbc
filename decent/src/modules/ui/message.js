@@ -333,8 +333,14 @@ exports.create = function (api) {
     })
   }
 
-  return function (msg, sbot) {
+  return function (msg, opts) {
     if (!isRenderableMessage(msg)) return null
+
+    // On a dedicated message/thread page we show the whole post — no
+    // "Show more/Show less" clamp. opts.full opts out of the collapse.
+    // (Beware: Array.prototype.map passes an index as the 2nd arg, so only
+    // treat an object with .full as the option bag.)
+    var full = !!(opts && typeof opts === 'object' && opts.full)
 
     var el = api.message_content_mini(msg)
     if(el) return mini(msg, el)
@@ -399,7 +405,7 @@ exports.create = function (api) {
       }
     })
 
-    var expandBtn = makeExpander()
+    var expandBtn = full ? null : makeExpander()
 
     var msgEl = h('div.message.message-card',
       h('div.title.row',
@@ -450,7 +456,8 @@ exports.create = function (api) {
     wireDoubleTapHeart(msgEl, content)
 
     // ── Collapse long posts by default (Twitter-style) ─────────────────────
-    wireCollapse(content, expandBtn)
+    // Skipped on the dedicated message page (full), where we show everything.
+    if (!full) wireCollapse(content, expandBtn)
 
     return msgEl
   }

@@ -518,11 +518,16 @@ exports.create = function (api) {
     }
   }
 
-  function renderReadme(content) {
+  function renderReadme(content, repoId, ref, baseParts) {
     var div = h('div.git-readme-content')
     try {
       var md = api.markdown({text: content})
-      if (md) { addHeadingAnchors(md); div.appendChild(md); return div }
+      if (md) {
+        addHeadingAnchors(md)
+        resolveMarkdownAssets(md, repoId, ref, baseParts || [])
+        div.appendChild(md)
+        return div
+      }
     } catch (_) {}
     div.appendChild(h('pre', content))
     return div
@@ -771,7 +776,9 @@ exports.create = function (api) {
         fetchReadme(repoId, ref, entries, function (err, content) {
           if (content) {
             readmeEl.className = 'git-readme'
-            readmeEl.appendChild(renderReadme(content))
+            // README lives at the tree root for this path, so images resolve
+            // relative to pathParts (the directory currently being browsed).
+            readmeEl.appendChild(renderReadme(content, repoId, ref, pathParts))
           }
         })
         browser.appendChild(readmeEl)
@@ -885,6 +892,45 @@ exports.create = function (api) {
   function rawBlobUrl(repoId, ref, pathParts) {
     return window.location.origin + '/git/' + encodeURIComponent(repoId) +
       '/raw/' + encodeURIComponent(ref) + '/' + pathParts.map(encodeURIComponent).join('/')
+  }
+
+  // Resolve a markdown-relative path (./foo, ../bar, /baz, plain) against the
+  // directory the README/blob lives in, GitHub-style. Returns path segments.
+  function resolveRepoRelative(baseParts, rel) {
+    var stack = baseParts.slice()
+    if (rel.charAt(0) === '/') { stack = []; rel = rel.replace(/^\/+/, '') }
+    rel.split('/').forEach(function (seg) {
+      if (seg === '' || seg === '.') return
+      if (seg === '..') { if (stack.length) stack.pop(); return }
+      try { stack.push(decodeURIComponent(seg)) } catch (_) { stack.push(seg) }
+    })
+    return stack
+  }
+
+  function isAbsoluteAssetUrl(u) {
+    return /^[a-z][a-z0-9+.\-]*:/i.test(u) || u.indexOf('//') === 0
+  }
+
+  // READMEs/markdown blobs render through the shared ssb-markdown module, whose
+  // toUrl only understands SSB blob refs — every other image URL comes back as
+  // "#<original>" (a dead anchor), so repo-relative and external images never
+  // load. Resolving repo-relative paths needs repoId + ref, which the shared
+  // module doesn't have, so fix the <img>/<video>/<audio> srcs up here: restore
+  // external URLs, and point repo-relative paths at /git/<id>/raw/<ref>/…
+  function resolveMarkdownAssets(rootEl, repoId, ref, baseParts) {
+    if (!rootEl || !rootEl.querySelectorAll) return
+    var media = rootEl.querySelectorAll('img, video, audio')
+    Array.prototype.forEach.call(media, function (el) {
+      var src = el.getAttribute('src')
+      // Real blob URLs are already absolute (no '#' prefix) and load fine.
+      if (!src || src.charAt(0) !== '#') return
+      var raw = src.slice(1)
+      if (!raw) return
+      if (isAbsoluteAssetUrl(raw)) { el.setAttribute('src', raw); return }
+      raw = raw.replace(/[?#].*$/, '')
+      var parts = resolveRepoRelative(baseParts, raw)
+      if (parts.length) el.setAttribute('src', rawBlobUrl(repoId, ref, parts))
+    })
   }
 
   function formatBytes(n) {
@@ -1018,7 +1064,11 @@ exports.create = function (api) {
         contentEl = h('div.git-readme.git-blob-pane.git-blob-readme')
         var md = null
         try { md = api.markdown({text: content}) } catch (_) {}
-        if (md) addHeadingAnchors(md)
+        if (md) {
+          addHeadingAnchors(md)
+          // Images in a markdown blob resolve relative to its own directory.
+          resolveMarkdownAssets(md, repoId, ref, pathParts.slice(0, -1))
+        }
         contentEl.appendChild(md || h('pre.git-blob-content', content))
       } else {
         contentEl = renderHighlightedBlob(content, fileName)
