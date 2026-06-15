@@ -92,6 +92,14 @@ exports.create = function (api) {
       )
 
       function showWindowNotification(details, opts) {
+        if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+          navigator.serviceWorker.ready.then(function (registration) {
+            return registration.showNotification(details.title, opts)
+          }).catch(function (swErr) {
+            console.error('desktop notification failed:', swErr)
+          })
+          return
+        }
         try {
           var n = new Notification(details.title, opts)
           n.onclick = function () {
@@ -99,13 +107,7 @@ exports.create = function (api) {
             window.location.hash = details.route
           }
         } catch (err) {
-          if (!navigator.serviceWorker || !navigator.serviceWorker.ready)
-            return console.error('desktop notification failed:', err)
-          navigator.serviceWorker.ready.then(function (registration) {
-            return registration.showNotification(details.title, opts)
-          }).catch(function (swErr) {
-            console.error('desktop notification failed:', swErr)
-          })
+          console.error('desktop notification failed:', err)
         }
       }
     }

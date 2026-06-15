@@ -196,25 +196,25 @@ exports.create = function (api) {
               data: { route: '#notifications' }
             }
             setDeliveryStatus('Sending test popup…')
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+              navigator.serviceWorker.ready.then(function (registration) {
+                return registration.showNotification('Test notification', opts)
+              }).then(function () {
+                setDeliveryStatus('Test popup delivered.')
+              }).catch(function (swErr) {
+                setDeliveryStatus('Test popup failed: ' + (swErr.message || swErr), true)
+              })
+              return
+            }
             try {
               var notification = new Notification('Test notification', opts)
               notification.onclick = function () {
                 window.focus()
                 window.location.hash = '#notifications'
               }
-              setDeliveryStatus('Test popup sent. If it is not visible, check your operating system notification settings.')
+              setDeliveryStatus('Test popup delivered.')
             } catch (err) {
-              if (!navigator.serviceWorker || !navigator.serviceWorker.ready) {
-                setDeliveryStatus('Test popup failed: ' + (err.message || err), true)
-                return
-              }
-              navigator.serviceWorker.ready.then(function (registration) {
-                return registration.showNotification('Test notification', opts)
-              }).then(function () {
-                setDeliveryStatus('Test popup sent. If it is not visible, check your operating system notification settings.')
-              }).catch(function (swErr) {
-                setDeliveryStatus('Test popup failed: ' + (swErr.message || swErr), true)
-              })
+              setDeliveryStatus('Test popup failed: ' + (err.message || err), true)
             }
           }
 
