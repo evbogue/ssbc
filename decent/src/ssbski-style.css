@@ -148,7 +148,7 @@ button { border-radius: 999px; }
  * in modern browsers, so it reads correctly on the pill/round controls. */
 .navbar .nav.pull-left li a:focus-visible,
 .navbar-avatar:focus-visible,
-.navbar-brand:focus-visible,
+.right-brand:focus-visible,
 .btn:focus-visible,
 .action-btn:focus-visible,
 .reaction-chip:focus-visible,
@@ -501,35 +501,24 @@ button { border-radius: 999px; }
   gap: 2px;
 }
 
-/* Brand (hermit-crab logo + wordmark) at the top of the rail. The logo is a
- * square image that fills the rail's width so the whole crab is visible; the
- * wordmark sits beneath it. On the collapsed rail it stays a (smaller) square
- * that fills the narrower strip. */
-.navbar-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 0 0 14px;
-  text-decoration: none;
+/* Brand: the hermit-crab logo as a full-bleed square pinned to the bottom of
+ * the right column. Negative margins cancel the column's 16px/14px padding so
+ * the square reaches the column edges — full width, real square, no margins,
+ * no rounding. */
+.right-brand {
+  display: block;
+  width: calc(100% + 32px);
+  margin: 0 -16px -14px;
+  line-height: 0;
 }
 
-.navbar-brand:hover { text-decoration: none; }
+.right-brand:hover { text-decoration: none; }
 
-.navbar-brand__logo {
+.right-brand__logo {
+  display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  height: auto;
-  border-radius: 16px;
   object-fit: cover;
-}
-
-.navbar-brand__name {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--sky-blue);
-  text-align: center;
 }
 
 /* Vertical nav list */
@@ -3553,13 +3542,6 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 
   .navbar .container-fluid { padding: 14px 10px; }
 
-  .navbar-brand {
-    justify-content: center;
-    padding: 4px 0 16px;
-  }
-
-  .navbar-brand__name { display: none; }
-
   .navbar .nav.pull-left li a {
     justify-content: center;
     gap: 0;
@@ -3614,8 +3596,6 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
     padding: 0 4px;
     gap: 0;
   }
-
-  .navbar-brand { display: none; }
 
   .navbar .nav.pull-left {
     flex-direction: row;

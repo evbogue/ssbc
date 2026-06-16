@@ -117,15 +117,13 @@ module.exports = {
         ) : null
       ])
 
-      // ssbski brand: hermit-crab logo + wordmark at the top of the rail. Decent
-      // keeps its own header, so this only renders for the ssbski skin.
-      var brand = isSsbski ? h('a.navbar-brand', {
+      // ssbski brand: the hermit-crab logo lives at the bottom of the right
+      // column (a full-bleed square), not in the left rail. Decent keeps its
+      // own header, so this only renders for the ssbski skin.
+      var rightBrand = isSsbski ? h('a.right-brand', {
         href: '#/',
         'aria-label': 'ssbski home'
-      }, [
-        h('img.navbar-brand__logo', {src: '/ssbski-logo.png', alt: ''}),
-        h('span.navbar-brand__name', 'ssbski')
-      ]) : null
+      }, h('img.right-brand__logo', {src: '/ssbski-logo.png', alt: 'ssbski'})) : null
 
       // Right-column card built from real SSB data. Prefer channel/hashtag
       // trends; fall back to active recent posters so the Bluesky-style column
@@ -229,7 +227,6 @@ module.exports = {
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            brand,
             profileLink,
             nav,
             h('div.pull-right', searchInput, api.menu(),
@@ -239,7 +236,8 @@ module.exports = {
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
                 h('a.right-footer__link', {href: '#key'}, 'Keys'),
                 h('span.right-footer__tag', 'ssbski · SSB')
-              ]) : null
+              ]) : null,
+              rightBrand
             )
           )
         )
