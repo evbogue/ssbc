@@ -8,7 +8,7 @@ exports.needs = {
   message_render: 'first',
   message_compose: 'first',
   sbot_log: 'first',
-  sbot_query: 'first',
+  sbot_messagesByType: 'first',
 }
 
 exports.gives = {
@@ -20,12 +20,10 @@ exports.create = function (api) {
 
   var channels
 
+  // Used by the live map-filter-reduce pass over the log (client-side, not
+  // query.read) to pick out channel names from incoming posts.
   var filter = {$filter: {value: {content: {channel: {$gt: ''}}}}}
   var map = {$map: {'name': ['value', 'content', 'channel']}}
-  var reduce = {$reduce: {
-    name: 'name',
-    rank: {$count: true}
-  }}
 
   return {
     message_meta: function (msg) {
@@ -59,9 +57,8 @@ exports.create = function (api) {
         )
 
         pull(
-          api.sbot_query({reverse: true, query: [
-            {$filter: {value: {content: {channel: channel}}}}
-          ]}),
+          api.sbot_messagesByType({type: 'post', reverse: true, limit: 100, old: true, live: false}),
+          pull.filter(matchesChannel),
           Scroller(div, content, api.message_render, false, false)
         )
 
@@ -74,11 +71,20 @@ exports.create = function (api) {
 
       channels = []
 
+      // Historical channel ranks: count posts per channel. (sbot_query maps to
+      // query.read, which the SQLite store doesn't support — it throws, which is
+      // what spewed "query.read is not supported in SQLite mode" on every load.)
       pull(
-        api.sbot_query({query: [filter, map, reduce]}),
-        pull.collect(function (err, chans) {
-          if (err) return console.error(err)
-          channels = chans.concat(channels)
+        api.sbot_messagesByType({type: 'post', old: true, live: false}),
+        pull.drain(function (msg) {
+          var c = msg && msg.value && msg.value.content
+          var name = c && typeof c.channel === 'string' && c.channel.trim()
+          if (!name) return
+          var existing = channels.find(function (e) { return e.name === name })
+          if (existing) existing.rank++
+          else channels.push({name: name, rank: 1})
+        }, function (err) {
+          if (err && err !== true) console.error(err)
         })
       )
 
