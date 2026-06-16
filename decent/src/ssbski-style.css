@@ -48,6 +48,10 @@
   --sky-mark: #fff8c5;          /* line-highlight background */
   --sky-mark-strong: #fae17d;
   --sky-shadow: 0 10px 28px rgba(15, 20, 25, 0.12);
+  --sky-shadow-sm: 0 1px 3px rgba(15, 20, 25, 0.10);
+  /* Aliases consumed by the notifications-permission card (notify-pref.js). */
+  --sky-text-secondary: var(--sky-muted);
+  --sky-accent: var(--sky-blue);
 
   /* Layout */
   --sky-rail-width: 240px;
@@ -82,6 +86,7 @@
     --sky-mark: rgba(212, 167, 44, 0.22);
     --sky-mark-strong: rgba(212, 167, 44, 0.42);
     --sky-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    --sky-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -337,6 +342,38 @@ button { border-radius: 999px; }
   font-weight: 800;
   color: var(--sky-text);
 }
+
+/* Back chevron on drilled-in routes (thread / profile / channel / search / a
+ * repo page). Round icon button at the left of the sticky header with a
+ * comfortable hit area; the title that follows it loses its left inset so the
+ * two don't double-indent. */
+.feed-header__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  margin-left: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--sky-text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.feed-header__back:hover { background: var(--sky-hover); }
+
+.feed-header__back:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 2px;
+}
+
+.feed-header__back .material-symbols-outlined { font-size: 1.5rem; }
+
+.feed-header__back + .feed-header__title { padding-left: 8px; }
 
 /* ============================================================
  * Left nav rail
@@ -730,6 +767,14 @@ button { border-radius: 999px; }
 .message-card:hover {
   background: color-mix(in srgb, var(--sky-surface) 96%, var(--sky-blue) 4%);
 }
+
+/* Whole feed card opens the thread (message.js wireCardClick), so the card
+ * reads as clickable. The post body keeps a text cursor — selection still
+ * works and the click handler bails on an active selection. Mini one-liners
+ * and the composer card aren't click-to-thread, so they keep the default. */
+.message-card:not(.message--mini):not(.compose) { cursor: pointer; }
+.message-card .message_content,
+.message-card .message_actions.row { cursor: auto; }
 
 /* Mini one-liners (git push / follow rows) flow as a single baseline row.
  * Decent's markup has no whitespace between the avatar, the content, and the

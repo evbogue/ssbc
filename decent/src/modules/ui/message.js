@@ -215,6 +215,29 @@ exports.create = function (api) {
     }, { passive: true })
   }
 
+  // Click-anywhere-on-card to open the thread (Bluesky-style). Scoped to the
+  // ssbski skin's feed cards; the dedicated thread page renders posts with
+  // {full:true} and opts out (you're already in that thread). Keyboard users
+  // get the same via the card's tabindex + Enter handler (clicks .enter).
+  function wireCardClick (msgEl, msg) {
+    if (typeof window === 'undefined') return
+    msgEl.addEventListener('click', function (ev) {
+      // Honour modifier-clicks / non-primary buttons and already-handled clicks.
+      if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey ||
+          ev.shiftKey || ev.altKey) return
+      // Leave real interactions alone: links, buttons, fields, media, the
+      // action row, and the reaction/more UI all handle their own clicks.
+      if (ev.target.closest && ev.target.closest(
+          'a, button, input, textarea, select, label, img, video, audio, iframe, ' +
+          '.message_actions, .reaction-pill, .reaction-tray, .reaction-picker, ' +
+          '.reaction-popover, .message-more-menu, .backlinks')) return
+      // Don't yank the reader into the thread mid-text-selection.
+      var sel = window.getSelection && window.getSelection()
+      if (sel && String(sel)) return
+      window.location.hash = '#' + msg.key
+    })
+  }
+
   function spawnHeartBurst (x, y) {
     if (typeof document === 'undefined') return
     var burst = h('div.reaction-heart-burst', '❤️')
@@ -454,6 +477,9 @@ exports.create = function (api) {
     // burst at the tap point. Suppressed over links/buttons/media/emoji so it
     // never fights a real interaction, and a no-op if already reacted.
     wireDoubleTapHeart(msgEl, content)
+
+    // ── Click-anywhere-on-card → thread (ssbski feed cards only) ───────────
+    if (!full && isSsbski()) wireCardClick(msgEl, msg)
 
     // ── Collapse long posts by default (Twitter-style) ─────────────────────
     // Skipped on the dedicated message page (full), where we show everything.

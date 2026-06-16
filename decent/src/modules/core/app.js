@@ -295,6 +295,35 @@ module.exports = {
         document.title = suffix ? base + ' — ' + suffix : base
       }
 
+      // Root routes own a slot in the nav rail and never show a back chevron;
+      // everything else is a drill-in (thread, profile, channel, search, a repo
+      // page, …) and gets one.
+      function isRootRoute (route) {
+        return route === 'public' || route === 'friends' || route === 'private' ||
+          route === 'notifications' || route === 'key' || route === 'repos'
+      }
+
+      // Drilled in (depth > 0) → step back through browser history; on the entry
+      // page or a deep link (depth 0) → fall back to the home feed so the chevron
+      // never walks the reader out of the app.
+      function goBack () {
+        if (navDepth > 0 && window.history.length > 1) window.history.back()
+        else window.location.hash = '#/'
+      }
+
+      function makeBackButton () {
+        // hyperscript doesn't reliably set aria-* from the attribute object
+        // (see the tabindex/aria workarounds elsewhere), so set it explicitly —
+        // otherwise a screen reader announces the "arrow_back" ligature text.
+        var btn = h('button.feed-header__back', {
+          type: 'button',
+          title: 'Back',
+          onclick: function (ev) { ev.preventDefault(); goBack() }
+        }, h('span.material-symbols-outlined', {'aria-hidden': 'true'}, 'arrow_back'))
+        btn.setAttribute('aria-label', 'Back')
+        return btn
+      }
+
       // Bluesky-style centre-column header: the two primary feeds render as a
       // tab switcher (Discover / Following); every other route shows its title.
       function renderFeedHeader (route, view) {
@@ -314,6 +343,7 @@ module.exports = {
         }
         var title = suffixForRoute(route, view)
         if (title) {
+          if (!isRootRoute(route)) feedHeader.appendChild(makeBackButton())
           feedHeader.appendChild(h('div.feed-header__title', title))
         } else {
           // No title for this route — don't leave an empty bar.
@@ -321,10 +351,58 @@ module.exports = {
         }
       }
 
-      renderRoute(getRoute(), renderTarget)
+      // ── Navigation stack: back affordance + scroll restoration ────────────
+      // Hash navigations already create browser history entries, so back/forward
+      // (and the header chevron, via goBack) all route through onhashchange. We
+      // stamp each entry with a depth via history.state so a drilled-in screen
+      // (depth > 0) can be told apart from the entry page / a deep link (depth 0).
+      // Per-route scrollTop is captured leaving a screen and restored returning
+      // to it — best-effort while a live feed streams back in — so "back" lands
+      // the reader where they were.
+      var navDepth = 0
+      var currentRoute = null
+      var scrollByRoute = {}
+
+      function currentScrollEl () {
+        return renderTarget.querySelector('.column.scroller') || renderTarget
+      }
+
+      function restoreScroll (route) {
+        var saved = scrollByRoute[route]
+        if (!saved) return
+        var deadline = Date.now() + 1500
+        requestAnimationFrame(function step () {
+          var el = currentScrollEl()
+          el.scrollTop = saved
+          // Keep nudging until the content has streamed in tall enough to hold
+          // the offset (or we give up), then stop feeding the scroller.
+          if (Math.abs(el.scrollTop - saved) > 2 && Date.now() < deadline)
+            requestAnimationFrame(step)
+        })
+      }
+
+      function navigate (route) {
+        if (currentRoute != null)
+          scrollByRoute[currentRoute] = currentScrollEl().scrollTop
+        renderRoute(route, renderTarget)
+        currentRoute = route
+        restoreScroll(route)
+      }
+
+      try { window.history.replaceState({navDepth: 0}, '') } catch (err) {}
+      navigate(getRoute())
 
       window.onhashchange = function () {
-        renderRoute(getRoute(), renderTarget)
+        var st = window.history.state
+        if (st && typeof st.navDepth === 'number') {
+          // Back/forward to an entry we've already stamped.
+          navDepth = st.navDepth
+        } else {
+          // A fresh forward navigation (anchor / hash set) lands with null state.
+          navDepth += 1
+          try { window.history.replaceState({navDepth: navDepth}, '') } catch (err) {}
+        }
+        navigate(getRoute())
       }
 
       document.body.appendChild(screen)
