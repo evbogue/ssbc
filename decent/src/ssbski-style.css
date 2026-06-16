@@ -142,6 +142,29 @@ textarea, input, button { font-family: inherit; }
 
 button { border-radius: 999px; }
 
+/* Visible keyboard focus across interactive chrome. Inputs/textareas/search keep
+ * their own box-shadow focus ring; this covers the buttons, links, tabs and chips
+ * that otherwise showed no focus indicator at all. outline follows border-radius
+ * in modern browsers, so it reads correctly on the pill/round controls. */
+.navbar .nav.pull-left li a:focus-visible,
+.navbar-avatar:focus-visible,
+.navbar-brand:focus-visible,
+.btn:focus-visible,
+.action-btn:focus-visible,
+.reaction-chip:focus-visible,
+.reaction-picker-trigger:focus-visible,
+.emoji-btn:focus-visible,
+.message-expand:focus-visible,
+.message-more-menu__item:focus-visible,
+.feed-header__tab:focus-visible,
+.compose-trigger__button:focus-visible,
+.git-forge-tab:focus-visible,
+.git-blob-action:focus-visible,
+.right-footer__link:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 2px;
+}
+
 /* Desktop notification settings card. Buttons reuse .btn/.btn-primary. */
 .notify-permission {
   display: grid;
@@ -543,13 +566,14 @@ button { border-radius: 999px; }
 }
 
 .navbar .nav.pull-left li.active a {
-  background: transparent;
-  color: var(--sky-text);
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
   font-weight: 700;
 }
 
 .navbar .nav.pull-left li.active a:hover {
-  background: var(--sky-hover);
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
 }
 
 .nav__icon {
