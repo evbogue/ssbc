@@ -2674,33 +2674,59 @@ button { border-radius: 999px; }
 
 .git-repo-name { margin: 0 0 8px 0; font-size: 1.1em; font-weight: 600; }
 
-.git-refs { display: flex; flex-direction: column; gap: 4px; margin: 4px 0 8px 0; }
-.git-ref { display: flex; align-items: center; gap: 6px; }
+/* ── Push (git-update) feed card ─────────────────────────────────────────── */
+/* Header: icon + "pushed to <repo>" with branch badges pushed to the right,
+ * separated from the commit list by a hairline. */
+.git-push-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-bottom: 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--sky-border);
+}
+.git-push-icon { font-size: 1.15em; color: var(--sky-muted); }
+.git-push-summary { color: var(--sky-text); }
+
+/* Branch badges now sit inline as a wrapping row, pinned right via auto margin
+ * (was a vertical column, one badge per line). */
+.git-refs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: auto; }
+.git-ref { display: inline-flex; align-items: center; gap: 6px; }
 .git-ref-deleted { color: var(--sky-red); font-style: italic; }
 
+/* Commits hang off a vertical rail with a dot per commit, so the list reads as
+ * one group rather than a flat run of paragraphs. */
+.git-timeline { position: relative; margin: 6px 0 0 0; padding-left: 18px; }
+.git-timeline:empty { display: none; }
+.git-timeline::before {
+  content: '';
+  position: absolute;
+  left: 4px; top: 8px; bottom: 8px;
+  width: 1.5px;
+  background: var(--sky-border-strong);
+}
+.git-commit { position: relative; padding: 5px 0; }
+.git-commit::before {
+  content: '';
+  position: absolute;
+  left: -17px; top: 9px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--sky-surface);
+  border: 1.5px solid var(--sky-border-strong);
+}
+
+/* sha + title on the top line, +/- stats pinned right. Title flexes and wraps
+ * internally; stats never wrap away. */
 .git-commit-row {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
-  gap: 3px 10px;
-  margin: 4px 0 0 0;
-}
-
-/* Title grows to fill the line beside the SHA and wraps internally (hanging
- * indent) rather than dropping to its own flex line and orphaning the SHA. */
-.git-commit-title {
-  flex: 1 1 0;   /* basis 0 so it packs beside the SHA, then grows + wraps */
-  min-width: 0;
-}
-
-.git-commit-byline {
-  flex-basis: 100%;   /* author + stats always on their own line below */
-  display: inline-flex;
-  align-items: center;
   gap: 8px;
-  color: var(--sky-muted);
-  font-size: 0.9em;
+  margin: 0;
 }
+.git-commit-title { flex: 1 1 auto; min-width: 0; }
+.git-commit-stats-wrap { flex-shrink: 0; white-space: nowrap; }
 
 .git-log-row {
   display: flex;
@@ -2745,11 +2771,25 @@ button { border-radius: 999px; }
 .git-commit-files { display: flex; flex-direction: column; gap: 3px; margin: 4px 0; font-size: 0.85em; }
 .git-commit-files-count { font-size: 0.8em; color: var(--sky-muted-soft); }
 .git-commit-stats { color: var(--sky-muted-soft); }
-.git-stat-add { color: var(--sky-green); font-weight: 600; }
-.git-stat-del { color: var(--sky-red); font-weight: 600; }
+/* On-palette stat colours: additions take the skin's one accent (blue), removals
+ * stay muted gray alongside the "N files" count. The +/- signs carry the meaning,
+ * so colour serves the palette rather than re-signalling add vs remove. */
+.git-stat-add { color: var(--sky-blue); font-weight: 600; }
+.git-stat-del { color: var(--sky-muted); font-weight: 600; }
 /* pre-line (not pre-wrap): body text is reflowed in git.js so only the blank
- * lines between paragraphs remain as breaks; everything else fills the width. */
-.git-commit-body-preview { margin: 2px 0 0 0; line-height: 1.4; white-space: pre-line; }
+ * lines between paragraphs remain as breaks; everything else fills the width.
+ * Clamped to 2 lines so a chatty commit can't out-tower the rest of the card —
+ * the full message is one click away on the commit page. */
+.git-commit-body-preview {
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
 .git-commits-more { color: var(--sky-muted-soft); font-style: italic; }
 
 /* ── State badges (issue/PR open/closed/merged) ─────────────────────────── */

@@ -677,9 +677,6 @@ exports.create = function (api) {
             xhr.send()
           }())
 
-          var authorName = commit.author && commit.author.name
-            ? commit.author.name : null
-
           // commit.body is the multi-line description below the title. Git
           // hard-wraps it at ~72 cols for the terminal; unwrap each blank-line
           // separated paragraph (single newlines → spaces) so it reflows to the
@@ -687,8 +684,20 @@ exports.create = function (api) {
           var rawBody = typeof commit.body === 'string' ? commit.body.trim() : ''
           var bodyText = null
           if (rawBody) {
-            var reflowed = rawBody
-              .split(/\n{2,}/)
+            var paragraphs = rawBody.split(/\n{2,}/)
+            // Drop trailing git trailer blocks (Co-Authored-By:, Signed-off-by:,
+            // Reviewed-by:, …) — machine metadata, not prose, so they're noise in
+            // a feed preview. Only strip a final paragraph whose every line is a
+            // "Key: value" trailer, so normal body text is never touched.
+            var trailerLine = /^[A-Za-z][A-Za-z-]*:\s/
+            while (paragraphs.length) {
+              var lines = paragraphs[paragraphs.length - 1]
+                .split('\n').map(function (l) { return l.trim() }).filter(Boolean)
+              if (lines.length && lines.every(function (l) { return trailerLine.test(l) }))
+                paragraphs.pop()
+              else break
+            }
+            var reflowed = paragraphs
               .map(function (p) { return p.replace(/[ \t]*\n[ \t]*/g, ' ').trim() })
               .filter(Boolean)
               .join('\n\n')
@@ -697,23 +706,26 @@ exports.create = function (api) {
               : reflowed
           }
 
-          return [
-            h('p.git-commit-row',
+          // One commit = one block on the timeline rail: sha + title share the
+          // top line with the +/- stats pinned right; the body preview (if any)
+          // sits under it. The pusher is already named in the card header, so we
+          // don't repeat a commit author byline here.
+          return h('div.git-commit',
+            h('div.git-commit-row',
               h('a', {href: browseHref}, h('code.git-sha', commit.sha1.substr(0, 7))),
-              ' ',
               commit.title ? h('span.git-commit-title', commit.title) : null,
-              ' ',
-              h('span.git-commit-byline',
-                authorName ? h('span.git-commit-author', authorName) : null,
-                statsEl
-              )
+              h('span.git-commit-stats-wrap', statsEl)
             ),
             bodyText ? h('p.git-commit-body-preview', bodyText) : null
-          ]
+          )
         }
 
         var repoId = c.repo
         var commitsHolder = h('div.git-commits-holder')
+        // Commits hang off a vertical rail (.git-timeline); the "+ more" link is
+        // a sibling below the rail, not on it.
+        var timeline = h('div.git-timeline')
+        commitsHolder.appendChild(timeline)
         var refsObj = c.refs || {}
         var firstHeadRef = Object.keys(refsObj)
           .filter(function (r) { return /^refs\/heads\//.test(r) && refsObj[r] })[0]
@@ -735,9 +747,7 @@ exports.create = function (api) {
             var limit = 5
             data.commits.slice(0, limit).forEach(function (commit) {
               var rendered = renderUpdateCommit(commit, repoId)
-              if (Array.isArray(rendered))
-                rendered.forEach(function (el) { if (el) commitsHolder.appendChild(el) })
-              else if (rendered) commitsHolder.appendChild(rendered)
+              if (rendered) timeline.appendChild(rendered)
             })
             if (data.commits.length > limit) {
               var branch = shortRefName(refName)
@@ -750,20 +760,26 @@ exports.create = function (api) {
           xhr.send()
         }
 
+        var branchBadges = c.refs ? Object.keys(c.refs).map(function (ref) {
+          var rev = c.refs[ref]
+          var shortName = shortRefName(ref)
+          var branchHref = rev
+            ? '#git/' + encodeURIComponent(repoId) + '/tree/' + encodeURIComponent(shortName)
+            : null
+          return h('span.git-ref',
+            branchHref
+              ? h('a.git-branch-badge', {href: branchHref}, shortName)
+              : h('span.git-branch-badge', shortName),
+            rev ? null : h('em.git-ref-deleted', 'deleted'))
+        }) : []
+
         return [
-          h('p', 'pushed to ', repoLink(repoId)),
-          c.refs ? h('div.git-refs', Object.keys(c.refs).map(function (ref) {
-            var rev = c.refs[ref]
-            var shortName = shortRefName(ref)
-            var branchHref = rev
-              ? '#git/' + encodeURIComponent(repoId) + '/tree/' + encodeURIComponent(shortName)
-              : null
-            return h('div.git-ref',
-              branchHref
-                ? h('a.git-branch-badge', {href: branchHref}, shortName)
-                : h('span.git-branch-badge', shortName),
-              rev ? null : h('em.git-ref-deleted', 'deleted'))
-          })) : null,
+          // Single push header: icon + "pushed to <repo>" with the branch
+          // badges pinned to the right, all on one row.
+          h('div.git-push-header',
+            h('span.git-push-icon.material-symbols-outlined', {'aria-hidden': 'true'}, 'commit'),
+            h('span.git-push-summary', 'pushed to ', repoLink(repoId)),
+            branchBadges.length ? h('span.git-refs', branchBadges) : null),
           commitsHolder,
           Array.isArray(c.issues) ? c.issues.map(function (issue) {
             if (issue.merged === true)
