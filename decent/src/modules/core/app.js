@@ -281,6 +281,7 @@ module.exports = {
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
           else if (route.indexOf('code-search/') === 0) suffix = 'Search'
+          else if (route.indexOf('dm/') === 0) suffix = 'Chat'
           else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)
           else if (route[0] === '@') suffix = 'Profile'
           else if (route[0] === '%') suffix = 'Thread'
