@@ -121,8 +121,48 @@ exports.create = function (api) {
     return close
   }
 
-  function makeExtraActions (msg) {
+  // Toggle a post card between its rendered body and the raw {key, value}
+  // JSON. We stash the rendered children aside and swap a <pre> in their place,
+  // so flipping back is lossless (and keeps any wired-up event handlers).
+  function makeRawToggle (msg, content) {
+    var rawBtn = makeIconButton('data_object', 'View raw', 'action-btn--raw')
+    var stash = h('div')
+    var pre = null
+    var showingRaw = false
+    rawBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      showingRaw = !showingRaw
+      // Raw view is the whole object — opt out of the "Show more" clamp while
+      // it's up (the .showing-raw class also tells wireCollapse's observer to
+      // stop re-applying a max-height).
+      content.classList.toggle('showing-raw', showingRaw)
+      if (showingRaw) {
+        if (!pre) {
+          pre = h('pre.message_raw',
+            h('code', JSON.stringify({key: msg.key, value: msg.value}, null, 2)))
+        }
+        var node
+        while ((node = content.firstChild)) stash.appendChild(node)
+        content.appendChild(pre)
+        content.classList.remove('is-overflowing')
+        content.style.maxHeight = ''
+      } else {
+        if (pre && pre.parentNode === content) content.removeChild(pre)
+        var back
+        while ((back = stash.firstChild)) content.appendChild(back)
+      }
+      rawBtn.classList.toggle('action-btn--raw-on', showingRaw)
+      rawBtn.setAttribute('aria-pressed', showingRaw ? 'true' : 'false')
+      rawBtn.title = showingRaw ? 'View rendered' : 'View raw'
+      rawBtn.setAttribute('aria-label', rawBtn.title)
+    })
+    return rawBtn
+  }
+
+  function makeExtraActions (msg, content) {
     var isSaved = !!getSavedPosts()[msg.key]
+    var rawBtn = makeRawToggle(msg, content)
     var saveBtn = makeIconButton('bookmark', 'Save post', 'action-btn--save')
     var shareBtn = makeIconButton('ios_share', 'Copy post link', 'action-btn--share')
     var moreBtn = makeIconButton('more_horiz', 'More', 'action-btn--more')
@@ -164,7 +204,7 @@ exports.create = function (api) {
       }
     })
 
-    return h('div.message_actions_extra', saveBtn, shareBtn, h('span.message-more-wrap', moreBtn, menu))
+    return h('div.message_actions_extra', rawBtn, saveBtn, shareBtn, h('span.message-more-wrap', moreBtn, menu))
   }
 
   function getCache () {
@@ -295,7 +335,7 @@ exports.create = function (api) {
     var clampPx = null // the CSS clamp height (.collapsible max-height), cached once
 
     function update () {
-      if (expanded) return
+      if (expanded || content.classList.contains('showing-raw')) return
       // Read the CSS clamp once, before we ever apply an inline cap (after which
       // getComputedStyle would echo our own value back). It's a constant.
       if (clampPx == null) {
@@ -442,7 +482,7 @@ exports.create = function (api) {
       expandBtn,
       h('div.message_actions.row',
         h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg)),
-        isSsbski() ? makeExtraActions(msg) : null
+        isSsbski() ? makeExtraActions(msg, content) : null
       ),
       backlinks,
       {onkeydown: function (ev) {
