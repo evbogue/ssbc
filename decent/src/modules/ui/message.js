@@ -36,12 +36,11 @@ function message_content_mini_fallback(msg)  {
 }
 
 function isRenderableMessage (msg) {
-  return !!(
-    msg &&
-    msg.value &&
-    msg.value.content &&
-    typeof msg.value.content === 'object'
-  )
+  var content = msg && msg.value && msg.value.content
+  // Objects render normally; an encrypted message (content is a boxed string)
+  // is renderable too — message_content_mini turns it into a 🔒 mini card
+  // without decrypting it.
+  return !!(content && (typeof content === 'object' || typeof content === 'string'))
 }
 
 exports.create = function (api) {
