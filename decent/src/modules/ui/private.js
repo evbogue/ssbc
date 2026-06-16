@@ -138,6 +138,7 @@ exports.create = function (api) {
     div.title = 'Chat'
     div.appendChild(h('div.scroller__wrapper.chat-list__wrapper', head, list))
 
+    var lastSig = null
     function rebuild () {
       pull(
         privateStream({reverse: true, limit: 1000}),
@@ -154,6 +155,11 @@ exports.create = function (api) {
           })
           var rows = Object.keys(convs).map(function (k) { return convs[k] })
             .sort(function (a, b) { return b.lastTs - a.lastTs })
+
+          // Skip the DOM rebuild when nothing changed (avoids 4s flicker).
+          var sig = rows.map(function (c) { return convIdOf(c.parts) + ':' + c.lastTs }).join('|')
+          if (sig === lastSig) return
+          lastSig = sig
 
           list.innerHTML = ''
           if (!rows.length) {
@@ -260,9 +266,13 @@ exports.create = function (api) {
     function toBottom () { scroll.scrollTop = scroll.scrollHeight }
 
     // Render the full bubble list from scratch (cheap at these limits, and it
-    // reconciles optimistic sends with the real stored messages).
+    // reconciles optimistic sends with the real stored messages). The poll
+    // calls this every few seconds; skip the DOM rebuild when the message set
+    // is unchanged so it doesn't flicker or reset an open raw view.
+    var lastSig = null
     function rebuild (opts) {
-      var stick = opts && opts.force ? true : nearBottom()
+      var force = !!(opts && opts.force)
+      var stick = force ? true : nearBottom()
       pull(
         privateStream({reverse: true, limit: 1000}),
         pull.collect(function (err, msgs) {
@@ -270,6 +280,10 @@ exports.create = function (api) {
           var mine = msgs.filter(function (m) {
             return convIdOf(participantsOf(m)) === cid
           }).sort(function (a, b) { return tsOf(a) - tsOf(b) })
+
+          var sig = mine.map(function (m) { return m.key }).join(',')
+          if (!force && sig === lastSig) return
+          lastSig = sig
 
           msgsCol.innerHTML = ''
           if (!mine.length) {
@@ -340,17 +354,48 @@ exports.create = function (api) {
         col.appendChild(group)
         lastAuthor = author
       }
-      // Render only the message body — no "re:" reply line or quote chrome,
-      // which message_content would prepend for messages that have a root.
-      var content = m.value.content || {}
-      var body = content.text
-        ? api.markdown(content)
-        : h('span', '🔒')
-      var bubble = h('div.chat-bubble' + (isMine ? '.chat-bubble--mine' : '.chat-bubble--theirs'),
-        h('div.chat-bubble__body', body))
-      bubble.title = new Date(ts).toLocaleString()
-      group._bubbles.appendChild(bubble)
+      group._bubbles.appendChild(makeBubble(m, isMine, ts))
     })
+  }
+
+  // A single chat bubble plus a hover-revealed raw-JSON toggle (the message's
+  // unboxed {key, value} — recps/type/text and all).
+  function makeBubble (m, isMine, ts) {
+    // Render only the message body — no "re:" reply line or quote chrome,
+    // which message_content would prepend for messages that have a root.
+    var content = m.value.content || {}
+    var body = content.text ? api.markdown(content) : h('span', '🔒')
+    var bodyWrap = h('div.chat-bubble__body', body)
+    var bubble = h('div.chat-bubble' + (isMine ? '.chat-bubble--mine' : '.chat-bubble--theirs'), bodyWrap)
+    bubble.title = new Date(ts).toLocaleString()
+
+    var rawPre = null
+    var showing = false
+    var rawBtn = h('button.chat-bubble__raw',
+      {type: 'button', title: 'View raw', 'aria-label': 'View raw'},
+      h('span.material-symbols-outlined', {'aria-hidden': 'true'}, 'data_object'))
+    rawBtn.addEventListener('click', function (ev) {
+      ev.preventDefault()
+      ev.stopPropagation()
+      showing = !showing
+      if (showing) {
+        if (!rawPre) rawPre = h('pre.chat-bubble__rawjson',
+          h('code', JSON.stringify({key: m.key, value: m.value}, null, 2)))
+        bodyWrap.style.display = 'none'
+        bubble.appendChild(rawPre)
+        bubble.classList.add('chat-bubble--raw')
+      } else {
+        if (rawPre && rawPre.parentNode === bubble) bubble.removeChild(rawPre)
+        bodyWrap.style.display = ''
+        bubble.classList.remove('chat-bubble--raw')
+      }
+      rawBtn.classList.toggle('chat-bubble__raw--on', showing)
+      rawBtn.title = showing ? 'View message' : 'View raw'
+      rawBtn.setAttribute('aria-label', rawBtn.title)
+    })
+
+    return h('div.chat-bubble-row' + (isMine ? '.chat-bubble-row--mine' : '.chat-bubble-row--theirs'),
+      bubble, rawBtn)
   }
 
   function appendOptimistic (col, text) {

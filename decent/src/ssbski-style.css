@@ -3788,6 +3788,48 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 .chat-group--mine .chat-group__bubbles { align-items: flex-end; }
 .chat-group--theirs .chat-group__bubbles { align-items: flex-start; }
 
+/* Bubble + hover-revealed raw-JSON toggle alongside it. */
+.chat-bubble-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+.chat-group--mine .chat-bubble-row { flex-direction: row-reverse; }
+.chat-bubble__raw {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sky-muted-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.chat-bubble-row:hover .chat-bubble__raw,
+.chat-bubble__raw:focus-visible,
+.chat-bubble__raw--on { opacity: 1; }
+.chat-bubble__raw:hover { background: var(--sky-hover); color: var(--sky-text); }
+.chat-bubble__raw--on { color: var(--sky-blue); }
+.chat-bubble__raw .material-symbols-outlined { font-size: 16px; }
+
+/* Raw view: neutral surface so the JSON is legible regardless of bubble colour. */
+.chat-bubble--raw {
+  background: var(--sky-surface-soft) !important;
+  color: var(--sky-text) !important;
+  border: 1px solid var(--sky-border);
+}
+.chat-bubble__rawjson {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 320px;
+  overflow: auto;
+  color: var(--sky-text);
+}
+
 .chat-bubble {
   padding: 8px 12px;
   border-radius: 18px;
