@@ -506,6 +506,7 @@ button { border-radius: 999px; }
  * the square reaches the column edges — full width, real square, no margins,
  * no rounding. */
 .right-brand {
+  position: relative;
   display: block;
   width: calc(100% + 32px);
   margin: 0 -16px -14px;
@@ -525,9 +526,31 @@ button { border-radius: 999px; }
   transition: opacity 0.2s ease;
 }
 
+/* "SSBSKI" wordmark overlaid on the faded logo; it vanishes on hover/focus as
+ * the crab is revealed (the inverse of the logo's opacity). */
+.right-brand__word {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--sky-blue);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
 .right-brand:hover .right-brand__logo,
 .right-brand:focus-visible .right-brand__logo {
   opacity: 1;
+}
+
+.right-brand:hover .right-brand__word,
+.right-brand:focus-visible .right-brand__word {
+  opacity: 0;
 }
 
 /* Vertical nav list */

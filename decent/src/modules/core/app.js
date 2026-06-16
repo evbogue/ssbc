@@ -123,7 +123,10 @@ module.exports = {
       var rightBrand = isSsbski ? h('a.right-brand', {
         href: '#/',
         'aria-label': 'ssbski home'
-      }, h('img.right-brand__logo', {src: '/ssbski-logo.png', alt: 'ssbski'})) : null
+      }, [
+        h('img.right-brand__logo', {src: '/ssbski-logo.png', alt: 'ssbski'}),
+        h('span.right-brand__word', 'SSBSKI')
+      ]) : null
 
       // Right-column card built from real SSB data. Prefer channel/hashtag
       // trends; fall back to active recent posters so the Bluesky-style column
