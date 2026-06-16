@@ -161,6 +161,59 @@ button { border-radius: 999px; }
 .notify-permission__description { color: var(--sky-text-secondary); font-size: 14px; }
 .notify-permission__actions { justify-self: end; }
 .notify-permission__action { white-space: nowrap; }
+.notify-permission__buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+.notify-permission__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.notify-permission__toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.notify-permission__toggle-track {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--sky-border, #d0d7de);
+  transition: background .15s ease;
+}
+.notify-permission__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .15s ease;
+}
+.notify-permission__toggle-input:checked + .notify-permission__toggle-track {
+  background: var(--sky-accent, #1d9bf0);
+}
+.notify-permission__toggle-input:checked + .notify-permission__toggle-track .notify-permission__toggle-thumb {
+  transform: translateX(18px);
+}
+.notify-permission__toggle-input:focus-visible + .notify-permission__toggle-track {
+  outline: 2px solid var(--sky-accent, #1d9bf0);
+  outline-offset: 2px;
+}
+.notify-permission__toggle-label {
+  font-size: 13px;
+  color: var(--sky-text-secondary);
+}
 .notify-permission__status {
   display: block;
   margin-top: 5px;
@@ -179,6 +232,7 @@ button { border-radius: 999px; }
     justify-self: stretch;
   }
   .notify-permission__action { width: 100%; }
+  .notify-permission__buttons { justify-content: stretch; }
 }
 
 /* Bootstrap used to supply the base button look; re-establish it for ssbski */

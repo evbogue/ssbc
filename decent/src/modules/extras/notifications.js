@@ -8,6 +8,7 @@ var plugs = require('../../wire')
 var cont = require('cont')
 var ref = require('ssb-ref')
 var emptyState = require('../../empty-state')
+var notifyPref = require('./notify-pref')
 
 //var message_render = plugs.first(exports.message_render = [])
 //var sbot_log = plugs.first(exports.sbot_log = [])
@@ -189,6 +190,18 @@ exports.create = function (api) {
               {type: 'button', onclick: onclick}, label)
           }
 
+          function toggleSwitch(checked, onchange) {
+            var input = h('input.notify-permission__toggle-input',
+              {type: 'checkbox', checked: checked})
+            input.onchange = function () { onchange(input.checked) }
+            return h('label.notify-permission__toggle',
+              input,
+              h('span.notify-permission__toggle-track',
+                h('span.notify-permission__toggle-thumb')),
+              h('span.notify-permission__toggle-label', checked ? 'On' : 'Off')
+            )
+          }
+
           function showTestNotification() {
             var opts = {
               body: 'Desktop notifications are working. New activity will appear like this while the app is open.',
@@ -222,11 +235,20 @@ exports.create = function (api) {
             setDeliveryStatus('')
             if (Notification.permission === 'granted') {
               banner.style.display = ''
+              var enabled = notifyPref.isEnabled()
               renderNotificationCard(
-                'notifications_active',
-                'Desktop notifications are on',
-                'New activity will appear while this app is open. Your operating system must also allow Chrome notifications.',
-                primaryButton('Send test notification', showTestNotification)
+                enabled ? 'notifications_active' : 'notifications_paused',
+                enabled ? 'Desktop notifications are on' : 'Desktop notifications are off',
+                enabled
+                  ? 'New activity will appear while this app is open. Your operating system must also allow Chrome notifications.'
+                  : 'Popups are turned off. Flip the switch to start getting desktop notifications for new activity again.',
+                h('div.notify-permission__buttons',
+                  primaryButton('Send test notification', showTestNotification),
+                  toggleSwitch(enabled, function (on) {
+                    notifyPref.setEnabled(on)
+                    renderBanner()
+                  })
+                )
               )
               return
             }

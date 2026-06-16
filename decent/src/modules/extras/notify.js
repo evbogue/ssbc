@@ -5,6 +5,7 @@
 var pull = require('pull-stream')
 var u = require('../../util')
 var keys = require('../../keys')
+var notifyPref = require('./notify-pref')
 
 exports.needs = {
   sbot_log: 'first',
@@ -68,6 +69,7 @@ exports.create = function (api) {
         pull.drain(function (raw) {
           if (raw.sync) return
           if (Notification.permission !== 'granted') return
+          if (!notifyPref.isEnabled()) return
 
           var msg = raw
           var v = msg.value
