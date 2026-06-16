@@ -18,6 +18,7 @@ exports.needs = {
   message_render: 'first',
   message_compose: 'first',
   message_content: 'first',
+  markdown: 'first',
   message_unbox: 'first',
   sbot_log: 'first',
   avatar_image: 'first',
@@ -339,7 +340,12 @@ exports.create = function (api) {
         col.appendChild(group)
         lastAuthor = author
       }
-      var body = api.message_content(m) || h('span', (m.value.content && m.value.content.text) || '')
+      // Render only the message body — no "re:" reply line or quote chrome,
+      // which message_content would prepend for messages that have a root.
+      var content = m.value.content || {}
+      var body = content.text
+        ? api.markdown(content)
+        : h('span', '🔒')
       var bubble = h('div.chat-bubble' + (isMine ? '.chat-bubble--mine' : '.chat-bubble--theirs'),
         h('div.chat-bubble__body', body))
       bubble.title = new Date(ts).toLocaleString()
