@@ -59,18 +59,26 @@
   --sky-feed-width: none;       /* feed fills the band between the rail and right column */
 }
 
+/*
+ * Dark mode blends two palettes: Claude Code's warm charcoal surfaces (not
+ * pure black) with Bluesky's cool text + blue accent. Variable names keep the
+ * --sky-* prefix so the rest of the sheet is untouched; only dark mode shifts
+ * — light mode stays fully Bluesky.
+ *   bg/surface/border = Anthropic dark charcoal (#262624 family)
+ *   text = Bluesky cool off-white   accent (--sky-blue) = Bluesky blue #1085fe
+ */
 @media (prefers-color-scheme: dark) {
   :root {
-    --sky-bg: #000000;            /* contrast_0 inverted */
-    --sky-surface: #000000;
-    --sky-surface-soft: #19222e;  /* contrast_950 */
-    --sky-hover: #111822;         /* contrast_975 */
-    --sky-border: #232e3e;        /* contrast_900 */
-    --sky-border-strong: #313f54; /* contrast_800 */
-    --sky-text: #eef3f8;          /* ~contrast_0 inverted */
+    --sky-bg: #1f1e1d;            /* warm charcoal base */
+    --sky-surface: #1f1e1d;
+    --sky-surface-soft: #292826;  /* raised warm surface */
+    --sky-hover: #2d2c2a;         /* warm hover */
+    --sky-border: #3a3835;        /* warm gray border */
+    --sky-border-strong: #4b4843; /* warm gray, stronger */
+    --sky-text: #eef3f8;          /* Bluesky cool off-white */
     --sky-muted: #a5b2c5;         /* contrast_300 */
     --sky-muted-soft: #667b99;    /* contrast_500 */
-    --sky-blue: #1085fe;          /* same brand blue in dark — Bluesky doesn't lighten it */
+    --sky-blue: #1085fe;          /* Bluesky brand blue */
     --sky-blue-hover: #4a9eff;
     --sky-blue-soft: rgba(16, 133, 254, 0.20);
     --sky-green: #0dd370;         /* positive_400 */
