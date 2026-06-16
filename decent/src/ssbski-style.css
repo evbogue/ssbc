@@ -3818,14 +3818,27 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   color: var(--sky-text) !important;
   border: 1px solid var(--sky-border);
 }
+.chat-bubble__rawwrap { display: flex; flex-direction: column; gap: 4px; }
+.chat-bubble__rawlabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sky-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.chat-bubble__rawlabel + .chat-bubble__rawjson { margin-top: 0; }
 .chat-bubble__rawjson {
-  margin: 0;
+  margin: 0 0 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--sky-bg);
+  border: 1px solid var(--sky-border);
   font-family: var(--font-mono, monospace);
   font-size: 11px;
   line-height: 1.45;
   white-space: pre-wrap;
   word-break: break-all;
-  max-height: 320px;
+  max-height: 260px;
   overflow: auto;
   color: var(--sky-text);
 }

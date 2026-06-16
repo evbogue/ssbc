@@ -54,6 +54,9 @@ exports.create = function (api) {
         var unboxed = api.message_unbox(msg)
         if(unboxed) {
           unboxed.value.private = true
+          // Keep the original on-wire message (content is the encrypted .box
+          // blob) so the raw view can prove the message is actually encrypted.
+          unboxed.boxed = msg
           return unboxed
         }
         return null
@@ -358,8 +361,9 @@ exports.create = function (api) {
     })
   }
 
-  // A single chat bubble plus a hover-revealed raw-JSON toggle (the message's
-  // unboxed {key, value} — recps/type/text and all).
+  // A single chat bubble plus a hover-revealed raw-JSON toggle that shows the
+  // actual on-wire message (content is the encrypted .box blob) next to what
+  // it decrypts to — so the encryption is visible and believable.
   function makeBubble (m, isMine, ts) {
     // Render only the message body — no "re:" reply line or quote chrome,
     // which message_content would prepend for messages that have a root.
@@ -379,8 +383,15 @@ exports.create = function (api) {
       ev.stopPropagation()
       showing = !showing
       if (showing) {
-        if (!rawPre) rawPre = h('pre.chat-bubble__rawjson',
-          h('code', JSON.stringify({key: m.key, value: m.value}, null, 2)))
+        if (!rawPre) {
+          var encrypted = m.boxed || {key: m.key, value: m.value}
+          rawPre = h('div.chat-bubble__rawwrap',
+            h('div.chat-bubble__rawlabel', 'Encrypted — as stored on the feed'),
+            h('pre.chat-bubble__rawjson', h('code', JSON.stringify(encrypted, null, 2))),
+            h('div.chat-bubble__rawlabel', 'Decrypts to — with your key'),
+            h('pre.chat-bubble__rawjson', h('code', JSON.stringify(m.value.content, null, 2)))
+          )
+        }
         bodyWrap.style.display = 'none'
         bubble.appendChild(rawPre)
         bubble.classList.add('chat-bubble--raw')
