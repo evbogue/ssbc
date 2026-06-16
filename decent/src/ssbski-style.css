@@ -514,11 +514,20 @@ button { border-radius: 999px; }
 
 .right-brand:hover { text-decoration: none; }
 
+/* Faded to a faint watermark at rest (blends into the light/dark column bg via
+ * opacity); fully revealed on hover or keyboard focus. */
 .right-brand__logo {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
+  opacity: 0.15;
+  transition: opacity 0.2s ease;
+}
+
+.right-brand:hover .right-brand__logo,
+.right-brand:focus-visible .right-brand__logo {
+  opacity: 1;
 }
 
 /* Vertical nav list */
