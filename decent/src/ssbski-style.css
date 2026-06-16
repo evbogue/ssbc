@@ -501,22 +501,26 @@ button { border-radius: 999px; }
   gap: 2px;
 }
 
-/* Brand (hermit-crab logo + wordmark) at the top of the rail */
+/* Brand (hermit-crab logo + wordmark) at the top of the rail. The logo is a
+ * square image that fills the rail's width so the whole crab is visible; the
+ * wordmark sits beneath it. On the collapsed rail it stays a (smaller) square
+ * that fills the narrower strip. */
 .navbar-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 4px 14px 16px;
+  gap: 8px;
+  padding: 0 0 14px;
   text-decoration: none;
 }
 
 .navbar-brand:hover { text-decoration: none; }
 
 .navbar-brand__logo {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  border-radius: 16px;
   object-fit: cover;
 }
 
@@ -525,6 +529,7 @@ button { border-radius: 999px; }
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--sky-blue);
+  text-align: center;
 }
 
 /* Vertical nav list */
