@@ -3970,3 +3970,13 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   vertical-align: middle;
   margin-left: 2px;
 }
+
+/* New-profile-background (banner) thumbnail inside an "about" mini message. */
+.about-mini__banner {
+  width: 66px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-left: 2px;
+}
