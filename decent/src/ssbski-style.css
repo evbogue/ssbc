@@ -3960,3 +3960,13 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 .chat-newchat__input:focus { outline: none; border-color: var(--sky-blue); }
 .chat-newchat__input--err { border-color: var(--sky-red); }
 .chat-newchat__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+/* New-profile-photo thumbnail inside an "about" mini message. */
+.about-mini__photo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-left: 2px;
+}

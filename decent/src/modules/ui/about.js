@@ -52,13 +52,29 @@ exports.create = function (api) {
     if(msg.value.content.type !== 'about') return
 
     var about = msg.value.content
-    var id = msg.value.content.about
-    if(!about.name) return
+    var id = about.about
+    // Render a mini for name and/or photo updates (not for image-less,
+    // name-less abouts such as a lone description).
+    if(!about.name && !about.image) return
 
-    if(about.about === msg.value.author)
-      return ['self-identifies as ', h('a', {href:"#"+about.about}, about.name)]
+    var bits = [
+      about.about === msg.value.author
+        ? h('span', 'self-identifies')
+        : h('span', 'identifies ', api.avatar_link(id, api.avatar_name(id), ''))
+    ]
 
-    return ['identifies ', api.avatar_link(id, api.avatar_name(id), ''), ' as ', h('a', {href:"#"+about.about}, about.name)]
+    if(about.name)
+      bits.push(' as ', h('a', {href:"#"+id}, about.name))
+
+    // Show the new profile photo so a photo change is visible in the feed.
+    if(about.image)
+      bits.push(
+        about.name ? ' ' : ' with a new photo ',
+        h('a', {href:"#"+id},
+          h('img.avatar--thumbnail.about-mini__photo', {src: api.blob_url(asLink(about.image))}))
+      )
+
+    return bits
   }
 
   return exports
