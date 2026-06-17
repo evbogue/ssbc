@@ -48,7 +48,14 @@ exports.create = function (api) {
                       localStorage[BROWSER_SECRET_KEY] = importKey.value.replace(/\s+/g, ' ')
                       alert('Your public/private key has been updated')
                       e.preventDefault()
-                    }}, 'Import')
+                    }}, 'Import'),
+                    h('button.btn.btn-danger', {title: 'Permanently delete your secret key from this browser', onclick: function (e){
+                      e.preventDefault()
+                      if(!confirm('Delete your keys? This permanently removes your identity from this browser. Make sure you have a backup of your secret key — without it this identity cannot be recovered.')) return
+                      try { delete localStorage[BROWSER_SECRET_KEY] } catch (_) {}
+                      alert('Your keys have been deleted from this browser.')
+                      location.reload()
+                    }}, 'Delete keys')
                   )
                 )
               )
