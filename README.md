@@ -171,6 +171,34 @@ This rebuilds the shared JS bundle and all stylesheets in one step.
 Build output: `decent/build/index.html`, `decent/build/style.css`,
 `decent/build/ssbski-style.css`, `decent/build/ssbpro-style.css`
 
+### Deploying to a public node
+
+The public node (`decent.evbogue.com`, etc.) runs `node bin start` inside a tmux
+session. Because `decent/build/` is **not** committed, `git pull` alone never
+updates the served app — you must rebuild the bundle on the server and restart the
+process. Full deploy:
+
+```bash
+ssh root@evbogue.com
+cd /root/ssbc
+git pull
+npm run build:web          # REQUIRED — build/ is gitignored, pull won't update it
+```
+
+Then restart the running node. It lives in tmux session `7` (find it with
+`tmux list-panes -a -F '#{session_name} #{pane_current_command} #{pane_current_path}'`):
+
+```bash
+tmux send-keys -t 7 C-c           # stop the current node
+tmux send-keys -t 7 'node bin start' Enter
+```
+
+Verify the live bundle picked up your change, e.g.:
+
+```bash
+curl -s http://127.0.0.1:8989/ | grep -c 'some-string-from-your-change'
+```
+
 ### Local docs
 
 The running server serves this repository's current documentation at:
