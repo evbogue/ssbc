@@ -62,6 +62,7 @@ module.exports = {
         }
         container.innerHTML = ''
         container.appendChild(view)
+        syncSsbproLeftStack()
         setActive(route)
         setTitle(route, view)
         renderFeedHeader(route, view)
@@ -633,10 +634,11 @@ module.exports = {
         return panel
       }
 
+      var ssbproLeftStack = isSsbpro ? h('div.ssbpro-left-stack', profileLink) : null
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            profileLink,
+            isSsbpro ? null : profileLink,
             nav,
             isSsbpro ? h('div.topbar-actions',
               makeConnectButton(),
@@ -670,7 +672,16 @@ module.exports = {
         content.appendChild(feedHost)
         renderTarget = feedHost
       }
-      var screen = h('div.screen.column', header, content)
+      var screen = h('div.screen.column', header, ssbproLeftStack, content)
+
+      function syncSsbproLeftStack () {
+        if (!ssbproLeftStack) return
+        if (window.innerWidth <= 980) return
+        var existing = ssbproLeftStack.querySelector('.compose-trigger')
+        if (existing) ssbproLeftStack.removeChild(existing)
+        var trigger = renderTarget.querySelector('.compose-trigger')
+        if (trigger) ssbproLeftStack.appendChild(trigger)
+      }
 
       function setActive (route) {
         var items = nav.querySelectorAll('li[data-route]')

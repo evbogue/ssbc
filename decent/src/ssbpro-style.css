@@ -295,11 +295,21 @@ body {
   line-height: 1.1;
 }
 
-.navbar-avatar {
+.ssbpro-left-stack {
   position: fixed;
   top: calc(var(--pro-topbar-height) + 12px);
   left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
   width: var(--pro-left-width);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 35;
+}
+
+.navbar-avatar {
+  position: relative;
+  order: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -310,7 +320,6 @@ body {
   border: 1px solid var(--sky-border);
   background: var(--sky-surface);
   box-shadow: var(--sky-shadow-sm);
-  z-index: 35;
 }
 
 .navbar-avatar::before {
@@ -380,10 +389,12 @@ body {
 }
 
 .compose-trigger {
-  top: calc(var(--pro-topbar-height) + 152px);
-  bottom: auto;
-  left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
-  width: var(--pro-left-width);
+  position: relative;
+  order: 1;
+  inset: auto;
+  width: 100%;
+  margin: 0;
+  z-index: auto;
 }
 
 .compose-trigger__button {
@@ -1487,6 +1498,11 @@ body {
     width: var(--pro-left-width);
   }
 
+  .ssbpro-left-stack .compose-trigger {
+    left: auto;
+    width: 100%;
+  }
+
   .compose-trigger__button::after {
     display: inline;
   }
@@ -1561,6 +1577,7 @@ body {
   }
 
   .navbar-avatar,
+  .ssbpro-left-stack,
   .navbar .pull-right {
     display: none;
   }
