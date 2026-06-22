@@ -9,6 +9,20 @@ const pull = require('pull-stream')
 let names = []
 let ready = false
 const waiting = []
+const watchers = {}
+
+function notify (id) {
+  const list = watchers[id]
+  if (!list) return
+  for (let i = list.length - 1; i >= 0; i--) {
+    const watcher = list[i]
+    if (watcher.detached && watcher.detached()) {
+      list.splice(i, 1)
+      continue
+    }
+    watcher.fn()
+  }
+}
 
 function update (name) {
   const n = names.find(function (e) {
@@ -21,6 +35,7 @@ function update (name) {
     n.rank = (n.rank || 0) + (name.rank || 1)
     if (name.ts > (n.ts || 0)) n.ts = name.ts
   }
+  notify(name.id)
 }
 
 function addSigil (e) {
@@ -52,6 +67,7 @@ exports.needs = {
 exports.gives = {
   connection_status: true,
   signifier: true,
+  signifier_watch: true,
   signified: true
 }
 
@@ -99,6 +115,19 @@ exports.create = function (api) {
   out.signifier = async(function (id) {
     return rank(names.filter(function (e) { return e.id === id }))
   })
+
+  out.signifier_watch = function (id, fn, detached) {
+    if (!id || typeof fn !== 'function') return function () {}
+    if (!watchers[id]) watchers[id] = []
+    const watcher = { fn: fn, detached: detached }
+    watchers[id].push(watcher)
+    return function () {
+      const list = watchers[id]
+      if (!list) return
+      const i = list.indexOf(watcher)
+      if (i !== -1) list.splice(i, 1)
+    }
+  }
 
   out.signified = async(function (name) {
     const rx = new RegExp('^' + name)

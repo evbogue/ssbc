@@ -1,8 +1,10 @@
 
-var signifier = require('../../wire').first(exports.signifier = [])
 var h = require('hyperscript')
 
-exports.needs = { signifier: 'first' }
+exports.needs = {
+  signifier: 'first',
+  signifier_watch: 'first'
+}
 
 exports.gives = 'avatar_name'
 
@@ -18,9 +20,19 @@ exports.create = function (api) {
     //TODO: "most popular" name is easily gameable.
     //must come up with something better than this.
 
-    api.signifier(id, function (_, names) {
-      if(names.length) n.textContent = names[0].name
-    })
+    function refresh () {
+      api.signifier(id, function (_, names) {
+        if(names.length) n.textContent = names[0].name
+      })
+    }
+
+    refresh()
+
+    if (api.signifier_watch) {
+      api.signifier_watch(id, refresh, function () {
+        return typeof document !== 'undefined' && !document.contains(n)
+      })
+    }
 
     return n
   }
