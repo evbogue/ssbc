@@ -780,17 +780,32 @@ button { border-radius: 999px; }
 
 .trending-card__head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--sky-text);
 }
 
+.trending-card__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .trending-card__title {
   min-width: 0;
+  line-height: 1.15;
+}
+
+.trending-card__subtitle {
+  color: var(--sky-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 .trending-card__hide,
@@ -802,11 +817,19 @@ button { border-radius: 999px; }
 }
 
 .trending-card__hide {
+  display: inline-grid;
+  place-items: center;
   flex: 0 0 auto;
   margin-left: auto;
-  padding: 3px 0;
-  font-size: 0.78rem;
-  font-weight: 700;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.trending-card__hide .material-symbols-outlined {
+  font-size: 1.08rem;
+  line-height: 1;
 }
 
 .trending-card__hide:hover,
@@ -814,26 +837,54 @@ button { border-radius: 999px; }
 .discovery-toggle:hover,
 .discovery-toggle:focus-visible {
   color: var(--sky-blue);
+  background: var(--sky-hover);
   outline: none;
 }
 
 .discovery-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 10px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--sky-border);
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--sky-surface-soft);
   font-size: 0.9rem;
-  font-weight: 700;
   text-align: left;
 }
 
 .discovery-toggle__icon {
   font-size: 1.1rem;
   line-height: 1;
+}
+
+.discovery-toggle__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.discovery-toggle__title {
+  color: var(--sky-text);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.discovery-toggle__subtitle {
+  color: var(--sky-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.discovery-toggle__action {
+  flex: 0 0 auto;
+  color: var(--sky-blue);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
 .trending__list { display: flex; flex-direction: column; }

@@ -466,15 +466,21 @@ module.exports = {
       function buildTrendingCard (onHide) {
         var list = h('div.trending__list')
         var title = h('span.trending-card__title', 'Trending')
+        var hideIcon = h('span.material-symbols-outlined', 'visibility_off')
+        hideIcon.setAttribute('aria-hidden', 'true')
+        var hideButton = h('button.trending-card__hide', {
+          type: 'button',
+          title: 'Hide popular people',
+          onclick: onHide
+        }, hideIcon)
+        hideButton.setAttribute('aria-label', 'Hide popular people')
         var card = h('div.trending-card', {style: {display: 'none'}},
           h('div.trending-card__head',
-            title,
-            h('button.trending-card__hide', {
-              type: 'button',
-              title: 'Hide popular people',
-              'aria-label': 'Hide popular people',
-              onclick: onHide
-            }, 'Hide')
+            h('span.trending-card__copy',
+              title,
+              h('span.trending-card__subtitle', 'People and topics from your local network')
+            ),
+            hideButton
           ),
           list
         )
@@ -576,6 +582,8 @@ module.exports = {
           rememberPopularPeopleHidden(true)
           render()
         })
+        var showIcon = h('span.material-symbols-outlined.discovery-toggle__icon', 'visibility')
+        showIcon.setAttribute('aria-hidden', 'true')
         var showButton = h('button.discovery-toggle', {
           type: 'button',
           onclick: function () {
@@ -584,9 +592,14 @@ module.exports = {
             render()
           }
         },
-          h('span.material-symbols-outlined.discovery-toggle__icon', {'aria-hidden': 'true'}, 'visibility'),
-          h('span.discovery-toggle__label', 'Show popular people')
+          showIcon,
+          h('span.discovery-toggle__copy',
+            h('span.discovery-toggle__title', 'Popular people hidden'),
+            h('span.discovery-toggle__subtitle', 'Show this area')
+          ),
+          h('span.discovery-toggle__action', 'Show')
         )
+        showButton.setAttribute('aria-label', 'Show popular people')
 
         function render () {
           panel.innerHTML = ''
