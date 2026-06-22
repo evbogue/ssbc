@@ -519,6 +519,10 @@ body {
   box-shadow: var(--sky-shadow-sm);
 }
 
+.discovery-panel {
+  flex: 0 0 auto;
+}
+
 .trending-card {
   margin-top: 0;
   max-height: min(430px, calc(100vh - 280px));
@@ -532,11 +536,25 @@ body {
 
 .trending-card__head::after {
   content: 'People and topics from your local network';
+  order: 3;
   display: block;
+  flex-basis: 100%;
+  width: 100%;
   margin-top: 3px;
   color: var(--sky-muted);
   font-size: 0.78rem;
   font-weight: 500;
+}
+
+.trending-card__hide {
+  margin-left: auto;
+  font-size: 0.78rem;
+}
+
+.discovery-toggle {
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
 }
 
 .right-footer {

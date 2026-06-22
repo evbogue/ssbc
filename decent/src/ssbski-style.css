@@ -766,6 +766,10 @@ button { border-radius: 999px; }
 }
 
 /* Right-column "Trending" card */
+.discovery-panel {
+  flex: 0 0 auto;
+}
+
 .trending-card {
   margin-top: 8px;
   padding: 12px 16px;
@@ -775,10 +779,61 @@ button { border-radius: 999px; }
 }
 
 .trending-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--sky-text);
+}
+
+.trending-card__title {
+  min-width: 0;
+}
+
+.trending-card__hide,
+.discovery-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--sky-muted);
+  font: inherit;
+}
+
+.trending-card__hide {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 3px 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.trending-card__hide:hover,
+.trending-card__hide:focus-visible,
+.discovery-toggle:hover,
+.discovery-toggle:focus-visible {
+  color: var(--sky-blue);
+  outline: none;
+}
+
+.discovery-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.discovery-toggle__icon {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .trending__list { display: flex; flex-direction: column; }

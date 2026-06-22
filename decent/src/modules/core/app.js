@@ -317,6 +317,20 @@ module.exports = {
         } catch (e) {}
       }
 
+      function readPopularPeopleHidden () {
+        try {
+          return window.localStorage.getItem('network:hidePopularPeople') === '1'
+        } catch (e) {}
+        return false
+      }
+
+      function rememberPopularPeopleHidden (hidden) {
+        try {
+          if (hidden) window.localStorage.setItem('network:hidePopularPeople', '1')
+          else window.localStorage.removeItem('network:hidePopularPeople')
+        } catch (e) {}
+      }
+
       function makeThemeToggle () {
         var icon = h('span.material-symbols-outlined.theme-toggle__icon', {
           'aria-hidden': 'true'
@@ -449,10 +463,19 @@ module.exports = {
       // Right-column card built from real SSB data. Prefer channel/hashtag
       // trends; fall back to active recent posters so the Bluesky-style column
       // does not disappear on quieter local datasets.
-      function buildTrendingCard () {
+      function buildTrendingCard (onHide) {
         var list = h('div.trending__list')
+        var title = h('span.trending-card__title', 'Trending')
         var card = h('div.trending-card', {style: {display: 'none'}},
-          h('div.trending-card__head', 'Trending'),
+          h('div.trending-card__head',
+            title,
+            h('button.trending-card__hide', {
+              type: 'button',
+              title: 'Hide popular people',
+              'aria-label': 'Hide popular people',
+              onclick: onHide
+            }, 'Hide')
+          ),
           list
         )
         var counts = {}
@@ -486,7 +509,7 @@ module.exports = {
             return
           }
 
-          card.querySelector('.trending-card__head').textContent = 'Active people'
+          title.textContent = 'Active people'
           Object.keys(authorCounts)
             .map(function (k) { return [k, authorCounts[k]] })
             .sort(function (a, b) { return b[1] - a[1] })
@@ -545,6 +568,35 @@ module.exports = {
         return card
       }
 
+      function buildDiscoveryPanel () {
+        var hidden = readPopularPeopleHidden()
+        var panel = h('div.discovery-panel')
+        var card = buildTrendingCard(function () {
+          hidden = true
+          rememberPopularPeopleHidden(true)
+          render()
+        })
+        var showButton = h('button.discovery-toggle', {
+          type: 'button',
+          onclick: function () {
+            hidden = false
+            rememberPopularPeopleHidden(false)
+            render()
+          }
+        },
+          h('span.material-symbols-outlined.discovery-toggle__icon', {'aria-hidden': 'true'}, 'visibility'),
+          h('span.discovery-toggle__label', 'Show popular people')
+        )
+
+        function render () {
+          panel.innerHTML = ''
+          panel.appendChild(hidden ? showButton : card)
+        }
+
+        render()
+        return panel
+      }
+
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
@@ -554,8 +606,8 @@ module.exports = {
               makeConnectButton(),
               makeThemeToggle()
             ) : null,
-            h('div.pull-right', searchInput, api.menu(),
-              isNetworkSkin ? buildTrendingCard() : null,
+            h('div.pull-right', searchInput, isNetworkSkin ? null : api.menu(),
+              isNetworkSkin ? buildDiscoveryPanel() : null,
               isNetworkSkin ? h('div.right-footer', [
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
