@@ -3,6 +3,7 @@ var pull = require('pull-stream')
 var Scroller = require('../../scroller')
 var keys = require('../../keys')
 var emptyState = require('../../empty-state')
+var u = require('../../util')
 
 //var plugs = require('../../wire')
 //var message_render = plugs.first(exports.message_render = [])
@@ -150,7 +151,7 @@ exports.create = function (api) {
             : function (msg) { return isPublicMessage(msg) || isEncryptedMessage(msg) }
 
           pull(
-            api.sbot_log({
+            u.next(api.sbot_log, {
               reverse: true,
               limit: 100,
               live: false,
