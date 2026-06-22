@@ -12,7 +12,7 @@ exports.gives = 'message_name'
 exports.create = function (api) {
   return function (id, cb) {
     api.sbot_get(id, function (err, value) {
-      if(err && err.name == 'NotFoundError')
+      if(err || !value || !value.content)
         return cb(null, id.substring(0, 10)+'...(missing)')
       if(value.content.type === 'post' && 'string' === typeof value.content.text)
         return cb(null, title(value.content.text))
