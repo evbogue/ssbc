@@ -367,6 +367,18 @@ body {
   max-width: 100%;
 }
 
+.navbar-avatar__bio {
+  display: -webkit-box;
+  max-width: 100%;
+  margin-top: 4px;
+  overflow: hidden;
+  color: var(--sky-muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .compose-trigger {
   top: calc(var(--pro-topbar-height) + 152px);
   bottom: auto;

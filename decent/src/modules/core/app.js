@@ -436,6 +436,8 @@ module.exports = {
       function makeProfileMeta () {
         var nameEl = api.avatar_name(selfId)
         var handleEl = h('span.navbar-avatar__handle', selfId.slice(0, 9) + '…')
+        var bioEl = isSsbpro ? h('span.navbar-avatar__bio') : null
+        var latestBioTs = 0
         function syncHandle () {
           var nm = (nameEl.textContent || '').trim()
           handleEl.style.display = nm === selfId.substring(0, 10) ? 'none' : ''
@@ -444,7 +446,28 @@ module.exports = {
         new MutationObserver(syncHandle).observe(nameEl, {
           childList: true, characterData: true, subtree: true
         })
-        return h('span.navbar-avatar__meta', h('span.navbar-avatar__name', nameEl), handleEl)
+        if (bioEl) {
+          pull(
+            api.sbot_messagesByType({type: 'about', old: true, live: true}),
+            pull.drain(function (msg) {
+              var v = msg && msg.value
+              var c = v && v.content
+              if (!c || c.about !== selfId || v.author !== selfId) return
+              if (typeof c.description !== 'string') return
+              var ts = msg.timestamp || v.timestamp || 0
+              if (ts < latestBioTs) return
+              latestBioTs = ts
+              bioEl.textContent = c.description.trim()
+              bioEl.style.display = bioEl.textContent ? '' : 'none'
+            })
+          )
+          bioEl.style.display = 'none'
+        }
+        return h('span.navbar-avatar__meta',
+          h('span.navbar-avatar__name', nameEl),
+          handleEl,
+          bioEl
+        )
       }
 
       // Network skins render a large brand tile at the bottom of the right
