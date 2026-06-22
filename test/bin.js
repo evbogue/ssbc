@@ -311,7 +311,7 @@ test('ssbski serves rewritten stylesheet and same-origin websocket remote', (t) 
       t.error(err, 'ssbski http server starts')
       if (err) return end()
 
-      t.ok(html.indexOf('href="/ssbski-style.css"') !== -1, 'index loads ssbski stylesheet')
+      t.ok(html.indexOf('href="/ssbski-style.css') !== -1, 'index loads ssbski stylesheet')
       t.equal(html.indexOf('href="/style.css"'), -1, 'index does not load Decent stylesheet')
       t.ok(remoteRe.test(html),
         'injects same-origin ssbski websocket remote')
