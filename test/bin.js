@@ -31,6 +31,8 @@ function ssbServer(t, argv, opts) {
     argv.push('--decent.port=0')
   if (!argv.some((arg) => /^--ssbski\.port(?:=|$)/.test(arg)))
     argv.push('--ssbski.port=0')
+  if (!argv.some((arg) => /^--ssbpro\.port(?:=|$)/.test(arg)))
+    argv.push('--ssbpro.port=0')
 
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 
@@ -382,6 +384,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
     '--ws.port=9002',
     '--decent.port=0',
     '--ssbski.port=0',
+    '--ssbpro.port=0',
     '--path', dir
   ], {
     env: Object.assign({}, process.env, { ssb_appname: 'test' })
@@ -412,6 +415,7 @@ test('second start against the same app dir fails before plugin init', (t) => {
       '--port=0',
       '--decent.port=0',
       '--ssbski.port=0',
+      '--ssbpro.port=0',
       '--path', dir
     ], {
       env: Object.assign({}, process.env, { ssb_appname: 'test' })

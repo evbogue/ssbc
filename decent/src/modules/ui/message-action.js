@@ -77,6 +77,15 @@ exports.create = function (api) {
     })
   }
 
+  // ssbski/ssbpro render a full DM inbox + thread view (route '#dm/<feed>');
+  // Decent only has the legacy flat private stream and no thread route.
+  function hasThreadView () {
+    return !!document.querySelector(
+      'link[rel="stylesheet"][href*="ssbski-style.css"],' +
+      'link[rel="stylesheet"][href*="ssbpro-style.css"]'
+    )
+  }
+
   return {
     avatar_action: function (id) {
       if (id === selfId) return            // no self-messaging from your own profile
@@ -88,8 +97,13 @@ exports.create = function (api) {
       })
 
       var messageBtn = h('button.btn.btn-primary.profile-action-btn',
-        {type: 'button', title: 'Send this person a private (encrypted) message',
-         onclick: function () { composeMessage(id, name) }},
+        {type: 'button', title: 'Message this person privately',
+         onclick: function () {
+           // Where a DM thread view exists, open the conversation; otherwise
+           // fall back to the one-off private composer (Decent).
+           if (hasThreadView()) window.location.hash = '#dm/' + id
+           else composeMessage(id, name)
+         }},
         h('span.material-symbols-outlined', {style: {fontSize: '16px'}}, 'mail'),
         h('span.profile-action-btn__label', 'Message'))
 

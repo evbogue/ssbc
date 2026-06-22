@@ -40,7 +40,10 @@ exports.create = function (api) {
 
   function isSsbskiSkin () {
     return typeof document !== 'undefined' &&
-      !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+      !!document.querySelector(
+        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
+        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
+      )
   }
 
   // ── private message stream ──────────────────────────────────────────────

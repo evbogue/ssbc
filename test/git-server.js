@@ -99,7 +99,8 @@ test('git smart http server supports create push clone and json api', function (
           '--ws.port=' + wsPort,
           '--decent.host=127.0.0.1',
           '--decent.port=' + decentPort,
-          '--ssbski.port=0'
+          '--ssbski.port=0',
+          '--ssbpro.port=0'
         ], { env })
 
         let serverExited = false

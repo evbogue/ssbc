@@ -9,5 +9,8 @@ coverage
 
 # scratch screenshots from dev/verification
 /ssbski-*.png
+/ssbpro-*.png
 /ref-*.png
 /push-card-*.png
+/chat-*.png
+/qa-*.png

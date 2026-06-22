@@ -1,9 +1,9 @@
 # Frontend
 
-This document describes the current frontend in this repository, which ships in two skins:
-**Decent** and **ssbski**.
+This document describes the current frontend in this repository, which ships in three skins:
+**Decent**, **ssbski**, and **ssbpro**.
 
-## What Decent and ssbski are
+## What Decent, ssbski, and ssbpro are
 
 Decent is the browser UI for this repo’s local SSB node. It is served by
 `plugins/decent-ui.js` and, by default, is available at:
@@ -17,14 +17,20 @@ available at:
 
 - `http://127.0.0.1:8990/`
 
-The two are **the same JavaScript bundle** talking to **the same local SSB node** — only the
-stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski). UI modules that
-need to vary behavior between skins detect ssbski by checking for the `ssbski-style.css`
-stylesheet link (see `decent/src/modules/core/app.js`). The two public instances on the
-network are [decent.evbogue.com](https://decent.evbogue.com/) and
+ssbpro is a professional-network skin of the same UI — Feed/Network tabs, denser post
+cards, profile-forward surfaces, and a right discovery column. It is served by
+`plugins/ssbpro-ui.js` and, by default, is available at:
+
+- `http://127.0.0.1:8991/`
+
+All three are **the same JavaScript bundle** talking to **the same local SSB node** — only
+the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski, and
+`ssbpro-style.css` for ssbpro). UI modules that need to vary behavior between skins detect
+the active stylesheet link (see `decent/src/modules/core/app.js`). The public instances on
+the network are [decent.evbogue.com](https://decent.evbogue.com/) and
 [ssbski.evbogue.com](https://ssbski.evbogue.com/).
 
-Neither is a separate web app backed by a generic REST API. Both are browser clients built specifically around the local SSB server behavior exposed by this repo.
+None is a separate web app backed by a generic REST API. They are browser clients built specifically around the local SSB server behavior exposed by this repo.
 
 ## Build pipeline
 
@@ -45,10 +51,10 @@ in `decent/.gitignore`), so a fresh clone must run `npm run build:web` once befo
 web UI will serve.
 
 The current build flow browserifies the frontend entrypoint and generates the served
-`index.html` and stylesheet assets. Because Decent and ssbski share one JS bundle and differ
-only in CSS, this single command builds **both** skins — it emits `style.css` for Decent and
-`ssbski-style.css` for ssbski. Always rebuild both after any frontend or stylesheet change;
-never leave one skin stale.
+`index.html` and stylesheet assets. Because Decent, ssbski, and ssbpro share one JS bundle
+and differ only in CSS, this single command builds all skins — it emits `style.css` for
+Decent, `ssbski-style.css` for ssbski, and `ssbpro-style.css` for ssbpro. Always rebuild
+after any frontend or stylesheet change; never leave one skin stale.
 
 ## Runtime model
 
@@ -79,6 +85,8 @@ The important frontend areas are:
   - Decent stylesheet source
 - `decent/src/ssbski-style.css`
   - ssbski stylesheet source
+- `decent/src/ssbpro-style.css`
+  - ssbpro stylesheet source
 
 ## Plugin/module architecture
 

@@ -74,7 +74,8 @@ test('git json history and blame endpoints', async (t) => {
       '--ws.port=' + wsPort,
       '--decent.host=127.0.0.1',
       '--decent.port=' + decentPort,
-      '--ssbski.port=0'
+      '--ssbski.port=0',
+      '--ssbpro.port=0'
     ], { env })
     child.once('exit', (code, signal) => {
       if (signal !== 'SIGKILL') t.fail('server exited early: ' + (signal || code))

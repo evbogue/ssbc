@@ -133,11 +133,11 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 
 ---
 
-## Web UI: Decent and ssbski
+## Web UI: Decent, ssbski, and ssbpro
 
 ![A Decent profile page with avatar, bio, and feed](docs/img/decent.png)
 
-The browser UI ships in two skins, both built from `decent/`:
+The browser UI ships in three skins, all built from `decent/`:
 
 - **Decent** — the classic Patchbay-derived client, served by `plugins/decent-ui.js`.
   Decent and the WebSocket transport share a single port — defaulting to `8989`.
@@ -145,14 +145,18 @@ The browser UI ships in two skins, both built from `decent/`:
 - **ssbski** — a Bluesky-style skin served by `plugins/ssbski-ui.js` on its own port
   (default `8990`), with Discover/Following feed tabs, a trending sidebar, and a sticky
   centre-column header. Public instance: [ssbski.evbogue.com](https://ssbski.evbogue.com/).
+- **ssbpro** — a professional-network skin served by `plugins/ssbpro-ui.js` on its own
+  port (default `8991`), with Feed/Network tabs, profile-forward cards, and a right
+  discovery column.
 
 ![The ssbski skin: Discover/Following tabs and an Active people sidebar](docs/img/ssbski.png)
 
-Both skins are the **same JavaScript bundle** talking to the **same local SSB node** — only
-the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski). When you run
-`npm start`, both are served at once: open `http://127.0.0.1:8989/` for Decent or
-`http://127.0.0.1:8990/` for ssbski. Pick whichever interface you prefer; they read and write
-the same feed.
+All skins are the **same JavaScript bundle** talking to the **same local SSB node** — only
+the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski,
+`ssbpro-style.css` for ssbpro). When you run `npm start`, all are served at once: open
+`http://127.0.0.1:8989/` for Decent, `http://127.0.0.1:8990/` for ssbski, or
+`http://127.0.0.1:8991/` for ssbpro. Pick whichever interface you prefer; they read and
+write the same feed.
 
 ### Rebuilding the frontend
 
@@ -162,9 +166,10 @@ The web UI bundle (`decent/build/`) is generated and **not** committed to the re
 npm run build:web
 ```
 
-This rebuilds the shared JS bundle and **both** stylesheets in one step.
+This rebuilds the shared JS bundle and all stylesheets in one step.
 
-Build output: `decent/build/index.html`, `decent/build/style.css`, `decent/build/ssbski-style.css`
+Build output: `decent/build/index.html`, `decent/build/style.css`,
+`decent/build/ssbski-style.css`, `decent/build/ssbpro-style.css`
 
 ### Local docs
 

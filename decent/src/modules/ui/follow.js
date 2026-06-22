@@ -15,6 +15,23 @@ function isRelated(value, name) {
   return value ? name : value === false ? 'un'+name : ''
 }
 
+function isSsbproSkin () {
+  return typeof document !== 'undefined' &&
+    !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
+}
+
+function contactRelation (content) {
+  if (isSsbproSkin()) {
+    if (content.blocking) return 'mutes'
+    if (content.following) return 'subscribes to'
+    if (content.following === false) return 'unsubscribes from'
+    return ''
+  }
+  var relation = isRelated(content.following, 'follows')
+  if (content.blocking) relation = 'blocks'
+  return relation
+}
+
 exports.needs = {
   avatar: 'first',
   avatar_name: 'first',
@@ -35,8 +52,7 @@ exports.create = function (api) {
   exports.message_content_mini = function (msg) {
     var content = msg.value.content
     if(content.type == 'contact' && content.contact) {
-      var relation = isRelated(content.following, 'follows')
-      if(content.blocking) relation = 'blocks'
+      var relation = contactRelation(content)
       return [
         relation, ' ',
         api.avatar_link(content.contact, api.avatar_name(content.contact), '')
@@ -48,8 +64,7 @@ exports.create = function (api) {
 
     var content = msg.value.content
     if(content.type == 'contact' && content.contact) {
-      var relation = isRelated(content.following, 'follows')
-      if(content.blocking) relation = 'blocks'
+      var relation = contactRelation(content)
       return h('div.contact', relation, api.avatar(msg.value.content.contact, 'thumbnail'))
     }
   }
@@ -71,18 +86,32 @@ exports.create = function (api) {
     })
 
     function update () {
-      state.textContent = (
-        follows_you && you_follow ? 'friend'
-      : follows_you               ? 'follows you'
-      : you_follow                ? 'you follow'
-      :                             ''
-      )
+      var pro = isSsbproSkin()
+      state.textContent = pro
+        ? (
+          follows_you && you_follow ? 'mutual subscription'
+        : follows_you               ? 'subscribed to you'
+        : you_follow                ? 'subscribed'
+        :                             ''
+        )
+        : (
+          follows_you && you_follow ? 'friend'
+        : follows_you               ? 'follows you'
+        : you_follow                ? 'you follow'
+        :                             ''
+        )
 
-      label.textContent = you_follow ? 'unfollow' : 'follow'
+      label.textContent = pro
+        ? you_follow ? 'unsubscribe' : 'subscribe'
+        : you_follow ? 'unfollow' : 'follow'
       if (actionLink)
         actionLink.title = you_follow
-          ? 'Stop following this person (publishes a public unfollow)'
-          : 'Follow this person to replicate their posts (publishes a public follow)'
+          ? pro
+            ? 'Stop subscribing to this person (publishes a public unfollow)'
+            : 'Stop following this person (publishes a public unfollow)'
+          : pro
+            ? 'Subscribe to this person to replicate their posts (publishes a public follow)'
+            : 'Follow this person to replicate their posts (publishes a public follow)'
     }
 
     return h('div', state,

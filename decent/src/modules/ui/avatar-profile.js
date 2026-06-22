@@ -23,6 +23,80 @@ exports.needs = {
 exports.gives = 'avatar_profile'
 
 exports.create = function (api) {
+  function isSsbproSkin () {
+    return typeof document !== 'undefined' &&
+      !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
+  }
+
+  function wordCount (text) {
+    return (text || '').trim().split(/\s+/).filter(Boolean).length
+  }
+
+  function analyzeBio (text) {
+    var bio = (text || '').trim()
+    if (!bio) return {
+      tone: 'warn',
+      label: 'Add a short bio',
+      detail: 'Say what people can subscribe to you for.'
+    }
+    if (bio.length > 180) return {
+      tone: 'warn',
+      label: 'Too long for cards',
+      detail: 'Aim for one or two sentences so it previews cleanly.'
+    }
+    if (bio.length < 28 || wordCount(bio) < 5) return {
+      tone: 'hint',
+      label: 'Could be clearer',
+      detail: 'Add one concrete detail about what you do or care about.'
+    }
+    if (/^(hi|hello|hey|welcome|just|things|stuff)\b/i.test(bio)) return {
+      tone: 'hint',
+      label: 'Start stronger',
+      detail: 'Lead with what you make, study, or want to share.'
+    }
+    if ((bio.match(/https?:\/\//g) || []).length > 1) return {
+      tone: 'hint',
+      label: 'Link-heavy',
+      detail: 'Keep the bio readable and include only the most useful link.'
+    }
+    return {
+      tone: 'good',
+      label: 'Looks good',
+      detail: 'This should read well in cards and QR previews.'
+    }
+  }
+
+  function stripBuzzwords (text) {
+    return (text || '')
+      .replace(/\b(passionate|visionary|disruptive|innovative|synergy|thought leader|rockstar|ninja)\b/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+([,.])/g, '$1')
+      .trim()
+  }
+
+  function firstSentence (text) {
+    var bio = (text || '').trim()
+    var match = bio.match(/^(.{24,170}?[.!?])\s/)
+    return match ? match[1] : bio
+  }
+
+  function transformBio (text, mode) {
+    var bio = (text || '').trim()
+    if (mode === 'shorten') return firstSentence(stripBuzzwords(bio)).slice(0, 180).trim()
+    if (mode === 'clearer') return stripBuzzwords(bio)
+    if (mode === 'warmer') {
+      if (!bio) return 'I am working on local-first tools and sharing what I learn.'
+      if (/^I\b/.test(bio)) return bio
+      return 'I ' + bio.charAt(0).toLowerCase() + bio.slice(1)
+    }
+    if (mode === 'specific') {
+      if (!bio) return 'I build ___ for ___ and write about ___.'
+      if (bio.indexOf('___') !== -1) return bio
+      return bio + ' Currently focused on ___.'
+    }
+    if (mode === 'buzzwords') return stripBuzzwords(bio)
+    return bio
+  }
 
   // ── Blob upload helper ──────────────────────────────────────────────
   function uploadBlob (dataURL, cb) {
@@ -67,6 +141,135 @@ exports.create = function (api) {
         document.body.appendChild(lb)
       }
       return lb
+    }
+
+    function showImproveBio () {
+      var modal = h('div.bio-improve-modal')
+      var nameInput = h('input.bio-improve-name', {
+        type: 'text',
+        value: nameSpan.textContent || '',
+        placeholder: 'Display name'
+      })
+      var bioInput = h('textarea.bio-improve-text', {
+        rows: 5,
+        placeholder: 'Write a short bio people can understand at a glance...'
+      }, description)
+      var count = h('span.bio-improve-count')
+      var status = h('div.bio-improve-status')
+      var previewName = h('div.bio-preview-name')
+      var previewBio = h('div.bio-preview-text')
+      var saveBtn = h('button.btn.btn-primary.bio-improve-save', {type: 'button'}, 'Save bio')
+
+      function close () {
+        getLightbox().close()
+      }
+
+      function sync () {
+        var bio = bioInput.value
+        var name = nameInput.value.trim() || 'Your name'
+        var analysis = analyzeBio(bio)
+        count.textContent = bio.length + '/180'
+        count.classList.toggle('bio-improve-count--over', bio.length > 180)
+        status.className = 'bio-improve-status bio-improve-status--' + analysis.tone
+        status.innerHTML = ''
+        status.appendChild(h('strong', analysis.label))
+        status.appendChild(h('span', analysis.detail))
+        previewName.textContent = name
+        previewBio.textContent = bio.trim() || 'A concise bio helps people know why to subscribe.'
+        saveBtn.disabled = !nameInput.value.trim() && !bio.trim()
+      }
+
+      function applyTransform (mode) {
+        bioInput.value = transformBio(bioInput.value, mode)
+        sync()
+        bioInput.focus()
+      }
+
+      function template (text) {
+        bioInput.value = text
+        sync()
+        bioInput.focus()
+      }
+
+      function save () {
+        var newName = nameInput.value.trim()
+        var newBio = bioInput.value.trim()
+        var msg = {type: 'about', about: id}
+        var changed = false
+        if (newName && newName !== nameSpan.textContent) {
+          msg.name = newName
+          changed = true
+        }
+        if (newBio !== description) {
+          msg.description = newBio
+          changed = true
+        }
+        if (!changed) { close(); return }
+        saveBtn.disabled = true
+        api.message_confirm(msg, function (err, published) {
+          saveBtn.disabled = false
+          if (err) { alert(err.message); return }
+          if (published) {
+            if (newName) nameSpan.textContent = newName
+            description = newBio
+            bioEl.textContent = newBio
+          }
+          close()
+        })
+      }
+
+      modal.appendChild(h('div.bio-improve-header',
+        h('div',
+          h('div.bio-improve-title', 'Improve bio'),
+          h('div.bio-improve-subtitle', 'Make your public SSB identity easier to understand.')
+        ),
+        h('button.bio-improve-close', {type: 'button', title: 'Close', onclick: close},
+          h('span.material-symbols-outlined', 'close'))
+      ))
+      modal.appendChild(h('div.bio-improve-grid',
+        h('div.bio-improve-editor',
+          h('label.bio-improve-label', 'Name'),
+          nameInput,
+          h('label.bio-improve-label', 'Bio'),
+          bioInput,
+          h('div.bio-improve-row', count),
+          status,
+          h('div.bio-improve-tools',
+            h('button', {type: 'button', onclick: function () { applyTransform('shorten') }}, 'Shorten'),
+            h('button', {type: 'button', onclick: function () { applyTransform('clearer') }}, 'Make clearer'),
+            h('button', {type: 'button', onclick: function () { applyTransform('warmer') }}, 'Make warmer'),
+            h('button', {type: 'button', onclick: function () { applyTransform('specific') }}, 'More specific'),
+            h('button', {type: 'button', onclick: function () { applyTransform('buzzwords') }}, 'Remove buzzwords')
+          ),
+          h('div.bio-improve-templates',
+            h('button', {type: 'button', onclick: function () { template('I build ___ for ___ and write about ___.') }}, 'I build...'),
+            h('button', {type: 'button', onclick: function () { template('Working on ___, interested in ___.') }}, 'Working on...'),
+            h('button', {type: 'button', onclick: function () { template('Independent ___ focused on ___.') }}, 'Independent...')
+          )
+        ),
+        h('div.bio-improve-preview',
+          h('div.bio-preview-card',
+            h('div.bio-preview-top',
+              api.avatar_image(id, 'thumbnail'),
+              h('div', previewName, previewBio)
+            ),
+            h('button.bio-preview-subscribe', {type: 'button', disabled: true}, 'Subscribe')
+          ),
+          h('div.bio-preview-note', 'This is how your bio appears in profile cards and QR subscribe previews.')
+        )
+      ))
+      modal.appendChild(h('div.bio-improve-footer',
+        h('button.btn', {type: 'button', onclick: close}, 'Cancel'),
+        saveBtn
+      ))
+
+      nameInput.addEventListener('input', sync)
+      bioInput.addEventListener('input', sync)
+      saveBtn.onclick = save
+      sync()
+      getLightbox().show(modal)
+      bioInput.focus()
+      bioInput.select()
     }
 
     // ── Banner cropper ──────────────────────────────────────────────
@@ -286,7 +489,9 @@ exports.create = function (api) {
       listExpandEl.innerHTML = ''
       var data = type === 'following' ? followingData : followersData
       listExpandEl.appendChild(h('div.profile-list-title',
-        type === 'following' ? 'Following' : 'Followers'))
+        type === 'following'
+          ? isSsbproSkin() ? 'Subscriptions' : 'Following'
+          : isSsbproSkin() ? 'Subscribers' : 'Followers'))
       var grid = h('div.profile-list-grid')
       data.forEach(function (fid) {
         grid.appendChild(api.avatar_image_link(fid, 'thumbnail'))
@@ -298,9 +503,9 @@ exports.create = function (api) {
     var statsEl = h('div.profile-stats',
       h('span.profile-stat', postCountEl, ' Posts'),
       h('span.profile-stat', {onclick: function () { toggleList('following') }},
-        followingCountEl, ' Following'),
+        followingCountEl, isSsbproSkin() ? ' Subscriptions' : ' Following'),
       h('span.profile-stat', {onclick: function () { toggleList('followers') }},
-        followersCountEl, ' Followers')
+        followersCountEl, isSsbproSkin() ? ' Subscribers' : ' Followers')
     )
 
     // ── Petname (others' profiles): inline "add / edit nickname" ──────
@@ -370,11 +575,19 @@ exports.create = function (api) {
 
     // ── Actions area (top-right of card body) ──────────────────────
     var actionsEl = h('div.profile-card-actions')
-    var editBtn
+    var editBtn, improveBtn
 
     if (isSelf) {
       editBtn = h('button.btn.profile-edit-btn', {type: 'button', title: 'Edit your name, picture, and bio', onclick: enterEdit},
         'Edit profile')
+      if (isSsbproSkin()) {
+        improveBtn = h('button.btn.btn-primary.profile-improve-btn', {
+          type: 'button',
+          title: 'Improve your public bio',
+          onclick: showImproveBio
+        }, 'Improve bio')
+        actionsEl.appendChild(improveBtn)
+      }
       actionsEl.appendChild(editBtn)
     } else {
       var actionEls = api.avatar_action(id)
@@ -477,6 +690,7 @@ exports.create = function (api) {
       nameEl.style.display = 'none'
       bioEl.style.display  = 'none'
       if (editBtn) editBtn.style.display = 'none'
+      if (improveBtn) improveBtn.style.display = 'none'
       editFormEl.style.display = ''
       nameInput.focus()
       nameInput.select()
@@ -488,6 +702,7 @@ exports.create = function (api) {
       nameEl.style.display = ''
       bioEl.style.display  = ''
       if (editBtn) editBtn.style.display = ''
+      if (improveBtn) improveBtn.style.display = ''
 
       bannerEl.classList.remove('profile-banner--editable')
       bannerEl.onclick = null

@@ -1,6 +1,9 @@
 var plugs = require('../../wire')
 var h = require('hyperscript')
 var pull = require('pull-stream')
+var hyperlightbox = require('hyperlightbox')
+var QRCode = require('qrcode')
+var ssbRef = require('ssb-ref')
 
 module.exports = {
   needs: {
@@ -8,6 +11,7 @@ module.exports = {
     menu: 'first',
     avatar_image: 'first',
     avatar_name: 'first',
+    message_confirm: 'first',
     sbot_log: 'first',
     sbot_messagesByType: 'first',
     notify_start: 'first'
@@ -22,6 +26,10 @@ module.exports = {
         )
       }
       var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+      var isSsbpro = !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
+      var isNetworkSkin = isSsbski || isSsbpro
+      var ssbproTheme = readSsbproTheme()
+      applySsbproTheme(ssbproTheme)
 
       window.addEventListener('error', window.onError = function (e) {
         // "ResizeObserver loop completed with undelivered notifications" is a
@@ -60,11 +68,305 @@ module.exports = {
       }
 
       var selfId = require('../../keys').id
+      var topbarLightbox = null
+
+      function profileUrlFor (id) {
+        return window.location.origin + window.location.pathname + '#' + id
+      }
+
+      function parseProfileCode (text) {
+        var candidate = ssbRef.extract(String(text || '').trim())
+        return ssbRef.isFeed(candidate) ? candidate : null
+      }
+
+      function getTopbarLightbox () {
+        if (!topbarLightbox) {
+          topbarLightbox = hyperlightbox()
+          document.body.appendChild(topbarLightbox)
+        }
+        return topbarLightbox
+      }
+
+      function copyText (text, statusEl, doneText) {
+        function done () {
+          if (statusEl) statusEl.textContent = doneText || 'Copied'
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, function () {
+            window.prompt('Copy this profile code:', text)
+            done()
+          })
+        } else {
+          window.prompt('Copy this profile code:', text)
+          done()
+        }
+      }
+
+      function showConnectModal () {
+        var profileLink = profileUrlFor(selfId)
+        var tabs = h('div.qr-connect-tabs')
+        var body = h('div.qr-connect-body')
+        var footer = h('div.qr-connect-footer')
+        var tabButtons = {}
+        var modal = h('div.qr-connect-modal',
+          h('div.qr-connect-header',
+            h('div',
+              h('div.qr-connect-title', 'Connect'),
+              h('div.qr-connect-subtitle', 'Share your profile or subscribe from a code.')
+            ),
+            h('button.bio-improve-close', {type: 'button', title: 'Close', onclick: function () { getTopbarLightbox().close() }},
+              h('span.material-symbols-outlined', 'close'))
+          ),
+          tabs,
+          body,
+          footer
+        )
+
+        function setMode (mode) {
+          Object.keys(tabButtons).forEach(function (key) {
+            tabButtons[key].classList.toggle('qr-connect-tab--active', key === mode)
+          })
+          body.innerHTML = ''
+          footer.innerHTML = ''
+          if (mode === 'paste') renderPaste()
+          else renderQr()
+        }
+
+        function addTab (mode, label, icon) {
+          var button = h('button.qr-connect-tab', {
+            type: 'button',
+            onclick: function () { setMode(mode) }
+          }, [
+            h('span.material-symbols-outlined', {'aria-hidden': 'true'}, icon),
+            h('span', label)
+          ])
+          tabButtons[mode] = button
+          tabs.appendChild(button)
+        }
+
+        function renderQr () {
+          var status = h('div.qr-connect-status')
+          var canvas = h('canvas.qr-connect-code')
+          var profileCode = h('input.qr-connect-copy', {
+            type: 'text',
+            readonly: true,
+            value: selfId
+          })
+          var profileLinkInput = h('input.qr-connect-copy', {
+            type: 'text',
+            readonly: true,
+            value: profileLink
+          })
+
+          body.appendChild(h('div.qr-connect-card',
+            canvas,
+            h('div.qr-connect-person',
+              api.avatar_image(selfId, 'thumbnail'),
+              h('div',
+                h('strong', api.avatar_name(selfId)),
+                h('span', 'Scan to view and subscribe.')
+              )
+            )
+          ))
+          body.appendChild(h('label.qr-connect-label', 'Profile code'))
+          body.appendChild(profileCode)
+          body.appendChild(h('label.qr-connect-label', 'Profile link'))
+          body.appendChild(profileLinkInput)
+          body.appendChild(status)
+
+          footer.appendChild(
+            h('button.btn', {type: 'button', onclick: function () { copyText(selfId, status, 'Profile code copied') }}, 'Copy code')
+          )
+          footer.appendChild(
+            h('button.btn', {type: 'button', onclick: function () { copyText(profileLink, status, 'Profile link copied') }}, 'Copy link')
+          )
+          footer.appendChild(
+            h('button.btn.btn-primary', {type: 'button', onclick: function () {
+              var a = document.createElement('a')
+              a.href = canvas.toDataURL('image/png')
+              a.download = 'ssbpro-profile-qr.png'
+              a.click()
+            }}, 'Download QR')
+          )
+
+          QRCode.toCanvas(canvas, profileLink, {
+            errorCorrectionLevel: 'M',
+            margin: 1,
+            scale: 8,
+            color: {
+              dark: '#0a66c2',
+              light: '#ffffff'
+            }
+          }, function (err) {
+            if (err) {
+              status.textContent = 'Could not create QR code.'
+              console.error(err)
+            }
+          })
+          profileCode.select()
+        }
+
+        function renderPaste () {
+          var targetId = null
+          var status = h('div.qr-connect-status')
+          var input = h('textarea.qr-connect-paste', {
+            rows: 4,
+            placeholder: 'Paste a profile link or @feed.ed25519 code...'
+          })
+          var preview = h('div.qr-connect-preview', {style: {display: 'none'}})
+          var subscribeBtn = h('button.btn.btn-primary', {type: 'button', disabled: true}, 'Subscribe')
+
+          body.appendChild(h('label.qr-connect-label', 'Profile code or link'))
+          body.appendChild(input)
+          body.appendChild(preview)
+          body.appendChild(status)
+          footer.appendChild(h('button.btn', {type: 'button', onclick: function () { getTopbarLightbox().close() }}, 'Cancel'))
+          footer.appendChild(subscribeBtn)
+
+          function renderPreview () {
+            targetId = parseProfileCode(input.value)
+            preview.innerHTML = ''
+            if (!input.value.trim()) {
+              status.textContent = ''
+              preview.style.display = 'none'
+              subscribeBtn.disabled = true
+              return
+            }
+            if (!targetId) {
+              status.textContent = 'That does not look like an SSB profile code.'
+              preview.style.display = 'none'
+              subscribeBtn.disabled = true
+              return
+            }
+            if (targetId === selfId) {
+              status.textContent = 'That is your own profile.'
+              preview.style.display = 'none'
+              subscribeBtn.disabled = true
+              return
+            }
+            status.textContent = ''
+            preview.style.display = ''
+            preview.appendChild(api.avatar_image(targetId, 'thumbnail'))
+            preview.appendChild(h('div',
+              h('strong', api.avatar_name(targetId)),
+              h('span', targetId)
+            ))
+            subscribeBtn.disabled = false
+          }
+
+          subscribeBtn.onclick = function () {
+            if (!targetId) return
+            subscribeBtn.disabled = true
+            api.message_confirm({
+              type: 'contact',
+              contact: targetId,
+              following: true
+            }, function (err, msg) {
+              subscribeBtn.disabled = false
+              if (err) {
+                status.textContent = err.message
+                return
+              }
+              if (msg) {
+                getTopbarLightbox().close()
+                window.location.hash = '#' + targetId
+              }
+            })
+          }
+
+          input.addEventListener('input', renderPreview)
+          input.focus()
+        }
+
+        addTab('qr', 'My QR', 'qr_code_2')
+        addTab('paste', 'Paste code', 'content_paste')
+        getTopbarLightbox().show(modal)
+        setMode('qr')
+      }
+
+      function readSsbproTheme () {
+        if (!isSsbpro) return 'system'
+        try {
+          var stored = window.localStorage.getItem('ssbpro:theme')
+          if (stored === 'light' || stored === 'dark') return stored
+        } catch (e) {}
+        return 'system'
+      }
+
+      function applySsbproTheme (theme) {
+        if (!isSsbpro) return
+        if (theme === 'light' || theme === 'dark') {
+          document.documentElement.setAttribute('data-ssbpro-theme', theme)
+        } else {
+          document.documentElement.removeAttribute('data-ssbpro-theme')
+        }
+      }
+
+      function getResolvedSsbproTheme () {
+        var explicit = document.documentElement.getAttribute('data-ssbpro-theme')
+        if (explicit === 'light' || explicit === 'dark') return explicit
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'
+        return 'light'
+      }
+
+      function rememberSsbproTheme (theme) {
+        ssbproTheme = theme
+        applySsbproTheme(theme)
+        try {
+          window.localStorage.setItem('ssbpro:theme', theme)
+        } catch (e) {}
+      }
+
+      function makeThemeToggle () {
+        var icon = h('span.material-symbols-outlined.theme-toggle__icon', {
+          'aria-hidden': 'true'
+        })
+        var label = h('span.theme-toggle__label')
+        var button = h('button.theme-toggle', {
+          type: 'button',
+          title: 'Toggle light/dark mode',
+          onclick: function () {
+            rememberSsbproTheme(getResolvedSsbproTheme() === 'dark' ? 'light' : 'dark')
+            render()
+          }
+        }, icon, label)
+
+        function render () {
+          var next = getResolvedSsbproTheme() === 'dark' ? 'light' : 'dark'
+          icon.textContent = next === 'dark' ? 'dark_mode' : 'light_mode'
+          label.textContent = next === 'dark' ? 'Dark' : 'Light'
+          button.setAttribute('aria-label', 'Switch to ' + next + ' mode')
+        }
+
+        render()
+        return button
+      }
+
+      function makeConnectButton () {
+        return h('button.nav-connect-btn', {
+          type: 'button',
+          title: 'Connect with people',
+          'aria-label': 'Connect with people',
+          onclick: showConnectModal
+        }, [
+          h('span.material-symbols-outlined.nav-connect-btn__icon', {
+            'aria-hidden': 'true'
+          }, 'qr_code_2'),
+          h('span.nav-connect-btn__label', 'Connect')
+        ])
+      }
+
       function labelForRoute (route, fallback) {
-        if (!isSsbski) return fallback
-        if (route === 'public') return 'Discover'
-        if (route === 'friends') return 'Following'
-        if (route === 'private') return 'Chat'
+        if (!isNetworkSkin) return fallback
+        if (isSsbpro) {
+          if (route === 'public') return 'Feed'
+          if (route === 'friends') return 'Network'
+          if (route === 'private') return 'Messaging'
+        } else {
+          if (route === 'public') return 'Discover'
+          if (route === 'friends') return 'Following'
+          if (route === 'private') return 'Chat'
+        }
         return fallback
       }
 
@@ -87,7 +389,7 @@ module.exports = {
             h('span.material-symbols-outlined.nav__icon', {
               'aria-hidden': 'true'
             }, item.icon),
-            isSsbski ? h('span.nav__label', item.label) : null
+            isNetworkSkin ? h('span.nav__label', item.label) : null
           ])
         )
       }))
@@ -111,21 +413,37 @@ module.exports = {
         'aria-label': 'Profile'
       }, [
         api.avatar_image(selfId, 'thumbnail'),
-        isSsbski ? h('span.navbar-avatar__meta',
-          h('span.navbar-avatar__name', api.avatar_name(selfId)),
-          h('span.navbar-avatar__handle', selfId.slice(0, 9) + '…')
-        ) : null
+        isNetworkSkin ? makeProfileMeta() : null
       ])
 
-      // ssbski brand: the hermit-crab logo lives at the bottom of the right
-      // column (a full-bleed square), not in the left rail. Decent keeps its
-      // own header, so this only renders for the ssbski skin.
-      var rightBrand = isSsbski ? h('a.right-brand', {
+      // When no display name is set, avatar_name falls back to the truncated
+      // feed id — identical to the handle — so the key would render twice. Hide
+      // the handle in that case and reveal it once a real name resolves.
+      function makeProfileMeta () {
+        var nameEl = api.avatar_name(selfId)
+        var handleEl = h('span.navbar-avatar__handle', selfId.slice(0, 9) + '…')
+        function syncHandle () {
+          var nm = (nameEl.textContent || '').trim()
+          handleEl.style.display = nm === selfId.substring(0, 10) ? 'none' : ''
+        }
+        syncHandle()
+        new MutationObserver(syncHandle).observe(nameEl, {
+          childList: true, characterData: true, subtree: true
+        })
+        return h('span.navbar-avatar__meta', h('span.navbar-avatar__name', nameEl), handleEl)
+      }
+
+      // Network skins render a large brand tile at the bottom of the right
+      // column. Decent keeps its own header, so this only renders for skins.
+      var rightBrand = isNetworkSkin ? h('a.right-brand', {
         href: '#/',
-        'aria-label': 'ssbski home'
+        'aria-label': isSsbpro ? 'ssbpro home' : 'ssbski home'
       }, [
-        h('img.right-brand__logo', {src: '/ssbski-logo.png', alt: 'ssbski'}),
-        h('span.right-brand__word', 'SSBSKI')
+        h('img.right-brand__logo', {
+          src: isSsbpro ? '/icons/ssbpro-512.png' : '/ssbski-logo.png',
+          alt: isSsbpro ? 'ssbpro' : 'ssbski'
+        }),
+        h('span.right-brand__word', isSsbpro ? 'SSBPRO' : 'SSBSKI')
       ]) : null
 
       // Right-column card built from real SSB data. Prefer channel/hashtag
@@ -232,13 +550,17 @@ module.exports = {
           h('div.container-fluid',
             profileLink,
             nav,
+            isSsbpro ? h('div.topbar-actions',
+              makeConnectButton(),
+              makeThemeToggle()
+            ) : null,
             h('div.pull-right', searchInput, api.menu(),
-              isSsbski ? buildTrendingCard() : null,
-              isSsbski ? h('div.right-footer', [
+              isNetworkSkin ? buildTrendingCard() : null,
+              isNetworkSkin ? h('div.right-footer', [
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
                 h('a.right-footer__link', {href: '#key'}, 'Keys'),
-                h('span.right-footer__tag', 'ssbski · SSB')
+                h('span.right-footer__tag', isSsbpro ? 'ssbpro · SSB' : 'ssbski · SSB')
               ]) : null,
               rightBrand
             )
@@ -247,13 +569,13 @@ module.exports = {
       )
 
       var content = h('div.screen__content.column')
-      // ssbski shows a sticky, Bluesky-style header (feed tabs / section title)
-      // at the top of the centre column; the route view renders below it. The
+      // Network skins show a sticky header (feed tabs / section title) at the
+      // top of the centre column; the route view renders below it. The
       // view host is a separate node so renderRoute can replace the view
       // without wiping the persistent header.
       var feedHeader = null
       var renderTarget = content
-      if (isSsbski) {
+      if (isNetworkSkin) {
         feedHeader = h('div.feed-header')
         var feedHost = h('div.feed-host')
         content.appendChild(feedHeader)
@@ -292,7 +614,7 @@ module.exports = {
       }
 
       function setTitle (route, view) {
-        var base = isSsbski ? 'ssbski' : 'Decent SSB'
+        var base = isSsbpro ? 'ssbpro' : isSsbski ? 'ssbski' : 'Decent SSB'
         var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }
@@ -326,16 +648,16 @@ module.exports = {
         return btn
       }
 
-      // Bluesky-style centre-column header: the two primary feeds render as a
-      // tab switcher (Discover / Following); every other route shows its title.
+      // Network-skin centre-column header: the two primary feeds render as a
+      // tab switcher; every other route shows its title.
       function renderFeedHeader (route, view) {
         if (!feedHeader) return
         feedHeader.innerHTML = ''
         feedHeader.style.display = ''
         if (route === 'public' || route === 'friends') {
           [
-            {route: 'public', href: '#/', label: 'Discover'},
-            {route: 'friends', href: '#friends', label: 'Following'}
+            {route: 'public', href: '#/', label: labelForRoute('public', 'Public')},
+            {route: 'friends', href: '#friends', label: labelForRoute('friends', 'Friends')}
           ].forEach(function (t) {
             var tab = h('a.feed-header__tab', {href: t.href}, h('span', t.label))
             if (t.route === route) tab.classList.add('feed-header__tab--active')

@@ -47,9 +47,14 @@ exports.create = function (api) {
       var ourId = keys.id
       var ourIds = {}
       ourIds[ourId] = true
-      var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
-      var skin = isSsbski ? 'ssbski' : 'decent'
-      var icon = isSsbski ? '/icons/ssbski-192.png' : '/icons/decent-192.png'
+      var skinLink = document.querySelector(
+        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
+        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
+      )
+      var skin = skinLink
+        ? skinLink.href.indexOf('ssbpro-style.css') !== -1 ? 'ssbpro' : 'ssbski'
+        : 'decent'
+      var icon = '/icons/' + skin + '-192.png'
       // Only notify for messages that arrive after the app opened, so a reconnect
       // or backfill never replays a burst of already-seen history.
       var openedAt = Date.now()

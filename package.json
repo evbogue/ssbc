@@ -58,6 +58,7 @@
     "pull-pushable": "^2.2.0",
     "pull-reconnect": "^0.0.3",
     "pull-stream": "^3.6.2",
+    "qrcode": "^1.5.4",
     "secret-stack": "^6.3.1",
     "simple-mime": "^0.1.0",
     "split-buffer": "^1.0.0",

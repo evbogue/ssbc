@@ -26,6 +26,7 @@ const EXPECTED_ORDER = [
   'git-server',
   'decent-ui',
   'ssbski-ui',
+  'ssbpro-ui',
   'ssb-local',
   'ssb-logging',
   'ssb-query',
@@ -82,6 +83,7 @@ test('a server built from the registry still produces the expected manifest', (t
     // Keep the smoke test from binding real ports or broadcasting on the LAN.
     decent: { port: false },
     ssbski: { port: false },
+    ssbpro: { port: false },
     gossip: { local: false }
   }
 

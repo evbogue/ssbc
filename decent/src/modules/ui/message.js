@@ -46,7 +46,10 @@ function isRenderableMessage (msg) {
 exports.create = function (api) {
   function isSsbski () {
     return typeof document !== 'undefined' &&
-      !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
+      !!document.querySelector(
+        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
+        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
+      )
   }
 
   function shortFeedId (id) {
@@ -480,8 +483,14 @@ exports.create = function (api) {
       content,
       expandBtn,
       h('div.message_actions.row',
-        h('div.actions', replyLink, api.message_action(msg), api.message_reactions(msg)),
-        isSsbski() ? makeExtraActions(msg, content) : null
+        // On the ssbski/ssbpro skins the aggregated reaction pill moves out of
+        // .actions to sit after every button, so it can wrap across the full
+        // card width instead of being trapped in .actions' max-width column.
+        // Base Decent keeps the pill inside .actions (right-aligned) as before.
+        h('div.actions', replyLink, api.message_action(msg),
+          isSsbski() ? null : api.message_reactions(msg)),
+        isSsbski() ? makeExtraActions(msg, content) : null,
+        isSsbski() ? api.message_reactions(msg) : null
       ),
       backlinks,
       {onkeydown: function (ev) {

@@ -1,0 +1,1615 @@
+/*
+ * ssbpro skin — a professional-network reskin of the Decent web client.
+ *
+ * This imports the mature network-shell layout from ssbski and retunes it:
+ * left navigation, centered update feed, right discovery column, denser cards,
+ * and LinkedIn-like blue/gray surfaces without using the LinkedIn name.
+ */
+@import url('/ssbski-style.css');
+
+:root {
+  color-scheme: light;
+  --sky-bg: #f4f2ee;
+  --sky-surface: #ffffff;
+  --sky-surface-soft: #edf3f8;
+  --sky-hover: #eef3f8;
+  --sky-border: #d9d2c6;
+  --sky-border-strong: #b7aea1;
+  --sky-text: #1f2328;
+  --sky-muted: #5f6f7a;
+  --sky-muted-soft: #8c9398;
+  --sky-blue: #0a66c2;
+  --sky-blue-hover: #004182;
+  --sky-blue-soft: rgba(10, 102, 194, 0.12);
+  --sky-green: #057642;
+  --sky-green-soft: rgba(5, 118, 66, 0.12);
+  --sky-pink: #b24020;
+  --sky-pink-soft: rgba(178, 64, 32, 0.12);
+  --sky-red: #cc1016;
+  --sky-red-soft: rgba(204, 16, 22, 0.12);
+  --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.06);
+  --sky-rail-width: 228px;
+  --sky-right-width: 328px;
+  --sky-feed-width: 720px;
+  --pro-topbar-height: 56px;
+  --pro-page-width: 1128px;
+  --pro-left-width: 248px;
+  --pro-right-width: 312px;
+  --pro-gap: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --sky-bg: #16191c;
+    --sky-surface: #1f2328;
+    --sky-surface-soft: #26323a;
+    --sky-hover: #26323a;
+    --sky-border: #343a40;
+    --sky-border-strong: #535b62;
+    --sky-text: #f3f6f8;
+    --sky-muted: #b9c2ca;
+    --sky-muted-soft: #87929b;
+    --sky-blue: #70b5f9;
+    --sky-blue-hover: #a8d4ff;
+    --sky-blue-soft: rgba(112, 181, 249, 0.18);
+    --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.3);
+  }
+}
+
+:root[data-ssbpro-theme="light"] {
+  color-scheme: light;
+  --sky-bg: #f4f2ee;
+  --sky-surface: #ffffff;
+  --sky-surface-soft: #edf3f8;
+  --sky-hover: #eef3f8;
+  --sky-border: #d9d2c6;
+  --sky-border-strong: #b7aea1;
+  --sky-text: #1f2328;
+  --sky-muted: #5f6f7a;
+  --sky-muted-soft: #8c9398;
+  --sky-blue: #0a66c2;
+  --sky-blue-hover: #004182;
+  --sky-blue-soft: rgba(10, 102, 194, 0.12);
+  --sky-green: #057642;
+  --sky-green-soft: rgba(5, 118, 66, 0.12);
+  --sky-pink: #b24020;
+  --sky-pink-soft: rgba(178, 64, 32, 0.12);
+  --sky-red: #cc1016;
+  --sky-red-soft: rgba(204, 16, 22, 0.12);
+  --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.06);
+}
+
+:root[data-ssbpro-theme="dark"] {
+  color-scheme: dark;
+  --sky-bg: #16191c;
+  --sky-surface: #1f2328;
+  --sky-surface-soft: #26323a;
+  --sky-hover: #26323a;
+  --sky-border: #343a40;
+  --sky-border-strong: #535b62;
+  --sky-text: #f3f6f8;
+  --sky-muted: #b9c2ca;
+  --sky-muted-soft: #87929b;
+  --sky-blue: #70b5f9;
+  --sky-blue-hover: #a8d4ff;
+  --sky-blue-soft: rgba(112, 181, 249, 0.18);
+  --sky-green: #7ad69c;
+  --sky-green-soft: rgba(122, 214, 156, 0.16);
+  --sky-pink: #ff9b7d;
+  --sky-pink-soft: rgba(255, 155, 125, 0.14);
+  --sky-red: #ff858a;
+  --sky-red-soft: rgba(255, 133, 138, 0.14);
+  --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+html,
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.screen,
+.screen.column {
+  background: var(--sky-bg);
+  padding-top: var(--pro-topbar-height);
+}
+
+.screen__content,
+.screen__content.column {
+  height: calc(100vh - var(--pro-topbar-height));
+  margin-left: calc(max(16px, (100vw - var(--pro-page-width)) / 2) + var(--pro-left-width) + var(--pro-gap));
+  margin-right: calc(max(16px, (100vw - var(--pro-page-width)) / 2) + var(--pro-right-width) + var(--pro-gap));
+  padding: 12px 0 0;
+  background: var(--sky-bg);
+}
+
+.scroller__wrapper {
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+}
+
+.feed-header {
+  height: 48px;
+  max-width: var(--sky-feed-width);
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sky-surface) 94%, transparent);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.feed-header__tab {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.feed-header__tab--active::after {
+  width: 92px;
+  height: 2px;
+  background: var(--sky-blue);
+}
+
+.feed-header__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.navbar {
+  position: fixed;
+  inset: 0 0 auto;
+  width: 100%;
+  height: var(--pro-topbar-height);
+  background: var(--sky-surface);
+  border-right: 0;
+  border-bottom: 1px solid var(--sky-border);
+  box-shadow: var(--sky-shadow-sm);
+  z-index: 80;
+}
+
+.navbar-inner {
+  height: 100%;
+}
+
+.navbar .container-fluid {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  max-width: var(--pro-page-width);
+  height: 100%;
+  margin: 0 auto;
+  padding: 0;
+  gap: 18px;
+}
+
+.navbar .container-fluid::before {
+  content: 'ssbpro';
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  color: var(--sky-blue);
+  font-size: 1.28rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.navbar .nav.pull-left {
+  flex-direction: row;
+  align-items: center;
+  width: auto;
+  height: 100%;
+  gap: 2px;
+}
+
+.navbar .nav.pull-left li a {
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--pro-topbar-height);
+  gap: 1px;
+  padding: 0 13px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--sky-muted);
+  font-weight: 500;
+}
+
+.navbar .nav.pull-left li a:hover {
+  background: transparent;
+  color: var(--sky-blue);
+}
+
+.navbar .nav.pull-left li.active a,
+.navbar .nav.pull-left li.active a:hover {
+  background: transparent;
+  border-bottom-color: var(--sky-text);
+  color: var(--sky-blue);
+}
+
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.theme-toggle,
+.nav-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  gap: 6px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-muted);
+  font: inherit;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.theme-toggle {
+  min-width: 86px;
+}
+
+.nav-connect-btn {
+  min-width: 104px;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible,
+.nav-connect-btn:hover,
+.nav-connect-btn:focus-visible {
+  border-color: var(--sky-blue);
+  color: var(--sky-blue);
+  background: var(--sky-hover);
+  outline: none;
+}
+
+.theme-toggle__icon,
+.nav-connect-btn__icon {
+  font-size: 1.18rem;
+}
+
+.theme-toggle__label,
+.nav-connect-btn__label {
+  font-size: 0.82rem;
+}
+
+.nav__icon {
+  font-size: 1.25rem;
+}
+
+.nav__label {
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.navbar-avatar {
+  position: fixed;
+  top: calc(var(--pro-topbar-height) + 12px);
+  left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
+  width: var(--pro-left-width);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  padding: 0 16px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--sky-border);
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+  z-index: 35;
+}
+
+.navbar-avatar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 38px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(135deg, #0a66c2, #79a7c8);
+  pointer-events: none;
+}
+
+.navbar-avatar:hover {
+  background: var(--sky-surface);
+}
+
+.navbar-avatar img,
+.navbar-avatar canvas,
+.navbar-avatar svg {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--sky-surface);
+}
+
+.navbar-avatar__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.navbar-avatar__name {
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.navbar-avatar__handle {
+  font-size: 0.8125rem;
+  color: var(--sky-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.compose-trigger {
+  top: calc(var(--pro-topbar-height) + 152px);
+  bottom: auto;
+  left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
+  width: var(--pro-left-width);
+}
+
+.compose-trigger__button {
+  height: 44px;
+  border-radius: 999px;
+  background: var(--sky-blue);
+  border-color: var(--sky-blue);
+  box-shadow: none;
+  font-size: 0.95rem;
+}
+
+.compose-trigger__button::after {
+  content: 'Start a Post';
+  font-size: 0.95rem;
+}
+
+/* Composer fields: the base CSS leaves both textareas at browser defaults
+   (grey border, square corners, 2px padding). Bring them onto the palette. */
+.compose-modal textarea,
+.compose-prompt__field {
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--sky-text);
+  background: var(--sky-surface);
+  box-sizing: border-box;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.compose-modal textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.compose-modal textarea::placeholder,
+.compose-prompt__field::placeholder {
+  color: var(--sky-muted);
+}
+
+.compose-modal textarea:focus,
+.compose-prompt__field:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px rgba(10, 102, 194, 0.18);
+}
+
+/* Contact/mention suggestion list (suggest-box). It is appended to <body> with
+   position:fixed and ships with no styling and z-index:auto, so it rendered
+   invisibly behind the New chat modal (z-index 200). Give it a real surface
+   and lift it above the modal. */
+.suggest-box {
+  z-index: 250;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  box-shadow: var(--sky-shadow-sm), 0 8px 24px rgba(0, 0, 0, 0.14);
+  padding: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+.suggest-box ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.suggest-box li {
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--sky-text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggest-box li strong {
+  font-weight: 500;
+}
+
+.suggest-box li.selected,
+.suggest-box li:hover {
+  background: rgba(10, 102, 194, 0.12);
+}
+
+/* Tidy the modal header and footer to match the calm card feel. */
+.compose-modal {
+  border: 1px solid var(--sky-border);
+}
+
+.compose-modal__header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.compose-modal__title {
+  font-weight: 500;
+  color: var(--sky-text);
+}
+
+.compose__controls.row {
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.navbar .pull-right {
+  top: calc(var(--pro-topbar-height) + 12px);
+  right: max(16px, calc((100vw - var(--pro-page-width)) / 2));
+  width: var(--pro-right-width);
+  height: calc(100vh - var(--pro-topbar-height) - 24px);
+  padding: 0 2px 12px 0;
+  background: var(--sky-bg);
+  border-left: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.nav-search {
+  flex: 0 0 auto;
+  height: 40px;
+  border-radius: 6px;
+  border-color: var(--sky-border);
+  background: var(--sky-surface);
+  font-size: 0.95rem;
+}
+
+.pull-right .menu {
+  align-self: stretch;
+  flex: 0 0 auto;
+}
+
+.trending-card,
+.right-footer,
+.right-brand {
+  flex: 0 0 auto;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.trending-card {
+  margin-top: 0;
+  max-height: min(430px, calc(100vh - 280px));
+  overflow-y: auto;
+}
+
+.trending-card__head {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.trending-card__head::after {
+  content: 'People and topics from your local network';
+  display: block;
+  margin-top: 3px;
+  color: var(--sky-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.right-footer {
+  margin-top: 0;
+  padding: 12px 14px;
+  gap: 6px 12px;
+}
+
+.right-brand {
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+  line-height: 1;
+  text-align: center;
+}
+
+.right-brand__logo {
+  width: 52px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  opacity: 1;
+}
+
+.right-brand__word {
+  position: static;
+  display: block;
+  font-size: 0.92rem;
+  letter-spacing: 0;
+  color: var(--sky-text);
+  opacity: 1;
+}
+
+.right-brand:hover .right-brand__logo,
+.right-brand:focus-visible .right-brand__logo,
+.right-brand:hover .right-brand__word,
+.right-brand:focus-visible .right-brand__word {
+  opacity: 1;
+}
+
+.message-card,
+.message-card.compose,
+.profile-card,
+.notify-permission {
+  margin: 8px 0 0;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.message-card:hover {
+  background: var(--sky-surface);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Group consecutive single-line activity rows (reactions, locked-post stubs,
+   "self-identifies as") into one list surface instead of a wall of separate
+   cards. Each mini defaults to a self-contained run (rounded top + bottom, top
+   margin from the shared .message-card rule); when one directly follows another
+   the shared edge is merged — no gap, no doubled border, square inner corners —
+   so a run reads as a single grouped panel. */
+.message-card.message--mini {
+  box-shadow: none;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.message-card.message--mini + .message-card.message--mini {
+  margin-top: 0;
+  border-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.message-card.message--mini:has(+ .message-card.message--mini) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Highlight the hovered row in place rather than lifting it with a shadow,
+   which would visually break the merged run. */
+.message-card.message--mini:hover {
+  background: var(--sky-hover);
+  box-shadow: none;
+}
+
+.message-card:not(.message--mini):not(.compose) {
+  padding: 14px 16px 12px 72px;
+}
+
+.message-card:not(.message--mini):not(.compose) > .title .avatar img,
+.message-card:not(.message--mini):not(.compose) > .title .avatar canvas,
+.message-card:not(.message--mini):not(.compose) > .title .avatar svg {
+  left: 16px;
+  width: 44px;
+  height: 44px;
+}
+
+.message-card .message_content {
+  color: var(--sky-text);
+  font-size: 0.98rem;
+}
+
+.message-card .message_actions.row {
+  border-top: 1px solid var(--sky-border);
+  margin-top: 12px;
+  padding-top: 4px;
+  /* The aggregated reaction pill is rendered as the row's last child (after the
+     buttons). Let the row wrap so the pill drops onto its own full-width line
+     beneath every button, and top-align so the button groups stay on one row. */
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 8px;
+}
+
+/* The imported ssbski skin pins .actions to a single nowrap row and forbids its
+   children from shrinking (.actions > * { flex: 0 0 auto }), so a post with many
+   reactions pushes the chip pill straight past the card's right border. Let the
+   action row wrap and give the aggregated reaction pill its own full-width line
+   below the buttons, where its chips flow and wrap cleanly inside the card. */
+.message-card .message_actions .actions {
+  /* .actions now holds only the quick-action buttons, so let it shrink to its
+     content instead of ssbski's greedy width:100%/max-width:420px — otherwise it
+     claims the whole row and bumps the extra-actions group onto a second line. */
+  width: auto;
+  max-width: none;
+  flex: 0 1 auto;
+  justify-content: flex-start;
+  gap: 8px 6px;
+}
+
+.message-card .message_actions .reaction-pill {
+  flex: 1 0 100%;
+  justify-content: flex-start;
+  margin-left: 0;
+  min-width: 0;
+}
+
+.action-btn,
+.reaction-chip,
+.message-expand {
+  border-radius: 4px;
+}
+
+.chat-list__wrapper {
+  overflow: hidden;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.chat-list__head {
+  min-height: 60px;
+  padding: 14px 16px;
+  background: var(--sky-surface);
+}
+
+.chat-list__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.chat-list__title::before {
+  content: 'mail';
+  font-family: 'Material Symbols Outlined';
+  color: var(--sky-blue);
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.chat-list__head .chat-new-btn {
+  width: 38px !important;
+  height: 38px !important;
+  border: 1px solid var(--sky-border) !important;
+  background: var(--sky-surface) !important;
+  box-shadow: var(--sky-shadow-sm) !important;
+}
+
+.chat-list__head .chat-new-btn:hover,
+.chat-list__head .chat-new-btn:focus-visible {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+  outline: none;
+}
+
+.chat-list__head .chat-new-btn .material-symbols-outlined {
+  font-size: 1.16rem;
+}
+
+.chat-list .feed-empty,
+.chat-thread__msgs .feed-empty {
+  display: grid !important;
+  justify-items: center !important;
+  gap: 8px !important;
+  margin: 28px 16px !important;
+  padding: 34px 20px !important;
+  border: 1px dashed var(--sky-border) !important;
+  border-radius: 8px !important;
+  background: color-mix(in srgb, var(--sky-surface-soft) 42%, transparent) !important;
+  text-align: center !important;
+}
+
+.chat-list .feed-empty__icon,
+.chat-thread__msgs .feed-empty__icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  font-size: 1.35rem;
+}
+
+.chat-list .feed-empty__title,
+.chat-thread__msgs .feed-empty__title {
+  color: var(--sky-text);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chat-list .feed-empty__body,
+.chat-thread__msgs .feed-empty__body {
+  max-width: 280px;
+  color: var(--sky-muted);
+  font-size: 0.92rem;
+}
+
+.chat-list__row {
+  min-height: 72px;
+  padding: 13px 16px;
+  border-bottom-color: color-mix(in srgb, var(--sky-border) 72%, transparent);
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.chat-list__row:hover {
+  background: var(--sky-hover);
+}
+
+.chat-list__row--unread {
+  background: color-mix(in srgb, var(--sky-blue-soft) 42%, var(--sky-surface));
+}
+
+.chat-row__avatar img,
+.chat-row__avatar .avatar--thumbnail {
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--sky-border);
+}
+
+.chat-row__top {
+  align-items: center;
+}
+
+.chat-row__name {
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.chat-row__time {
+  color: var(--sky-muted-soft);
+  font-size: 0.78rem;
+}
+
+.chat-row__preview {
+  margin-top: 2px;
+  color: var(--sky-muted);
+  font-size: 0.9rem;
+}
+
+.chat-row__unread {
+  width: 8px;
+  height: 8px;
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.chat-thread {
+  overflow: hidden;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.chat-thread__head {
+  min-height: 62px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--sky-surface) 94%, var(--sky-surface-soft));
+}
+
+.chat-thread__who {
+  min-width: 0;
+}
+
+.chat-thread__who:hover {
+  text-decoration: none;
+}
+
+.chat-thread__avatar img,
+.chat-thread__avatar .avatar--thumbnail {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--sky-border);
+}
+
+.chat-thread__id {
+  min-width: 0;
+}
+
+.chat-thread__name {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--sky-text);
+  font-size: 1rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-thread__handle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-thread__scroll {
+  padding: 18px 18px 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sky-surface-soft) 32%, transparent),
+    transparent 180px
+  );
+}
+
+.chat-thread__msgs {
+  gap: 2px;
+}
+
+.chat-day {
+  align-self: center;
+  margin: 14px 0 10px;
+  padding: 4px 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.chat-group {
+  margin: 4px 0;
+}
+
+.chat-group__avatar img,
+.chat-group__avatar .avatar--thumbnail {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--sky-border);
+}
+
+.chat-group__bubbles {
+  max-width: min(78%, 560px);
+}
+
+.chat-bubble {
+  padding: 9px 13px;
+  border-radius: 16px;
+  font-size: 0.98rem;
+  line-height: 1.42;
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.chat-bubble--mine {
+  background: var(--sky-blue);
+  border: 1px solid var(--sky-blue);
+  color: #fff;
+}
+
+.chat-bubble--theirs {
+  background: var(--sky-surface);
+}
+
+.chat-bubble__raw {
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+}
+
+.chat-composer {
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--sky-surface) 96%, var(--sky-surface-soft));
+}
+
+.chat-composer__input {
+  min-height: 42px !important;
+  border-color: var(--sky-border) !important;
+  border-radius: 999px !important;
+  background: var(--sky-surface) !important;
+  box-shadow: inset 0 0 0 1px transparent !important;
+}
+
+.chat-composer__input:focus {
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.chat-composer__send {
+  width: 42px !important;
+  height: 42px !important;
+  box-shadow: var(--sky-shadow-sm) !important;
+}
+
+.chat-newchat {
+  z-index: 5100;
+  padding: 72px 16px 32px;
+  background: rgba(15, 20, 25, 0.52);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.chat-newchat__card {
+  width: min(460px, 100%);
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.chat-newchat__head {
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.chat-newchat__input {
+  min-height: 42px;
+  border-color: var(--sky-border);
+  border-radius: 8px;
+}
+
+.chat-newchat__input:focus {
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.profile-banner {
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(135deg, #0a66c2, #7aa6c2);
+}
+
+.profile-card-actions {
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.profile-improve-btn,
+.profile-edit-btn {
+  min-height: 34px;
+  border-radius: 999px;
+}
+
+.profile-card-actions > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-card-actions > div > label {
+  color: var(--sky-muted);
+  font-size: 0.82rem;
+}
+
+.profile-card-actions a {
+  min-height: 34px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--sky-blue);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.profile-card-actions a:hover {
+  background: var(--sky-blue-hover);
+  color: #fff;
+}
+
+.profile-card-actions a br {
+  display: none;
+}
+
+.lightbox {
+  z-index: 5000;
+  padding: 72px 16px 32px;
+}
+
+.lightbox__content {
+  width: min(760px, calc(100vw - 32px));
+  max-width: none;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.bio-improve-modal {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: calc(100vh - 104px);
+  overflow: auto;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.qr-connect-modal {
+  position: relative;
+  z-index: 1;
+  width: min(540px, 100%);
+  max-height: calc(100vh - 104px);
+  margin: 0 auto;
+  overflow: auto;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.qr-connect-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px 0;
+}
+
+.qr-connect-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  gap: 7px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-muted);
+  font: inherit;
+  font-weight: 800;
+}
+
+.qr-connect-tab:hover,
+.qr-connect-tab:focus-visible,
+.qr-connect-tab--active {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  outline: none;
+}
+
+.qr-connect-tab .material-symbols-outlined {
+  font-size: 1.12rem;
+}
+
+.bio-improve-header,
+.bio-improve-footer,
+.qr-connect-header,
+.qr-connect-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.bio-improve-header,
+.qr-connect-header {
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.bio-improve-footer,
+.qr-connect-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--sky-border);
+}
+
+.bio-improve-title,
+.qr-connect-title {
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+
+.bio-improve-subtitle,
+.qr-connect-subtitle,
+.bio-preview-note {
+  color: var(--sky-muted);
+  font-size: 0.9rem;
+}
+
+.qr-connect-body {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.qr-connect-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+}
+
+.qr-connect-code {
+  width: min(280px, 100%);
+  height: auto;
+  border: 8px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.qr-connect-person,
+.qr-connect-preview {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.qr-connect-person img,
+.qr-connect-person canvas,
+.qr-connect-person svg,
+.qr-connect-preview img,
+.qr-connect-preview canvas,
+.qr-connect-preview svg {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--sky-border);
+  object-fit: cover;
+}
+
+.qr-connect-person strong,
+.qr-connect-person span,
+.qr-connect-preview strong,
+.qr-connect-preview span {
+  display: block;
+}
+
+.qr-connect-person span,
+.qr-connect-preview span {
+  overflow-wrap: anywhere;
+  color: var(--sky-muted);
+  font-size: 0.88rem;
+}
+
+.qr-connect-label {
+  margin: 2px 0 -6px;
+  color: var(--sky-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.qr-connect-copy,
+.qr-connect-paste {
+  width: 100%;
+  border: 1px solid var(--sky-border);
+  border-radius: 6px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font: inherit;
+}
+
+.qr-connect-copy {
+  height: 38px;
+  padding: 0 10px;
+}
+
+.qr-connect-paste {
+  min-height: 108px;
+  padding: 10px;
+  resize: vertical;
+}
+
+.qr-connect-copy:focus,
+.qr-connect-paste:focus {
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+  outline: none;
+}
+
+.qr-connect-preview {
+  padding: 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+}
+
+.qr-connect-status {
+  min-height: 18px;
+  color: var(--sky-muted);
+  font-size: 0.88rem;
+}
+
+.bio-improve-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sky-muted);
+}
+
+.bio-improve-close:hover {
+  background: var(--sky-hover);
+  color: var(--sky-text);
+}
+
+.bio-improve-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.85fr);
+  gap: 18px;
+  padding: 18px;
+}
+
+.bio-improve-editor,
+.bio-improve-preview {
+  min-width: 0;
+}
+
+.bio-improve-label {
+  display: block;
+  margin: 0 0 6px;
+  color: var(--sky-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.bio-improve-name,
+.bio-improve-text {
+  width: 100%;
+  border: 1px solid var(--sky-border);
+  border-radius: 6px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font: inherit;
+}
+
+.bio-improve-name {
+  height: 40px;
+  margin-bottom: 14px;
+  padding: 0 11px;
+}
+
+.bio-improve-text {
+  min-height: 132px;
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.bio-improve-name:focus,
+.bio-improve-text:focus {
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+  outline: none;
+}
+
+.bio-improve-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 6px 0 10px;
+}
+
+.bio-improve-count {
+  color: var(--sky-muted);
+  font-size: 0.82rem;
+}
+
+.bio-improve-count--over {
+  color: var(--sky-red);
+  font-weight: 700;
+}
+
+.bio-improve-status {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+}
+
+.bio-improve-status strong {
+  font-size: 0.92rem;
+}
+
+.bio-improve-status span {
+  color: var(--sky-muted);
+  font-size: 0.86rem;
+}
+
+.bio-improve-status--good {
+  border-color: rgba(5, 118, 66, 0.35);
+  background: var(--sky-green-soft);
+}
+
+.bio-improve-status--warn {
+  border-color: rgba(204, 16, 22, 0.32);
+  background: var(--sky-red-soft);
+}
+
+.bio-improve-tools,
+.bio-improve-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bio-improve-tools button,
+.bio-improve-templates button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-blue);
+  font-weight: 700;
+}
+
+.bio-improve-tools button:hover,
+.bio-improve-templates button:hover {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+}
+
+.bio-preview-card {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.bio-preview-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.bio-preview-top img,
+.bio-preview-top canvas,
+.bio-preview-top svg {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.bio-preview-name {
+  font-weight: 800;
+}
+
+.bio-preview-text {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--sky-muted);
+  font-size: 0.92rem;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.bio-preview-subscribe {
+  justify-self: start;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--sky-blue);
+  border-radius: 999px;
+  background: var(--sky-blue);
+  color: #fff;
+  font-weight: 800;
+  opacity: 1;
+}
+
+.bio-preview-note {
+  margin-top: 10px;
+}
+
+/* The imported ssbski skin collapses its nav rail, avatar card, and compose
+   button under @media (max-width: 1300px) — sized for ssbski's narrow rail, not
+   our top-bar layout. ssbpro keeps the full desktop chrome down to its own
+   980px breakpoint, so without this the 981–1300px range (most laptops) loses
+   the nav labels, the profile meta, and the "Start a Post" label, leaving a
+   wide empty pill. Re-assert the desktop presentation above 980px. */
+@media (min-width: 981px) {
+  .nav__label {
+    display: block;
+  }
+
+  .navbar .nav.pull-left li a {
+    justify-content: center;
+    gap: 1px;
+    padding: 0 13px;
+  }
+
+  .navbar-avatar {
+    justify-content: flex-start;
+    padding: 0 16px 16px;
+  }
+
+  .navbar-avatar__meta {
+    display: flex;
+  }
+
+  .compose-trigger {
+    left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
+    width: var(--pro-left-width);
+  }
+
+  .compose-trigger__button::after {
+    display: inline;
+  }
+}
+
+@media (max-width: 980px) {
+  .screen,
+  .screen.column {
+    padding-top: var(--pro-topbar-height);
+  }
+
+  .screen__content,
+  .screen__content.column {
+    height: calc(100vh - var(--pro-topbar-height));
+    margin-left: 12px;
+    margin-right: 12px;
+    padding: 0;
+  }
+
+  .navbar {
+    inset: 0 0 auto;
+    width: 100%;
+    height: var(--pro-topbar-height);
+    border-right: 0;
+    border-bottom: 1px solid var(--sky-border);
+  }
+
+  .navbar .container-fluid {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .navbar .container-fluid::before {
+    font-size: 1.05rem;
+  }
+
+  .navbar .nav.pull-left {
+    flex: 1;
+    min-width: 0;
+    justify-content: space-around;
+  }
+
+  .navbar .nav.pull-left li {
+    width: auto;
+  }
+
+  .navbar .nav.pull-left li a {
+    min-height: var(--pro-topbar-height);
+    padding: 0 8px;
+  }
+
+  .nav__label {
+    display: none;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .theme-toggle,
+  .nav-connect-btn {
+    min-width: 40px;
+    width: 40px;
+    padding: 0;
+  }
+
+  .theme-toggle__label,
+  .nav-connect-btn__label {
+    display: none;
+  }
+
+  .navbar-avatar,
+  .navbar .pull-right {
+    display: none;
+  }
+
+  .feed-header {
+    margin-top: 8px;
+  }
+
+  .chat-list__wrapper,
+  .chat-thread {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .chat-thread__scroll {
+    padding: 14px 12px;
+  }
+
+  .chat-group__bubbles {
+    max-width: 86%;
+  }
+
+  .chat-composer {
+    padding: 10px 12px;
+  }
+
+  .compose-trigger {
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: auto;
+    width: 56px;
+  }
+
+  .compose-trigger__button {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .compose-trigger__button::after {
+    content: '';
+  }
+
+  .bio-improve-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-connect-footer {
+    flex-wrap: wrap;
+  }
+
+  .qr-connect-footer .btn {
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 981px) and (max-width: 1120px) {
+  .screen__content,
+  .screen__content.column {
+    margin-left: calc(16px + var(--pro-left-width) + var(--pro-gap));
+    margin-right: 16px;
+  }
+
+  .navbar .pull-right {
+    display: none;
+  }
+}
