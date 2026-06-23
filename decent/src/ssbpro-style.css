@@ -1405,6 +1405,23 @@ body {
   margin-top: 6px;
 }
 
+/* Bio-aware feed cards: a short author bio under the name on post cards */
+.message-meta-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.message-author-bio {
+  color: var(--sky-muted);
+  font-size: 0.84rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Network discovery dashboard (ssbpro Network tab) */
 .network-discovery {
   display: grid;
