@@ -505,6 +505,18 @@ body {
   gap: 8px;
 }
 
+/* Inside the modal the composer card is just a passthrough wrapper around the
+   textarea + controls — the modal already supplies the surface and the textarea
+   its own border. Drop the inherited .message-card chrome so its bottom edge
+   doesn't draw a stray line under the Browse/Preview row. */
+.compose-modal .message-card.compose {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .navbar .pull-right {
   top: calc(var(--pro-topbar-height) + 12px);
   right: max(16px, calc((100vw - var(--pro-page-width)) / 2));
