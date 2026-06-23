@@ -70,6 +70,28 @@ Important existing files:
 npm run build:web
 ```
 
+## Status
+
+Stages 1–5 are implemented and verified (desktop 1440×1000 and mobile 390×844):
+
+- **Stage 1 — Connect payload + route:** done. Pure helpers in
+  `decent/src/modules/ui/qr-connect.js` (`encode/decode/validate/buildConnectPayload`,
+  `connectRouteFromText`); `#connect/<payload>` confirmation screen in
+  `decent/src/modules/ui/connect-view.js`; QR/Connect link now encode the route.
+- **Stage 2 — Duplicate subscribe guard:** done, via `follower_of` in both the
+  connect route and the Network dashboard.
+- **Stage 3 — Scan QR + image upload:** done. Third Connect tab; camera only on
+  explicit "Start camera"; `jsqr` decodes uploads; polite camera-unavailable state.
+- **Stage 4 — Network discovery tab:** done. `decent/src/modules/ui/network-discovery.js`
+  (registered before `public.js`) renders people/bio cards for the ssbpro skin only.
+- **Stage 5 — Bio-aware feed cards:** done. `message.js` shows a clamped author
+  bio under the name on ssbpro post cards only.
+- **Stage 6 — Tests/QA:** `test/qr-connect.js` covers encode/decode/validate and
+  `connectRouteFromText`; manual QA performed via Playwright. Remaining: deeper
+  cross-skin regression QA as desired.
+
+The per-stage detail below is kept for reference.
+
 ## Remaining Work
 
 ### Stage 1 - Proper Connect Payload and Route

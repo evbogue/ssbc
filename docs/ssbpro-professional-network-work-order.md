@@ -1,5 +1,18 @@
 # Work Order: ssbpro Bio Improvement Platform
 
+> **Status (implemented):** The QR / identity-exchange UI no longer lives as
+> separate buttons on the self profile. It is a single top-nav **Connect**
+> button that opens a modal with three tabs — **My QR**, **Paste code**, and
+> **Scan QR** (camera + image-upload fallback, camera requested only on
+> explicit action). QR codes encode a portable `#connect/<payload>`
+> (`ssbpro-connect`) route that renders an avatar/name/bio/feed confirmation
+> card with **Subscribe** (a normal `contact` follow, guarded against
+> duplicates). The Network tab is a people/bio discovery dashboard, and feed
+> cards show a short author bio under the name. See
+> `docs/ssbpro-remaining-work-order.md` for the per-stage breakdown. The
+> sections below are the original design intent and may describe earlier
+> placements (e.g. profile-level QR buttons) that have since moved into Connect.
+
 **Skin:** ssbpro only, served by `plugins/ssbpro-ui.js` on port `8991`.
 
 **Intent:** Make ssbpro feel like a lightweight professional presence and bio-improvement app, not a giant profile form. The core product is: write a better short bio, see how it looks in the network, share it quickly, and subscribe/connect with people through QR codes.
