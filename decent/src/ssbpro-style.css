@@ -1315,6 +1315,63 @@ body {
   font-size: 0.88rem;
 }
 
+/* #connect/<payload> confirmation screen */
+.qr-connect-route {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.qr-connect-route-card {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(420px, 100%);
+  padding: 28px 24px;
+  text-align: center;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow-sm);
+}
+
+.qr-connect-route-card img,
+.qr-connect-route-card canvas,
+.qr-connect-route-card svg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 1px solid var(--sky-border);
+  object-fit: cover;
+}
+
+.qr-connect-route-card strong {
+  font-size: 1.15rem;
+}
+
+.qr-connect-route-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.qr-connect-route-sub,
+.qr-connect-route-feed {
+  color: var(--sky-muted);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.qr-connect-route-bio {
+  color: var(--sky-text);
+  font-size: 0.95rem;
+}
+
+.qr-connect-route-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
 .bio-improve-close {
   width: 36px;
   height: 36px;

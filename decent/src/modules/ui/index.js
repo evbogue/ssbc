@@ -7,6 +7,7 @@ module.exports = {
   "avatar-profile.js":  require('./avatar-profile.js'),
   "avatar.js":  require('./avatar.js'),
   "compose.js":  require('./compose.js'),
+  "connect-view.js":  require('./connect-view.js'),
   "feed.js":  require('./feed.js'),
   "follow.js":  require('./follow.js'),
   "invite.js":  require('./invite.js'),

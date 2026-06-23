@@ -4,6 +4,7 @@ var pull = require('pull-stream')
 var hyperlightbox = require('hyperlightbox')
 var QRCode = require('qrcode')
 var ssbRef = require('ssb-ref')
+var qrConnect = require('../ui/qr-connect')
 
 module.exports = {
   needs: {
@@ -71,8 +72,35 @@ module.exports = {
       var selfId = require('../../keys').id
       var topbarLightbox = null
 
-      function profileUrlFor (id) {
-        return window.location.origin + window.location.pathname + '#' + id
+      // Gather the latest self about.name/description/image so the Connect QR can
+      // carry a portable, self-describing payload. One-shot drain on modal open.
+      function collectSelfProfile (cb) {
+        var profile = {name: null, description: null, image: null}
+        var ts = {name: 0, description: 0, image: 0}
+        pull(
+          api.sbot_messagesByType({type: 'about', old: true, live: false}),
+          pull.drain(function (msg) {
+            var v = msg && msg.value
+            var c = v && v.content
+            if (!c || c.about !== selfId || v.author !== selfId) return
+            var t = msg.timestamp || v.timestamp || 0
+            if (typeof c.name === 'string' && t >= ts.name) { profile.name = c.name; ts.name = t }
+            if (typeof c.description === 'string' && t >= ts.description) { profile.description = c.description; ts.description = t }
+            var image = c.image
+            if (image && typeof image === 'object' && typeof image.link === 'string') image = image.link
+            if (ssbRef.isBlob(image) && t >= ts.image) { profile.image = image; ts.image = t }
+          }, function () { cb(profile) })
+        )
+      }
+
+      function connectUrlFor (profile) {
+        var payload = qrConnect.buildConnectPayload({
+          feed: selfId,
+          name: profile && profile.name,
+          description: profile && profile.description,
+          image: profile && profile.image
+        })
+        return window.location.origin + window.location.pathname + '#connect/' + qrConnect.encodeConnectPayload(payload)
       }
 
       function parseProfileCode (text) {
@@ -104,7 +132,6 @@ module.exports = {
       }
 
       function showConnectModal () {
-        var profileLink = profileUrlFor(selfId)
         var tabs = h('div.qr-connect-tabs')
         var body = h('div.qr-connect-body')
         var footer = h('div.qr-connect-footer')
@@ -153,10 +180,13 @@ module.exports = {
             readonly: true,
             value: selfId
           })
+          // Start from a feed-only connect link so the QR is never blank, then
+          // upgrade it once the self profile (name/bio/image) has loaded.
+          var connectUrl = connectUrlFor(null)
           var profileLinkInput = h('input.qr-connect-copy', {
             type: 'text',
             readonly: true,
-            value: profileLink
+            value: connectUrl
           })
 
           body.appendChild(h('div.qr-connect-card',
@@ -171,7 +201,7 @@ module.exports = {
           ))
           body.appendChild(h('label.qr-connect-label', 'Profile code'))
           body.appendChild(profileCode)
-          body.appendChild(h('label.qr-connect-label', 'Profile link'))
+          body.appendChild(h('label.qr-connect-label', 'Connect link'))
           body.appendChild(profileLinkInput)
           body.appendChild(status)
 
@@ -179,7 +209,7 @@ module.exports = {
             h('button.btn', {type: 'button', onclick: function () { copyText(selfId, status, 'Profile code copied') }}, 'Copy code')
           )
           footer.appendChild(
-            h('button.btn', {type: 'button', onclick: function () { copyText(profileLink, status, 'Profile link copied') }}, 'Copy link')
+            h('button.btn', {type: 'button', onclick: function () { copyText(profileLinkInput.value, status, 'Connect link copied') }}, 'Copy link')
           )
           footer.appendChild(
             h('button.btn.btn-primary', {type: 'button', onclick: function () {
@@ -190,19 +220,32 @@ module.exports = {
             }}, 'Download QR')
           )
 
-          QRCode.toCanvas(canvas, profileLink, {
-            errorCorrectionLevel: 'M',
-            margin: 1,
-            scale: 8,
-            color: {
-              dark: '#0a66c2',
-              light: '#ffffff'
+          function drawQr (url) {
+            QRCode.toCanvas(canvas, url, {
+              errorCorrectionLevel: 'M',
+              margin: 1,
+              scale: 8,
+              color: {
+                dark: '#0a66c2',
+                light: '#ffffff'
+              }
+            }, function (err) {
+              if (err) {
+                status.textContent = 'Could not create QR code.'
+                console.error(err)
+              }
+            })
+          }
+
+          drawQr(connectUrl)
+          collectSelfProfile(function (profile) {
+            try {
+              connectUrl = connectUrlFor(profile)
+            } catch (e) {
+              return
             }
-          }, function (err) {
-            if (err) {
-              status.textContent = 'Could not create QR code.'
-              console.error(err)
-            }
+            profileLinkInput.value = connectUrl
+            drawQr(connectUrl)
           })
           profileCode.select()
         }
