@@ -239,6 +239,30 @@ body {
   margin-left: auto;
 }
 
+/* Mobile-only profile shortcut in the top bar. The full profile card lives in
+   the left rail, which collapses below 980px; this compact avatar restores a
+   one-tap path to your own profile. Hidden on desktop, revealed in the mobile
+   media query below. */
+.navbar-avatar-mobile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.navbar-avatar-mobile img,
+.navbar-avatar-mobile canvas,
+.navbar-avatar-mobile svg {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .theme-toggle,
 .nav-connect-btn {
   display: inline-flex;
@@ -1617,12 +1641,18 @@ body {
     padding: 10px 12px;
   }
 
+  /* Float the composer as a bottom-right FAB. The base rule leaves it
+     position:relative, so without an explicit fixed position the insets below
+     are ignored and it renders inline at the top of the feed as a clipped
+     half-circle. Pin it to the viewport and lift it above the feed. */
   .compose-trigger {
+    position: fixed;
     top: auto;
     right: 16px;
     bottom: 16px;
     left: auto;
     width: 56px;
+    z-index: 50;
   }
 
   .compose-trigger__button {
@@ -1630,10 +1660,15 @@ body {
     height: 56px;
     padding: 0;
     border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
   }
 
   .compose-trigger__button::after {
     content: '';
+  }
+
+  .navbar-avatar-mobile {
+    display: inline-flex;
   }
 
   .bio-improve-grid {

@@ -642,7 +642,15 @@ module.exports = {
             nav,
             isSsbpro ? h('div.topbar-actions',
               makeConnectButton(),
-              makeThemeToggle()
+              makeThemeToggle(),
+              // The profile avatar otherwise lives only in the left rail, which
+              // collapses on mobile — leaving no way to reach your own profile.
+              // Surface a compact avatar here; CSS shows it only below 980px.
+              h('a.navbar-avatar-mobile', {
+                href: '#' + selfId,
+                title: 'Profile',
+                'aria-label': 'Your profile'
+              }, api.avatar_image(selfId, 'thumbnail'))
             ) : null,
             h('div.pull-right', searchInput, isNetworkSkin ? null : api.menu(),
               isNetworkSkin ? buildDiscoveryPanel() : null,
