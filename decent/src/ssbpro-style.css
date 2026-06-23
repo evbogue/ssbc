@@ -1139,7 +1139,7 @@ body {
 
 .qr-connect-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   padding: 12px 18px 0;
 }
@@ -1313,6 +1313,39 @@ body {
   min-height: 18px;
   color: var(--sky-muted);
   font-size: 0.88rem;
+}
+
+/* Scan QR tab */
+.qr-scan {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: #000;
+}
+
+.qr-scan-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.qr-scan-fallback {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--sky-muted);
+  text-align: center;
+  background: var(--sky-surface-soft);
+}
+
+.qr-scan-fallback .material-symbols-outlined {
+  font-size: 2rem;
 }
 
 /* #connect/<payload> confirmation screen */

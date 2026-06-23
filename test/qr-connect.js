@@ -57,6 +57,29 @@ test('validateConnectPayload rejects malformed payloads', (t) => {
   t.end()
 })
 
+test('connectRouteFromText handles every entry point', (t) => {
+  const encoded = qr.encodeConnectPayload(qr.buildConnectPayload({ feed: FEED, name: 'Ada' }))
+
+  // Our own QR encodes a full URL containing the connect route.
+  t.equal(
+    qr.connectRouteFromText('http://127.0.0.1:8991/#connect/' + encoded),
+    '#connect/' + encoded,
+    'extracts payload from a full connect URL'
+  )
+  // A bare encoded payload.
+  t.equal(qr.connectRouteFromText(encoded), '#connect/' + encoded, 'accepts a bare payload')
+
+  // A plain feed id gets wrapped into a minimal connect route.
+  const route = qr.connectRouteFromText(FEED)
+  t.ok(route && route.indexOf('#connect/') === 0, 'wraps a bare feed id into a connect route')
+  t.equal(qr.decodeConnectPayload(route.slice('#connect/'.length)).feed, FEED, 'wrapped route carries the feed')
+
+  // Junk yields null rather than a bogus route.
+  t.equal(qr.connectRouteFromText('hello world'), null, 'plain text → null')
+  t.equal(qr.connectRouteFromText(''), null, 'empty → null')
+  t.end()
+})
+
 test('decodeConnectPayload returns null for garbage instead of throwing', (t) => {
   t.equal(qr.decodeConnectPayload('!!!not base64!!!'), null, 'bad base64')
   t.equal(qr.decodeConnectPayload(Buffer.from('not json', 'utf8').toString('base64url')), null, 'bad json')

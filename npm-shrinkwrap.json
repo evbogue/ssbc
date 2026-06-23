@@ -24,6 +24,7 @@
         "hyperprogress": "0.1.0",
         "hyperscript": "^1.4.7",
         "is-visible": "^2.0.4",
+        "jsqr": "^1.4.0",
         "kvgraph": "^0.1.0",
         "layered-graph": "^1.2.0",
         "map-filter-reduce": "^3.0.1",
@@ -6335,6 +6336,12 @@
       "engines": {
         "node": "*"
       }
+    },
+    "node_modules/jsqr": {
+      "version": "1.4.0",
+      "resolved": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
+      "integrity": "sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==",
+      "license": "Apache-2.0"
     },
     "node_modules/keyv": {
       "version": "4.5.4",

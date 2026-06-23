@@ -78,11 +78,29 @@ function decodeConnectPayload (encoded) {
   return validateConnectPayload(payload) ? payload : null
 }
 
+// Turn arbitrary scanned/pasted text into a local `#connect/<payload>` route so
+// every entry point (QR scan, image upload, paste) funnels through the same
+// confirmation card. Handles our own connect QR (a full URL), a bare connect
+// payload, and a plain feed id / profile link (wrapped into a minimal payload).
+// Returns null when nothing usable is found.
+function connectRouteFromText (text) {
+  text = String(text || '').trim()
+  if (!text) return null
+  var marker = '#connect/'
+  var idx = text.indexOf(marker)
+  var encoded = idx >= 0 ? text.slice(idx + marker.length) : text
+  if (decodeConnectPayload(encoded)) return marker + encoded
+  var feed = ssbRef.extract(text)
+  if (ssbRef.isFeed(feed)) return marker + encodeConnectPayload(buildConnectPayload({feed: feed}))
+  return null
+}
+
 module.exports = {
   CONNECT_TYPE: CONNECT_TYPE,
   CONNECT_VERSION: CONNECT_VERSION,
   buildConnectPayload: buildConnectPayload,
   validateConnectPayload: validateConnectPayload,
   encodeConnectPayload: encodeConnectPayload,
-  decodeConnectPayload: decodeConnectPayload
+  decodeConnectPayload: decodeConnectPayload,
+  connectRouteFromText: connectRouteFromText
 }

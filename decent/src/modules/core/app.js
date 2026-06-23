@@ -3,6 +3,7 @@ var h = require('hyperscript')
 var pull = require('pull-stream')
 var hyperlightbox = require('hyperlightbox')
 var QRCode = require('qrcode')
+var jsQR = require('jsqr')
 var ssbRef = require('ssb-ref')
 var qrConnect = require('../ui/qr-connect')
 
@@ -136,13 +137,20 @@ module.exports = {
         var body = h('div.qr-connect-body')
         var footer = h('div.qr-connect-footer')
         var tabButtons = {}
+        // Set by renderScan() so leaving the Scan tab (or closing the modal)
+        // always releases the camera; hyperlightbox.close() only hides + clears.
+        var stopScan = null
+        function closeModal () {
+          if (stopScan) { stopScan(); stopScan = null }
+          getTopbarLightbox().close()
+        }
         var modal = h('div.qr-connect-modal',
           h('div.qr-connect-header',
             h('div',
               h('div.qr-connect-title', 'Connect'),
               h('div.qr-connect-subtitle', 'Share your profile or subscribe from a code.')
             ),
-            h('button.bio-improve-close', {type: 'button', title: 'Close', onclick: function () { getTopbarLightbox().close() }},
+            h('button.bio-improve-close', {type: 'button', title: 'Close', onclick: closeModal},
               h('span.material-symbols-outlined', 'close'))
           ),
           tabs,
@@ -151,12 +159,14 @@ module.exports = {
         )
 
         function setMode (mode) {
+          if (stopScan) { stopScan(); stopScan = null }
           Object.keys(tabButtons).forEach(function (key) {
             tabButtons[key].classList.toggle('qr-connect-tab--active', key === mode)
           })
           body.innerHTML = ''
           footer.innerHTML = ''
           if (mode === 'paste') renderPaste()
+          else if (mode === 'scan') renderScan()
           else renderQr()
         }
 
@@ -322,8 +332,112 @@ module.exports = {
           input.focus()
         }
 
+        function renderScan () {
+          var status = h('div.qr-connect-status')
+          var hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+          var video = h('video.qr-scan-video', {autoplay: true, muted: true, playsinline: true})
+          // Offscreen canvas used to sample frames / uploaded images for jsQR.
+          var canvas = document.createElement('canvas')
+          var fileInput = h('input', {type: 'file', accept: 'image/*', style: {display: 'none'}})
+          var stream = null
+          var rafId = null
+          var scanning = false
+
+          function stop () {
+            scanning = false
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null }
+            if (stream) { stream.getTracks().forEach(function (t) { t.stop() }); stream = null }
+            video.srcObject = null
+          }
+          // Registered so setMode()/closeModal() can release the camera.
+          stopScan = stop
+
+          function decodeFrom (source, w, hgt) {
+            canvas.width = w
+            canvas.height = hgt
+            var ctx = canvas.getContext('2d')
+            ctx.drawImage(source, 0, 0, w, hgt)
+            var img = ctx.getImageData(0, 0, w, hgt)
+            var code = jsQR(img.data, img.width, img.height)
+            return code && code.data ? code.data : null
+          }
+
+          function handleResult (text) {
+            var route = qrConnect.connectRouteFromText(text)
+            if (!route) {
+              status.textContent = 'That QR code is not an ssbpro profile.'
+              return false
+            }
+            closeModal()
+            window.location.hash = route
+            return true
+          }
+
+          function tick () {
+            if (!scanning) return
+            if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth) {
+              var data = decodeFrom(video, video.videoWidth, video.videoHeight)
+              if (data && handleResult(data)) return
+            }
+            rafId = requestAnimationFrame(tick)
+          }
+
+          var startBtn = h('button.btn.btn-primary', {type: 'button', onclick: function () {
+            if (!hasCamera) {
+              status.textContent = 'Camera is not available here. Upload a QR image instead.'
+              return
+            }
+            startBtn.disabled = true
+            status.textContent = 'Requesting camera…'
+            navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}}).then(function (s) {
+              stream = s
+              video.srcObject = s
+              video.play()
+              status.textContent = 'Point the camera at a Connect QR code.'
+              scanning = true
+              tick()
+            }, function () {
+              startBtn.disabled = false
+              status.textContent = 'Camera permission denied or unavailable. Upload a QR image instead.'
+            })
+          }}, 'Start camera')
+
+          var uploadBtn = h('button.btn', {type: 'button', onclick: function () { fileInput.click() }}, 'Upload image')
+          fileInput.onchange = function () {
+            var file = fileInput.files && fileInput.files[0]
+            if (!file) return
+            var img = new Image()
+            img.onload = function () {
+              var data = decodeFrom(img, img.naturalWidth, img.naturalHeight)
+              URL.revokeObjectURL(img.src)
+              if (data) handleResult(data)
+              else status.textContent = 'No QR code found in that image.'
+            }
+            img.onerror = function () {
+              URL.revokeObjectURL(img.src)
+              status.textContent = 'Could not read that image.'
+            }
+            img.src = URL.createObjectURL(file)
+          }
+
+          body.appendChild(h('div.qr-scan',
+            hasCamera
+              ? video
+              : h('div.qr-scan-fallback',
+                  h('span.material-symbols-outlined', 'no_photography'),
+                  h('span', 'Camera not available on this device.'))
+          ))
+          body.appendChild(h('div.qr-connect-label', 'Subscribe by scanning a Connect QR, or upload a saved QR image.'))
+          body.appendChild(status)
+          body.appendChild(fileInput)
+
+          footer.appendChild(uploadBtn)
+          if (hasCamera) footer.appendChild(startBtn)
+        }
+
         addTab('qr', 'My QR', 'qr_code_2')
         addTab('paste', 'Paste code', 'content_paste')
+        addTab('scan', 'Scan QR', 'photo_camera')
         getTopbarLightbox().show(modal)
         setMode('qr')
       }

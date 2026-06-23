@@ -42,6 +42,7 @@
     "hyperprogress": "0.1.0",
     "hyperscript": "^1.4.7",
     "is-visible": "^2.0.4",
+    "jsqr": "^1.4.0",
     "kvgraph": "^0.1.0",
     "layered-graph": "^1.2.0",
     "map-filter-reduce": "^3.0.1",
