@@ -646,7 +646,7 @@ module.exports = {
       // does not disappear on quieter local datasets.
       function buildTrendingCard (onHide) {
         var list = h('div.trending__list')
-        var title = h('span.trending-card__title', 'Trending')
+        var title = h('span.trending-card__title', isSsbpro ? 'Groups' : 'Trending')
         var hideIcon = h('span.material-symbols-outlined', 'visibility_off')
         hideIcon.setAttribute('aria-hidden', 'true')
         var hideButton = h('button.trending-card__hide', {
@@ -659,7 +659,8 @@ module.exports = {
           h('div.trending-card__head',
             h('span.trending-card__copy',
               title,
-              h('span.trending-card__subtitle', 'People and topics from your local network')
+              h('span.trending-card__subtitle',
+                isSsbpro ? 'Channels from your local network' : 'People and topics from your local network')
             ),
             hideButton
           ),
@@ -684,6 +685,14 @@ module.exports = {
             .sort(function (a, b) { return b[1] - a[1] })
             .slice(0, 7)
           if (entries.length) {
+            if (isSsbpro) {
+              list.appendChild(
+                h('a.trending__item.trending__item--groups', {href: '#groups'},
+                  h('span.trending__topic', 'All groups'),
+                  h('span.trending__count', 'Browse channels')
+                )
+              )
+            }
             entries.forEach(function (e) {
               list.appendChild(
                 h('a.trending__item', {href: '#channel/' + encodeURIComponent(e[0])},
@@ -867,9 +876,10 @@ module.exports = {
           else if (route === 'repos') suffix = 'Repositories'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
+          else if (route === 'groups') suffix = 'Groups'
           else if (route.indexOf('code-search/') === 0) suffix = 'Search'
           else if (route.indexOf('dm/') === 0) suffix = 'Chat'
-          else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)
+          else if (route.indexOf('channel/') === 0) suffix = (isSsbpro ? 'Group #' : 'Channel ') + route.slice(8)
           else if (route[0] === '@') suffix = 'Profile'
           else if (route[0] === '%') suffix = 'Thread'
           else if (route[0] === '#') suffix = 'Message'
