@@ -13,6 +13,7 @@ exports.needs = {
   avatar_action:     'map',
   follows:           'first',
   followers:         'first',
+  follower_of:       'first',
   sbot_links:        'first',
   sbot_user_feed:    'first',
   message_confirm:   'first',
@@ -158,6 +159,8 @@ exports.create = function (api) {
       var status = h('div.bio-improve-status')
       var previewName = h('div.bio-preview-name')
       var previewBio = h('div.bio-preview-text')
+      var feedPreviewName = h('div.bio-preview-name')
+      var feedPreviewBio = h('div.bio-preview-text')
       var saveBtn = h('button.btn.btn-primary.bio-improve-save', {type: 'button'}, 'Save bio')
 
       function close () {
@@ -176,6 +179,8 @@ exports.create = function (api) {
         status.appendChild(h('span', analysis.detail))
         previewName.textContent = name
         previewBio.textContent = bio.trim() || 'A concise bio helps people know why to subscribe.'
+        feedPreviewName.textContent = name
+        feedPreviewBio.textContent = bio.trim() || 'This line appears under your name in ssbpro feeds.'
         saveBtn.disabled = !nameInput.value.trim() && !bio.trim()
       }
 
@@ -213,6 +218,7 @@ exports.create = function (api) {
             if (newName) nameSpan.textContent = newName
             description = newBio
             bioEl.textContent = newBio
+            renderProfileQuality()
           }
           close()
         })
@@ -248,12 +254,20 @@ exports.create = function (api) {
           )
         ),
         h('div.bio-improve-preview',
+          h('div.bio-preview-heading', 'Profile card'),
           h('div.bio-preview-card',
             h('div.bio-preview-top',
               api.avatar_image(id, 'thumbnail'),
               h('div', previewName, previewBio)
             ),
             h('button.bio-preview-subscribe', {type: 'button', disabled: true}, 'Subscribe')
+          ),
+          h('div.bio-preview-heading', 'Feed author row'),
+          h('div.bio-preview-card.bio-preview-card--feed',
+            h('div.bio-preview-top',
+              api.avatar_image(id, 'thumbnail'),
+              h('div', feedPreviewName, feedPreviewBio)
+            )
           ),
           h('div.bio-preview-note', 'This is how your bio appears in profile cards and QR subscribe previews.')
         )
@@ -477,6 +491,103 @@ exports.create = function (api) {
     var followingCountEl = h('strong', '—')
     var followersCountEl = h('strong', '—')
     var listExpandEl     = h('div.profile-list-expand', {style: {display: 'none'}})
+    var profileQualityEl = h('div.profile-quality', {style: {display: 'none'}})
+    var relationEl       = h('div.profile-relation', {style: {display: 'none'}})
+    var activityEl       = h('div.profile-activity', {style: {display: 'none'}})
+
+    function profileNeeds () {
+      var needs = []
+      var name = (nameSpan.textContent || '').trim()
+      if (!name || name === id) needs.push({icon: 'badge', text: 'Add a display name'})
+      if (!description || description.trim().length < 28)
+        needs.push({icon: 'subject', text: 'Add a clear one or two sentence bio'})
+      if (!headerImageLink) needs.push({icon: 'wallpaper', text: 'Add a banner image'})
+      return needs
+    }
+
+    function renderProfileQuality () {
+      if (!isSsbproSkin() || !isSelf) return
+      var needs = profileNeeds()
+      profileQualityEl.innerHTML = ''
+      if (!needs.length) {
+        profileQualityEl.style.display = 'none'
+        return
+      }
+      profileQualityEl.appendChild(h('div.profile-quality__head',
+        h('span.material-symbols-outlined', 'tips_and_updates'),
+        h('strong', 'Profile hints')
+      ))
+      var list = h('div.profile-quality__list')
+      needs.forEach(function (item) {
+        list.appendChild(h('button.profile-quality__item', {
+          type: 'button',
+          onclick: item.icon === 'subject' ? showImproveBio : enterEdit
+        },
+          h('span.material-symbols-outlined', item.icon),
+          h('span', item.text)
+        ))
+      })
+      profileQualityEl.appendChild(list)
+      profileQualityEl.style.display = ''
+    }
+
+    function renderRelation (youFollow, followsYou) {
+      if (!isSsbproSkin() || isSelf) return
+      var label = youFollow && followsYou ? 'Mutual subscription'
+        : youFollow ? 'You subscribe to this profile'
+        : followsYou ? 'This profile subscribes to you'
+        : 'You are not subscribed yet'
+      var icon = youFollow && followsYou ? 'sync_alt'
+        : youFollow ? 'check_circle'
+        : followsYou ? 'person_add'
+        : 'person'
+      relationEl.innerHTML = ''
+      relationEl.appendChild(h('span.material-symbols-outlined', icon))
+      relationEl.appendChild(h('span', label))
+      relationEl.style.display = ''
+    }
+
+    function shorten (text, max) {
+      text = (text || '').replace(/\s+/g, ' ').trim()
+      if (text.length <= max) return text
+      return text.slice(0, max - 1).replace(/\s+\S*$/, '') + '…'
+    }
+
+    function renderActivity (summary) {
+      if (!isSsbproSkin()) return
+      activityEl.innerHTML = ''
+      var rows = []
+      if (summary.intro) rows.push({
+        icon: 'waving_hand',
+        label: 'Intro',
+        value: shorten(summary.intro, 130)
+      })
+      if (summary.channels.length) rows.push({
+        icon: 'tag',
+        label: 'Channels',
+        value: summary.channels.slice(0, 5).map(function (ch) { return '#' + ch }).join(' ')
+      })
+      if (summary.mediaCount) rows.push({
+        icon: 'perm_media',
+        label: 'Media',
+        value: summary.mediaCount + ' post' + (summary.mediaCount === 1 ? '' : 's') + ' with blobs'
+      })
+      if (!rows.length) {
+        activityEl.style.display = 'none'
+        return
+      }
+      activityEl.appendChild(h('div.profile-activity__head', h('strong', 'Activity')))
+      rows.forEach(function (row) {
+        activityEl.appendChild(h('div.profile-activity__row',
+          h('span.material-symbols-outlined', row.icon),
+          h('div',
+            h('span.profile-activity__label', row.label),
+            h('span.profile-activity__value', row.value)
+          )
+        ))
+      })
+      activityEl.style.display = ''
+    }
 
     function toggleList (type) {
       if (currentList === type) {
@@ -740,6 +851,7 @@ exports.create = function (api) {
           if (newBio !== description) { description = newBio; bioEl.textContent = newBio }
           if (pendingBanner) headerImageLink = pendingBanner.link
           if (pendingAvatar) avatarImg.src = api.blob_url(pendingAvatar.link)
+          renderProfileQuality()
         }
         cancelEdit()
       })
@@ -757,6 +869,7 @@ exports.create = function (api) {
         if (typeof c.description === 'string' && bySubject && !editing) {
           description = c.description
           bioEl.textContent = c.description
+          renderProfileQuality()
         }
 
         if (c.headerImage && (bySubject || bySelf) && !pendingBanner) {
@@ -765,6 +878,7 @@ exports.create = function (api) {
           if (lnk) {
             headerImageLink = lnk
             bannerEl.style.backgroundImage = 'url(' + api.blob_url(lnk) + ')'
+            renderProfileQuality()
           }
         }
 
@@ -777,8 +891,19 @@ exports.create = function (api) {
         // Stream ended — render the collapsed trigger (Add / Edit nickname),
         // unless the viewer is mid-edit.
         if (!isSelf && !petnameEditing()) renderPetnameCollapsed()
+        renderProfileQuality()
       })
     )
+
+    if (isSsbproSkin() && !isSelf) {
+      api.follower_of(self_id, id, function (err, youFollow) {
+        if (err) return
+        api.follower_of(id, self_id, function (err2, followsYou) {
+          if (err2) return
+          renderRelation(!!youFollow, !!followsYou)
+        })
+      })
+    }
 
     pull(api.follows(id), pull.unique(), pull.collect(function (err, ary) {
       followingData = ary || []
@@ -790,16 +915,38 @@ exports.create = function (api) {
       followersCountEl.textContent = String(followersData.length)
     }))
 
-    // Post count — stream up to 500, filter to type:'post', count
+    // Post count and ssbpro activity summary — all derived from classic posts.
     var postCount = 0
+    var activitySummary = {intro: '', channels: [], mediaCount: 0}
+    var channelCounts = {}
     pull(
       api.sbot_user_feed({id: id, reverse: true, limit: 500}),
       pull.drain(function (msg) {
-        if (msg && msg.value && msg.value.content &&
-            typeof msg.value.content === 'object' &&
-            msg.value.content.type === 'post') postCount++
+        var content = msg && msg.value && msg.value.content
+        if (content && typeof content === 'object' && content.type === 'post') {
+          postCount++
+          if (isSsbproSkin()) {
+            if (content.channel) channelCounts[content.channel] = (channelCounts[content.channel] || 0) + 1
+            if (!activitySummary.intro && content.channel === 'intro')
+              activitySummary.intro = content.text || ''
+            if (Array.isArray(content.mentions)) {
+              for (var i = 0; i < content.mentions.length; i++) {
+                if (content.mentions[i] && /^&/.test(content.mentions[i].link || '')) {
+                  activitySummary.mediaCount++
+                  break
+                }
+              }
+            }
+          }
+        }
       }, function () {
         postCountEl.textContent = postCount >= 500 ? '500+' : String(postCount)
+        if (isSsbproSkin()) {
+          activitySummary.channels = Object.keys(channelCounts).sort(function (a, b) {
+            return channelCounts[b] - channelCounts[a]
+          })
+          renderActivity(activitySummary)
+        }
       })
     )
 
@@ -811,10 +958,13 @@ exports.create = function (api) {
         nameEl,
         handleEl,
         bioEl,
+        relationEl,
+        profileQualityEl,
         editFormEl,
         isSelf ? null : petnameEl,
         statsEl,
-        listExpandEl
+        listExpandEl,
+        activityEl
       )
     )
   }
