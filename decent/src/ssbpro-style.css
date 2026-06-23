@@ -1571,8 +1571,11 @@ body {
     gap: 8px;
   }
 
+  /* Drop the brand wordmark on mobile. The top bar is wall-to-wall at 390px
+     (brand + 5 nav icons + connect/theme/avatar), so the wordmark is the least
+     essential element — losing it gives the nav icons room to breathe. */
   .navbar .container-fluid::before {
-    font-size: 1.05rem;
+    display: none;
   }
 
   .navbar .nav.pull-left {
