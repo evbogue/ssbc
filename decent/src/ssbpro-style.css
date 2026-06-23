@@ -1661,30 +1661,37 @@ body {
    SSB post.channel / hashtag behavior. */
 .groups-dashboard {
   display: grid;
-  gap: 22px;
+  gap: 18px;
   width: 100%;
-  max-width: 820px;
+  max-width: 760px;
   margin: 0 auto;
-  padding: 20px 18px 44px;
+  padding: 18px 18px 40px;
 }
 
 .groups-hero,
 .group-page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
   border: 1px solid var(--sky-border);
   border-radius: 8px;
   background: var(--sky-surface);
   box-shadow: var(--sky-shadow-sm);
 }
 
+.groups-hero {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.groups-hero .btn {
+  white-space: nowrap;
+}
+
 .groups-hero__title,
 .group-page-head__title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.22rem;
   font-weight: 850;
 }
 
@@ -1698,7 +1705,7 @@ body {
 
 .groups-section {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .groups-section__head {
@@ -1719,15 +1726,16 @@ body {
 
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
 }
 
 .group-card {
   display: grid;
-  gap: 8px;
-  min-height: 150px;
-  padding: 14px;
+  align-content: start;
+  gap: 7px;
+  min-height: 112px;
+  padding: 13px 14px;
   border: 1px solid var(--sky-border);
   border-radius: 8px;
   background: var(--sky-surface);
@@ -1743,7 +1751,7 @@ body {
 }
 
 .group-card--starter {
-  background: var(--sky-blue-soft);
+  background: var(--sky-surface-soft);
 }
 
 .group-card__kicker {
@@ -1755,7 +1763,7 @@ body {
 
 .group-card__name {
   color: var(--sky-blue);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 850;
 }
 
@@ -1763,7 +1771,7 @@ body {
   display: -webkit-box;
   overflow: hidden;
   color: var(--sky-text);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   line-height: 1.35;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
@@ -1795,7 +1803,7 @@ body {
 }
 
 .group-page-head {
-  margin: 18px 18px 12px;
+  margin: 16px 18px 10px;
 }
 
 .group-page-head__back {
@@ -1810,13 +1818,13 @@ body {
 .group-template-row {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
 }
 
 .group-template-btn {
-  min-height: 34px;
-  padding: 0 11px;
+  min-height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--sky-border);
   border-radius: 999px;
   background: var(--sky-surface);
@@ -1832,7 +1840,20 @@ body {
 }
 
 .channel-compose-slot {
-  margin: 0 18px 12px;
+  margin: 0 18px 10px;
+}
+
+.channel-compose-slot .message-card.compose {
+  margin: 0;
+}
+
+.channel-compose-slot textarea {
+  min-height: 112px;
+  height: 112px !important;
+}
+
+.channel-compose-slot .compose__controls {
+  padding-top: 8px;
 }
 
 .trending__item--groups {
@@ -1851,6 +1872,7 @@ body {
 
   .groups-hero,
   .group-page-head {
+    grid-template-columns: 1fr;
     flex-direction: column;
     align-items: flex-start;
   }
