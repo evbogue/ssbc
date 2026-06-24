@@ -410,8 +410,7 @@ body {
 
 .trending-card,
 .right-footer,
-.discovery-toggle,
-.right-brand {
+.discovery-toggle {
   flex: 0 0 auto;
   border: 1px solid var(--sky-border);
   border-radius: 6px;
@@ -423,8 +422,10 @@ body {
 .trending-card { margin-top: 0; max-height: min(430px, calc(100vh - 280px)); overflow-y: auto; }
 .trending-card__head { font-size: 1rem; font-weight: 700; }
 .right-footer { margin-top: 0; padding: 12px 14px; gap: 6px 12px; }
-.right-brand { width: 100%; margin: 0; padding: 14px; line-height: 1; text-align: center; }
-.right-brand__word { font-weight: 800; letter-spacing: 0.08em; color: var(--sky-blue); }
+
+/* Right-column brand tile: hidden until there's a real decent2 logo to put
+   there (the placeholder icon + wordmark looked off). Re-enable when ready. */
+.right-brand { display: none; }
 
 /* ---- left column: identity well + compose ---- */
 .ssbpro-left-stack {
