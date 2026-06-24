@@ -159,8 +159,6 @@ exports.create = function (api) {
       var status = h('div.bio-improve-status')
       var previewName = h('div.bio-preview-name')
       var previewBio = h('div.bio-preview-text')
-      var feedPreviewName = h('div.bio-preview-name')
-      var feedPreviewBio = h('div.bio-preview-text')
       var saveBtn = h('button.btn.btn-primary.bio-improve-save', {type: 'button'}, 'Save bio')
 
       function close () {
@@ -179,8 +177,6 @@ exports.create = function (api) {
         status.appendChild(h('span', analysis.detail))
         previewName.textContent = name
         previewBio.textContent = bio.trim() || 'A concise bio helps people know why to subscribe.'
-        feedPreviewName.textContent = name
-        feedPreviewBio.textContent = bio.trim() || 'This line appears under your name in ssbpro feeds.'
         saveBtn.disabled = !nameInput.value.trim() && !bio.trim()
       }
 
@@ -261,13 +257,6 @@ exports.create = function (api) {
               h('div', previewName, previewBio)
             ),
             h('button.bio-preview-subscribe', {type: 'button', disabled: true}, 'Subscribe')
-          ),
-          h('div.bio-preview-heading', 'Feed author row'),
-          h('div.bio-preview-card.bio-preview-card--feed',
-            h('div.bio-preview-top',
-              api.avatar_image(id, 'thumbnail'),
-              h('div', feedPreviewName, feedPreviewBio)
-            )
           ),
           h('div.bio-preview-note', 'This is how your bio appears in profile cards and QR subscribe previews.')
         )

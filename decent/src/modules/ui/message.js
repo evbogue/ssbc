@@ -1,6 +1,5 @@
 var h = require('hyperscript')
 var u = require('../../util')
-var pull = require('pull-stream')
 
 //var plugs = require('../../wire')
 //
@@ -51,56 +50,6 @@ exports.create = function (api) {
         'link[rel="stylesheet"][href*="ssbski-style.css"],' +
         'link[rel="stylesheet"][href*="ssbpro-style.css"]'
       )
-  }
-
-  function isSsbpro () {
-    return typeof document !== 'undefined' &&
-      !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
-  }
-
-  // Author bio cache for ssbpro feed cards. Populated lazily from about
-  // messages the first time a bio is requested; bio elements register so live
-  // about updates reach already-rendered cards (mirrors avatar-image's pattern).
-  var bios = {}
-  var bioRegistry = {}
-  var bioStreamStarted = false
-
-  function updateBioEls (id) {
-    var list = bioRegistry[id]
-    if (!list) return
-    var text = bios[id] || ''
-    for (var i = list.length - 1; i >= 0; i--) {
-      var el = list[i]
-      if (!document.contains(el)) { list.splice(i, 1); continue }
-      el.textContent = text
-      el.style.display = text ? '' : 'none'
-    }
-  }
-
-  function startBioStream () {
-    if (bioStreamStarted) return
-    bioStreamStarted = true
-    pull(
-      api.sbot_messagesByType({type: 'about', old: true, live: true}),
-      pull.drain(function (msg) {
-        var v = msg && msg.value
-        var c = v && v.content
-        if (!c || c.about == null || typeof c.description !== 'string') return
-        bios[c.about] = c.description.trim()
-        updateBioEls(c.about)
-      }, function () {})
-    )
-  }
-
-  function authorBio (id) {
-    startBioStream()
-    var el = h('div.message-author-bio')
-    if (!bioRegistry[id]) bioRegistry[id] = []
-    bioRegistry[id].push(el)
-    var text = bios[id] || ''
-    el.textContent = text
-    el.style.display = text ? '' : 'none'
-    return el
   }
 
   function shortFeedId (id) {
@@ -529,13 +478,7 @@ exports.create = function (api) {
         isSsbski()
           ? h('span.message-author-key', {title: msg.value.author}, shortFeedId(msg.value.author))
           : null,
-        // ssbpro stacks a short author bio under the name to make each post
-        // read like a professional identity card; other skins are unchanged.
-        isSsbpro()
-          ? h('div.message-meta-stack',
-              h('div.message_meta.row', api.message_meta(msg)),
-              authorBio(msg.value.author))
-          : h('div.message_meta.row', api.message_meta(msg))
+        h('div.message_meta.row', api.message_meta(msg))
       ),
       content,
       expandBtn,
