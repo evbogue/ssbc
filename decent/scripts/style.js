@@ -5,6 +5,8 @@ const path = require('path')
 const buildDir   = path.join(__dirname, '..', 'build')
 const srcCss     = path.join(__dirname, '..', 'src', 'style.css')
 const destCss    = path.join(buildDir, 'style.css')
+const srcBaseCss    = path.join(__dirname, '..', 'src', 'base.css')
+const destBaseCss   = path.join(buildDir, 'base.css')
 const srcSsbskiCss  = path.join(__dirname, '..', 'src', 'ssbski-style.css')
 const destSsbskiCss = path.join(buildDir, 'ssbski-style.css')
 const srcSsbproCss  = path.join(__dirname, '..', 'src', 'ssbpro-style.css')
@@ -24,6 +26,11 @@ if (fs.existsSync(srcCss)) {
   // Write JSON representation for the browserify inline-fallback in app.js
   fs.writeFileSync(destCssJson, JSON.stringify(fs.readFileSync(srcCss, 'utf8')))
 }
+
+// Shared structural skin, @imported by ssbski-style.css and ssbpro-style.css.
+// Reached only through @import, so it must live in the build dir to be served.
+if (fs.existsSync(srcBaseCss))
+  fs.copyFileSync(srcBaseCss, destBaseCss)
 
 if (fs.existsSync(srcSsbskiCss))
   fs.copyFileSync(srcSsbskiCss, destSsbskiCss)

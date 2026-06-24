@@ -1,11 +1,14 @@
 /*
  * ssbpro skin — a professional-network reskin of the Decent web client.
  *
- * This imports the mature network-shell layout from ssbski and retunes it:
- * left navigation, centered update feed, right discovery column, denser cards,
- * and LinkedIn-like blue/gray surfaces without using the LinkedIn name.
+ * THIN SKIN. Structure/behaviour comes from the shared base.css (the same
+ * three-zone network shell ssbski uses). This file supplies the LinkedIn-like
+ * palette tokens (light + dark, plus an explicit data-ssbpro-theme toggle) and
+ * the professional-only surfaces (top bar, network dashboard, groups/channels,
+ * bio-aware feed cards, Connect/Scan-QR). It no longer imports ssbski, so the
+ * Bluesky identity can never leak into or break this skin.
  */
-@import url('/ssbski-style.css');
+@import url('/base.css');
 
 :root {
   color-scheme: light;
@@ -27,8 +30,21 @@
   --sky-pink-soft: rgba(178, 64, 32, 0.12);
   --sky-red: #cc1016;
   --sky-red-soft: rgba(204, 16, 22, 0.12);
+  /* Forge semantics — kept identical to base/ssbski so the git screens read the
+   * same. These used to be inherited from ssbski; now that ssbpro imports
+   * base.css directly they must be declared here (base.css defines no palette). */
+  --sky-warn: #9a6700;          /* closed / caution text */
+  --sky-warn-soft: #fff5d6;
+  --sky-purple: #8250df;        /* merged */
+  --sky-purple-soft: rgba(130, 80, 223, 0.12);
+  --sky-mark: #fff8c5;          /* line-highlight background */
+  --sky-mark-strong: #fae17d;
   --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.06);
+  /* Aliases consumed by the notifications-permission card (notify-pref.js);
+   * resolve against this skin's own --sky-muted/--sky-blue. */
+  --sky-text-secondary: var(--sky-muted);
+  --sky-accent: var(--sky-blue);
   --sky-rail-width: 228px;
   --sky-right-width: 328px;
   --sky-feed-width: 720px;
@@ -54,6 +70,13 @@
     --sky-blue: #70b5f9;
     --sky-blue-hover: #a8d4ff;
     --sky-blue-soft: rgba(112, 181, 249, 0.18);
+    /* Forge semantics (dark) — mirror base/ssbski's dark forge palette. */
+    --sky-warn: #d4a72c;
+    --sky-warn-soft: rgba(212, 167, 44, 0.18);
+    --sky-purple: #b392f0;
+    --sky-purple-soft: rgba(179, 146, 240, 0.18);
+    --sky-mark: rgba(212, 167, 44, 0.22);
+    --sky-mark-strong: rgba(212, 167, 44, 0.42);
     --sky-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     --sky-shadow-sm: 0 1px 1px rgba(0, 0, 0, 0.3);
   }

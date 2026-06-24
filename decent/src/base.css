@@ -1,0 +1,4076 @@
+/*
+ * base.css — shared structural skin for the Decent web client.
+ *
+ * This file owns the ENTIRE layout, components, and behaviour of the modern
+ * three-zone shell (left nav rail, centre feed, right column): reset, post
+ * cards, action row, reactions, composer modal, git/forge, profile, chat, and
+ * responsive rules. It is colour-agnostic — every themeable value reads from a
+ * CSS custom property (the --sky-* tokens). It defines NO :root palette of its
+ * own; each skin (ssbski-style.css, ssbpro-style.css) @imports this file FIRST
+ * and then supplies the tokens via its own :root, so recolouring a skin is a
+ * :root edit, never a rule-block override.
+ *
+ * Shared defaults a skin MAY override: the Inter UI font (loaded below) and the
+ * .right-brand right-column logo treatment. Skins override these in their own
+ * file when their identity differs (e.g. ssbpro restyles .right-brand).
+ *
+ * Served as a static file from decent/build/ and reached only through @import
+ * (never linked directly), so the ui-server's filename-keyed rewrites never
+ * touch it. It is copied into build/ by decent/scripts/style.js.
+ */
+/* Bluesky's UI font is Inter (ALF "theme" font = InterVariable). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Reset — ssbski no longer loads Bootstrap, so re-establish the few base
+ * rules it used to provide (box model, body margin, list chrome). */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--sky-bg);
+  color: var(--sky-text);
+  /* Inter + ALF's exact web fallback stack */
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-size: 15px;        /* ALF text_md */
+  line-height: 1.3;       /* ALF lineHeight.snug */
+  /* ALF disables Inter's contextual alternates */
+  font-variant-ligatures: no-contextual;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Nav lists must not show browser default bullets/indent without Bootstrap */
+.navbar .nav,
+.navbar .nav li,
+.menu,
+.menu li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+button { cursor: pointer; }
+
+/* Bluesky doesn't underline links by default (mentions, timestamps, post URLs
+ * are colour-only); post-body links underline on hover via the rule below. */
+a { color: var(--sky-blue); text-decoration: none; }
+a:hover { color: var(--sky-blue-hover); }
+
+textarea, input, button { font-family: inherit; }
+
+button { border-radius: 999px; }
+
+/* Visible keyboard focus across interactive chrome. Inputs/textareas/search keep
+ * their own box-shadow focus ring; this covers the buttons, links, tabs and chips
+ * that otherwise showed no focus indicator at all. outline follows border-radius
+ * in modern browsers, so it reads correctly on the pill/round controls. */
+.navbar .nav.pull-left li a:focus-visible,
+.navbar-avatar:focus-visible,
+.right-brand:focus-visible,
+.btn:focus-visible,
+.action-btn:focus-visible,
+.reaction-chip:focus-visible,
+.reaction-picker-trigger:focus-visible,
+.emoji-btn:focus-visible,
+.message-expand:focus-visible,
+.message-more-menu__item:focus-visible,
+.feed-header__tab:focus-visible,
+.compose-trigger__button:focus-visible,
+.git-forge-tab:focus-visible,
+.git-blob-action:focus-visible,
+.right-footer__link:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 2px;
+}
+
+/* Desktop notification settings card. Buttons reuse .btn/.btn-primary. */
+.notify-permission {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  margin: 12px;
+  padding: 16px;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 16px;
+  box-shadow: var(--sky-shadow-sm);
+}
+.notify-permission__icon {
+  color: var(--sky-blue);
+  font-size: 28px;
+}
+.notify-permission__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.notify-permission__title { color: var(--sky-text); font-size: 15px; }
+.notify-permission__description { color: var(--sky-text-secondary); font-size: 14px; }
+.notify-permission__actions { justify-self: end; }
+.notify-permission__action { white-space: nowrap; }
+.notify-permission__buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+.notify-permission__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.notify-permission__toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.notify-permission__toggle-track {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--sky-border, #d0d7de);
+  transition: background .15s ease;
+}
+.notify-permission__toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .15s ease;
+}
+.notify-permission__toggle-input:checked + .notify-permission__toggle-track {
+  background: var(--sky-accent, #1d9bf0);
+}
+.notify-permission__toggle-input:checked + .notify-permission__toggle-track .notify-permission__toggle-thumb {
+  transform: translateX(18px);
+}
+.notify-permission__toggle-input:focus-visible + .notify-permission__toggle-track {
+  outline: 2px solid var(--sky-accent, #1d9bf0);
+  outline-offset: 2px;
+}
+.notify-permission__toggle-label {
+  font-size: 13px;
+  color: var(--sky-text-secondary);
+}
+.notify-permission__status {
+  display: block;
+  margin-top: 5px;
+  color: var(--sky-text-secondary);
+  font-size: 12px;
+}
+.notify-permission__status:empty { display: none; }
+.notify-permission__status--error { color: #d93025; }
+
+@media (max-width: 640px) {
+  .notify-permission {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .notify-permission__actions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+  }
+  .notify-permission__action { width: 100%; }
+  .notify-permission__buttons { justify-content: stretch; }
+}
+
+/* Bootstrap used to supply the base button look; re-establish it for ssbski */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-size: 0.95em;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.btn:hover {
+  background: var(--sky-hover);
+  border-color: var(--sky-border-strong);
+}
+
+/* ============================================================
+ * Layout shell
+ *   .screen.column
+ *     .navbar              -> fixed LEFT nav rail
+ *     .screen__content     -> centered feed, room reserved for rail + right col
+ * The right-side search lives in .navbar .pull-right, which we pull out of the
+ * rail and fix to the right edge to form Bluesky's right column.
+ * ============================================================ */
+
+/* The centre column owns the scroll (like decent / Bluesky) instead of letting
+ * the whole page scroll. This is what the pull-stream Scroller needs: it binds
+ * its scroll listener to .column.scroller and decides when to load more via
+ * that element's scrollTop. If the element grows to fit all content (page-level
+ * scroll), scrollTop stays 0, isBottom() is always true, and the entire batch
+ * is dumped on load. So we lock .screen to the viewport and make the feed
+ * column the actual scroll container. */
+.screen,
+.screen.column {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--sky-bg);
+}
+
+/* Flex column: the sticky feed-header keeps its natural height and the
+ * feed-host below it takes the remaining viewport space (min-height:0 lets it
+ * shrink so its child can scroll rather than overflow). */
+.screen__content,
+.screen__content.column {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  margin-left: var(--sky-rail-width);
+  margin-right: var(--sky-right-width);
+  background: var(--sky-bg);
+}
+
+/* The route view renders into .feed-host. When that view is a scroller it
+ * fills the host and scrolls internally (rule below); for non-scroller routes
+ * (profile, thread, unknown) the host itself scrolls so long pages aren't
+ * clipped by .screen's overflow:hidden. */
+.feed-host {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.column.scroller {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.scroll-y { scrollbar-color: var(--sky-border-strong) transparent; }
+
+.scroller__wrapper {
+  max-width: var(--sky-feed-width);
+  margin: 0 auto;
+  padding: 0;
+  min-height: 100%;
+  border-left: 1px solid var(--sky-border);
+  border-right: 1px solid var(--sky-border);
+  background: var(--sky-surface);
+}
+
+/* ============================================================
+ * Sticky centre-column header (Bluesky feed tabs / section title)
+ * ============================================================ */
+
+.feed-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: stretch;
+  /* width:100% gives this a definite cross-size now that .screen__content is a
+   * flex column — without it, the `margin: 0 auto` collapses the bar to its
+   * content width instead of spanning (and centering at) the feed column. */
+  width: 100%;
+  max-width: var(--sky-feed-width);
+  height: 53px;
+  margin: 0 auto;
+  flex: none;
+  background: color-mix(in srgb, var(--sky-surface) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-left: 1px solid var(--sky-border);
+  border-right: 1px solid var(--sky-border);
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.feed-header__tab {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sky-muted);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+
+.feed-header__tab:hover {
+  background: var(--sky-hover);
+  color: var(--sky-text);
+}
+
+.feed-header__tab--active {
+  color: var(--sky-text);
+  font-weight: 700;
+}
+
+.feed-header__tab--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--sky-blue);
+}
+
+.feed-header__title {
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--sky-text);
+}
+
+/* Back chevron on drilled-in routes (thread / profile / channel / search / a
+ * repo page). Round icon button at the left of the sticky header with a
+ * comfortable hit area; the title that follows it loses its left inset so the
+ * two don't double-indent. */
+.feed-header__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  margin-left: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--sky-text);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.feed-header__back:hover { background: var(--sky-hover); }
+
+.feed-header__back:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 2px;
+}
+
+.feed-header__back .material-symbols-outlined { font-size: 1.5rem; }
+
+.feed-header__back + .feed-header__title { padding-left: 8px; }
+
+/* ============================================================
+ * Left nav rail
+ * ============================================================ */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sky-rail-width);
+  margin: 0;
+  background: var(--sky-bg);
+  border: 0;
+  border-right: 1px solid var(--sky-border);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  z-index: 50;
+}
+
+.navbar-inner {
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.navbar .container-fluid {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 14px 12px;
+  gap: 2px;
+}
+
+/* Brand: the hermit-crab logo as a full-bleed square pinned to the bottom of
+ * the right column. Negative margins cancel the column's 16px/14px padding so
+ * the square reaches the column edges — full width, real square, no margins,
+ * no rounding. */
+.right-brand {
+  position: relative;
+  display: block;
+  width: calc(100% + 32px);
+  margin: 0 -16px -14px;
+  line-height: 0;
+}
+
+.right-brand:hover { text-decoration: none; }
+
+/* Faded to a faint watermark at rest (blends into the light/dark column bg via
+ * opacity); fully revealed on hover or keyboard focus. */
+.right-brand__logo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  opacity: 0.15;
+  transition: opacity 0.2s ease;
+}
+
+/* "SSBSKI" wordmark overlaid on the faded logo; it vanishes on hover/focus as
+ * the crab is revealed (the inverse of the logo's opacity). */
+.right-brand__word {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--sky-blue);
+  opacity: 1;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.right-brand:hover .right-brand__logo,
+.right-brand:focus-visible .right-brand__logo {
+  opacity: 1;
+}
+
+.right-brand:hover .right-brand__word,
+.right-brand:focus-visible .right-brand__word {
+  opacity: 0;
+}
+
+/* Vertical nav list */
+.navbar .nav.pull-left {
+  display: flex;
+  flex-direction: column;
+  float: none;
+  width: 100%;
+  margin: 0;
+  gap: 2px;
+}
+
+.navbar .nav.pull-left li {
+  float: none;
+  width: 100%;
+  align-self: stretch;
+}
+
+.navbar .nav.pull-left li a {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-height: 50px;
+  min-width: 0;
+  gap: 16px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--sky-text);
+  font-weight: 500;
+  text-decoration: none;
+  text-shadow: none;
+}
+
+.navbar .nav.pull-left li a:hover {
+  background: var(--sky-hover);
+  color: var(--sky-text);
+}
+
+.navbar .nav.pull-left li.active a {
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  font-weight: 700;
+}
+
+.navbar .nav.pull-left li.active a:hover {
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+}
+
+.nav__icon {
+  color: currentColor;
+  font-size: 1.65rem;
+  /* Reserve a fixed 1-glyph square (em tracks font-size across breakpoints) so
+   * the literal icon name ("newspaper", "notifications_active") rendered before
+   * the Material Symbols font loads can't widen the rail and shift the layout. */
+  flex: 0 0 1.2em;
+  width: 1.2em;
+  display: inline-flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.navbar .nav.pull-left li.active .nav__icon {
+  font-variation-settings: 'FILL' 1;
+}
+
+.nav__label {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Profile avatar pinned to the bottom of the rail */
+.navbar-avatar {
+  order: 99;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 999px;
+}
+
+.navbar-avatar:hover { background: var(--sky-hover); }
+
+.navbar-avatar img {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--sky-border);
+}
+
+/* Account chip text beside the avatar. min-width:0 lets the flex child shrink
+ * so long names truncate instead of widening the fixed-width rail. */
+.navbar-avatar__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.navbar-avatar__name,
+.navbar-avatar__handle {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.navbar-avatar__name {
+  font-weight: 700;
+  color: var(--sky-text);
+}
+
+.navbar-avatar__handle {
+  font-size: 0.85rem;
+  color: var(--sky-muted);
+}
+
+/* ============================================================
+ * "New Post" composer button — Decent's floating compose trigger,
+ * relocated into the rail as Bluesky's prominent New Post pill.
+ * The inline "What is happening?" prompt is hidden for fidelity.
+ * ============================================================ */
+
+.compose-prompt { display: none; }
+
+.compose-trigger {
+  position: fixed;
+  left: 16px;
+  bottom: 74px;
+  width: calc(var(--sky-rail-width) - 32px);
+  margin: 0;
+  text-align: center;
+  z-index: 60;
+}
+
+.compose-trigger__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--sky-blue);
+  border-color: var(--sky-blue);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  box-shadow: var(--sky-shadow);
+  text-shadow: none;
+}
+
+.compose-trigger__button::after {
+  content: 'New Post';
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.compose-trigger__button:hover {
+  background: var(--sky-blue-hover);
+  border-color: var(--sky-blue-hover);
+  color: #fff;
+}
+
+/* ============================================================
+ * Right column (search)
+ * ============================================================ */
+
+.navbar .pull-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: var(--sky-right-width);
+  height: 100vh;
+  float: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--sky-bg);
+  border-left: 1px solid var(--sky-border);
+  z-index: 40;
+}
+
+.nav-search {
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  box-shadow: none;
+}
+
+.nav-search:focus {
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+  outline: none;
+}
+
+.pull-right .menu {
+  align-self: flex-start;
+}
+
+/* Right-column "Trending" card */
+.discovery-panel {
+  flex: 0 0 auto;
+}
+
+.trending-card {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  background: var(--sky-surface-soft);
+}
+
+.trending-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--sky-text);
+}
+
+.trending-card__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trending-card__title {
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.trending-card__subtitle {
+  color: var(--sky-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.trending-card__hide,
+.discovery-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--sky-muted);
+  font: inherit;
+}
+
+.trending-card__hide {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.trending-card__hide .material-symbols-outlined {
+  font-size: 1.08rem;
+  line-height: 1;
+}
+
+.trending-card__hide:hover,
+.trending-card__hide:focus-visible,
+.discovery-toggle:hover,
+.discovery-toggle:focus-visible {
+  color: var(--sky-blue);
+  background: var(--sky-hover);
+  outline: none;
+}
+
+.discovery-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  background: var(--sky-surface-soft);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.discovery-toggle__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.discovery-toggle__copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.discovery-toggle__title {
+  color: var(--sky-text);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.discovery-toggle__subtitle {
+  color: var(--sky-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.discovery-toggle__action {
+  flex: 0 0 auto;
+  color: var(--sky-blue);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.trending__list { display: flex; flex-direction: column; }
+
+.trending__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 0;
+  text-decoration: none;
+}
+
+.trending__item--person {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.trending__item--person img,
+.trending__item--person canvas,
+.trending__item--person svg {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--sky-border);
+}
+
+.trending__body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.trending__item:hover .trending__topic { text-decoration: underline; }
+
+.trending__topic {
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.95em;
+  word-break: break-all;
+}
+
+.trending__count {
+  color: var(--sky-muted-soft);
+  font-size: 0.82em;
+}
+
+.trending__empty {
+  padding: 6px 0;
+  color: var(--sky-muted);
+  font-size: 0.92em;
+}
+
+/* Right-column footer links (Bluesky has a links footer in this column) */
+.right-footer {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 14px 4px 4px;
+  font-size: 0.85em;
+}
+
+.right-footer__link {
+  color: var(--sky-muted-soft);
+  text-decoration: none;
+}
+
+.right-footer__link:hover {
+  color: var(--sky-blue);
+  text-decoration: underline;
+}
+
+.right-footer__tag {
+  flex-basis: 100%;
+  color: var(--sky-muted-soft);
+  opacity: 0.7;
+}
+
+/* ============================================================
+ * Post cards
+ * ============================================================ */
+
+.message-card {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--sky-surface);
+  border: 0;
+  border-bottom: 1px solid var(--sky-border);
+  border-radius: 0;
+  color: var(--sky-text);
+  transition: background 0.12s ease;
+}
+
+.message-card:hover {
+  background: color-mix(in srgb, var(--sky-surface) 96%, var(--sky-blue) 4%);
+}
+
+/* Whole feed card opens the thread (message.js wireCardClick), so the card
+ * reads as clickable. The post body keeps a text cursor — selection still
+ * works and the click handler bails on an active selection. Mini one-liners
+ * and the composer card aren't click-to-thread, so they keep the default. */
+.message-card:not(.message--mini):not(.compose) { cursor: pointer; }
+.message-card .message_content,
+.message-card .message_actions.row { cursor: auto; }
+
+/* Mini one-liners (git push / follow rows) flow as a single baseline row.
+ * Decent's markup has no whitespace between the avatar, the content, and the
+ * meta, so as inline boxes they rendered glued together ("@namefollows
+ * @other5 days ago"). A baseline flex row with a gap restores the seams. */
+.message--mini.message-card {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px;
+  color: var(--sky-muted);
+}
+
+/* Bluesky-style "… · time" separator before the timestamp, matching full posts. */
+.message--mini.message-card .message_meta.row::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--sky-muted-soft);
+}
+
+/* Bluesky avatar gutter. The avatar image (nested with the name in Decent's
+ * markup) is lifted into a fixed left column so the name, timestamp, body and
+ * actions all line up in the content column. Scoped to full post cards — git
+ * one-liner ".message--mini" rows stay inline. */
+.message-card:not(.message--mini):not(.compose) {
+  position: relative;
+  padding-left: 70px;
+}
+
+.message-card:not(.message--mini):not(.compose) > .title .avatar img,
+.message-card:not(.message--mini):not(.compose) > .title .avatar canvas,
+.message-card:not(.message--mini):not(.compose) > .title .avatar svg {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Header row now holds just name + timestamp, in the content column */
+.message-card .title.row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-right: 0;
+}
+
+.message-card .avatar,
+.message-card .avatar a.avatar {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  min-width: 0;
+}
+
+.avatar .avatar_name {
+  color: var(--sky-text);
+  font-weight: 600;      /* Bluesky display names are semibold */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-author-key {
+  min-width: 0;
+  max-width: 120px;
+  overflow: hidden;
+  color: var(--sky-muted-soft);
+  font-size: 0.95em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Bluesky renders "Name · time"; add the middot before the timestamp */
+.message-card:not(.message--mini):not(.compose) > .title .message_meta.row::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--sky-muted-soft);
+  font-weight: 400;
+}
+
+/* Mini (git one-liner) avatars: small inline thumbnail */
+.message--mini.message-card .avatar img,
+.message--mini.message-card .avatar canvas,
+.message--mini.message-card .avatar svg {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Decent renders a utility <input> in the meta row; Bluesky has no equivalent. */
+.message-card .message_meta.row input { display: none; }
+
+.message-card .message_meta.row,
+.embedded-post-message-meta.row {
+  color: var(--sky-muted-soft);
+  font-size: 0.9em;
+}
+
+.message-card .message_meta.row a,
+.embedded-post-message-meta.row a,
+.timestamp {
+  color: var(--sky-muted-soft);
+}
+
+.message-card .message_meta.row a:hover,
+.embedded-post-message-meta.row a:hover,
+.timestamp:hover {
+  color: var(--sky-blue);
+}
+
+.message-card .message_content {
+  margin-top: 4px;
+  color: var(--sky-text);
+  font-size: 1rem;
+}
+
+/* Collapse long posts to a skeet-sized block with a "Show more" toggle. The
+ * clamp is what lets message.js measure overflow (scrollHeight > clientHeight),
+ * so short posts aren't clamped and never show the button. */
+.message-card .message_content.collapsible {
+  position: relative;
+  /* Base clamp (~9 lines). message.js snaps the real cut down from here to the
+   * last whole text row so the toggle never bisects a line of text. */
+  max-height: 11.5rem;
+  overflow: hidden;
+}
+
+.message-card .message_content.collapsible--expanded {
+  max-height: none;
+  overflow: visible;
+}
+
+.message_content p:last-child,
+.markdown p:last-child { margin-bottom: 0; }
+
+/* Hidden by default; message.js adds .is-overflowing only when the post is
+ * actually taller than the clamp, so short posts never show the toggle. */
+.message-expand {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sky-blue);
+  font-weight: 600;
+  font-size: 0.95em;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.message-expand:hover {
+  background: none;
+}
+
+.message-expand:hover .message-expand__label {
+  text-decoration: underline;
+}
+
+/* Down-chevron that flips up when the post is expanded; fixed width so the
+ * literal "expand_more" ligature can't widen the button before the icon font
+ * loads. */
+.message-expand__icon {
+  display: inline-flex;
+  justify-content: center;
+  width: 1.1em;
+  overflow: hidden;
+  font-size: 1.05em;
+  transition: transform 0.15s;
+}
+
+.message-expand[aria-expanded="true"] .message-expand__icon {
+  transform: rotate(180deg);
+}
+
+.message_content.is-overflowing + .message-expand,
+.message_content.collapsible--expanded + .message-expand {
+  display: inline-flex;
+}
+
+/* ============================================================
+ * Action row (reply / repost / react)
+ * ============================================================ */
+
+.message-card .message_actions.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.message-card .actions {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.message-card .actions > * { flex: 0 0 auto; }
+
+.message_actions_extra {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--sky-muted);
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s;
+}
+
+.action-btn .action-icon { font-size: 19px; line-height: 1; }
+
+.action-btn:hover,
+.reaction-picker-trigger:hover,
+.action-btn--reply:hover,
+.action-btn--quote:hover,
+.action-btn--active,
+.action-btn--active:hover {
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+}
+
+.action-btn--save:hover,
+.action-btn--saved,
+.action-btn--saved:hover,
+.action-btn--share:hover,
+.action-btn--more:hover,
+.action-btn--raw:hover,
+.action-btn--raw-on,
+.action-btn--raw-on:hover {
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+}
+
+.message_content pre.message_raw {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.action-btn--repost:hover,
+.action-btn--reposted {
+  background: var(--sky-green-soft);
+  color: var(--sky-green);
+}
+
+.action-btn--react:hover,
+.action-btn--reacted,
+.action-btn--reacted:hover {
+  background: var(--sky-pink-soft);
+  color: var(--sky-pink);
+}
+
+.message-more-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.message-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: 38px;
+  z-index: 70;
+  display: none;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow);
+}
+
+.message-more-menu--open {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-more-menu__item {
+  display: flex;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sky-text);
+  font-size: 0.92em;
+  font-weight: 600;
+  text-align: left;
+}
+
+.message-more-menu__item:hover { background: var(--sky-hover); }
+
+/* ============================================================
+ * Reactions — layout/behavior ported from Decent's stylesheet (trays, picker,
+ * popover, chips, animations), re-themed with the ALF tokens. ssbski doesn't
+ * load Decent's style.css, so these structural rules have to live here.
+ * ============================================================ */
+
+/* Anchors so the floating tray/picker can position against the trigger */
+.reaction-group,
+.share-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Aggregated chips, pushed to the right of the action row */
+.reaction-pill {
+  position: relative;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.git-message-action-group { display: inline-flex; align-items: center; }
+
+/* Floating tray (quick reactions + share) — hidden until --open */
+.reaction-tray,
+.share-tray {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  box-shadow: var(--sky-shadow);
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.82) translateY(6px);
+  transform-origin: left bottom;
+  transition: opacity 0.14s ease,
+              transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reaction-tray--open,
+.share-tray--open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.reaction-tray .action-btn,
+.share-tray .action-btn { padding: 4px 5px; }
+
+.reaction-tray .reaction-emoji { font-size: 18px; }
+.reaction-emoji { font-size: 15px; line-height: 1; }
+.reaction-emoji-meta { font-size: 14px; line-height: 1; }
+
+/* Picker trigger (···) at the end of the tray */
+.reaction-picker-trigger {
+  margin-left: 2px;
+  padding: 4px 7px;
+  color: var(--sky-muted-soft);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border-left: 1px solid var(--sky-border);
+  border-radius: 0 999px 999px 0;
+}
+
+.reaction-picker-trigger:hover {
+  color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+}
+
+/* Full emoji picker panel */
+.reaction-picker {
+  position: absolute;
+  bottom: calc(100% + 56px);
+  left: 0;
+  width: 272px;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  box-shadow: var(--sky-shadow);
+  color: var(--sky-text);
+  z-index: 201;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.9) translateY(8px);
+  transform-origin: left bottom;
+  transition: opacity 0.16s ease,
+              transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reaction-picker--open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.reaction-picker__search {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid var(--sky-border);
+  font-size: 0.85em;
+  outline: none;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  border-radius: 12px 12px 0 0;
+}
+
+.reaction-picker__search:focus {
+  background: var(--sky-surface);
+  border-bottom-color: var(--sky-blue);
+}
+
+.reaction-picker__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px 6px;
+}
+
+.reaction-picker__body::-webkit-scrollbar { width: 4px; }
+.reaction-picker__body::-webkit-scrollbar-thumb {
+  background: var(--sky-border-strong);
+  border-radius: 4px;
+}
+
+.reaction-picker__section { margin-bottom: 4px; }
+
+.reaction-picker__label {
+  font-size: 0.68em;
+  font-weight: 700;
+  color: var(--sky-muted-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 8px 2px;
+}
+
+.reaction-picker__empty {
+  padding: 20px 12px;
+  font-size: 0.84em;
+  color: var(--sky-muted-soft);
+  text-align: center;
+}
+
+.reaction-picker__footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--sky-border);
+  background: var(--sky-surface-soft);
+}
+
+.reaction-picker__text {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--sky-text);
+  font-size: 0.85em;
+  outline: none;
+  border-radius: 0 0 12px 12px;
+}
+
+.reaction-picker__text:focus { background: var(--sky-surface); }
+.reaction-picker__text--invalid { animation: reaction-text-shake 0.3s ease; }
+
+@keyframes reaction-text-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-4px); }
+  75%      { transform: translateX(4px); }
+}
+
+.emoji-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 2px 4px;
+}
+
+.emoji-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 3px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.08s, transform 0.08s;
+}
+
+.emoji-btn:hover {
+  background: var(--sky-hover);
+  transform: scale(1.22);
+}
+
+.emoji-btn--active,
+.emoji-btn--active:hover {
+  background: var(--sky-blue-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sky-blue) 45%, transparent);
+}
+
+/* Aggregated reaction chips */
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 7px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-muted);
+  font-size: 0.88em;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s, transform 0.1s;
+}
+
+.reaction-chip:hover {
+  border-color: var(--sky-border-strong);
+  background: var(--sky-hover);
+  color: var(--sky-blue);
+  transform: translateY(-1px);
+}
+
+.reaction-chip--active,
+.reaction-chip--active:hover {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+}
+
+.reaction-chip__emoji { font-size: 16px; line-height: 1; }
+.reaction-chip__count { font-size: 0.92em; font-weight: 700; }
+.reaction-chip__avatars { display: inline-flex; align-items: center; }
+.reaction-chip__avatars > *:not(:first-child) { margin-left: -5px; }
+
+.avatar--micro {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--sky-surface-soft);
+}
+.reaction-chip:hover .avatar--micro { box-shadow: 0 0 0 1px var(--sky-hover); }
+.reaction-chip--active .avatar--micro { box-shadow: 0 0 0 1px var(--sky-blue-soft); }
+
+/* One-shot reaction pop + double-tap heart burst */
+@keyframes reaction-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.reaction-pop-anim { animation: reaction-pop 150ms ease-out 1; }
+
+.reaction-heart-burst {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  line-height: 1;
+  animation: reaction-heart-burst 700ms ease-out 1 forwards;
+}
+
+@keyframes reaction-heart-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  60%  { opacity: 1; transform: translate(-50%, -90%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -160%) scale(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-pop-anim { animation: none; }
+  .reaction-heart-burst { display: none; }
+  .reaction-picker__text--invalid { animation: none; outline: 1px solid var(--sky-pink); }
+}
+
+/* Who-reacted popover */
+.reaction-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 160px;
+  max-width: 240px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px 0;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  box-shadow: var(--sky-shadow);
+  color: var(--sky-text);
+  z-index: 202;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.92) translateY(6px);
+  transform-origin: center bottom;
+  transition: opacity 0.16s ease,
+              transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reaction-popover--open {
+  opacity: 1;
+  transform: translateX(-50%) scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+.reaction-popover__head {
+  padding: 2px 12px 6px;
+  font-size: 0.82em;
+  font-weight: 700;
+  color: var(--sky-muted);
+  border-bottom: 1px solid var(--sky-border);
+  margin-bottom: 4px;
+}
+
+.reaction-popover__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+
+.reaction-popover__row .avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reaction-popover__time {
+  margin-left: auto;
+  padding-left: 10px;
+  color: var(--sky-muted-soft);
+  font-size: 0.92em;
+}
+
+.avatar--tiny {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+/* ============================================================
+ * Composer modal (the "New Post" dialog) — ssbski lacks Decent's
+ * structural compose CSS, so build the dialog look here.
+ * ============================================================ */
+
+.lightbox__content {
+  max-width: 600px;
+  /* Clear the 53px sticky feed-header so the modal sits below it, not tucked
+   * under its edge. Bottom stays smaller so tall modals still breathe. */
+  margin: 88px auto 48px;
+  padding: 0 16px;
+}
+
+.compose-modal {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 16px;
+  box-shadow: var(--sky-shadow);
+  color: var(--sky-text);
+}
+
+.compose-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.compose-modal__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.compose-modal__title .avatar,
+.compose-modal__title .avatar a.avatar {
+  display: inline-flex;
+  align-items: center;
+}
+
+.compose-modal__title .avatar img,
+.compose-modal__title .avatar canvas,
+.compose-modal__title .avatar svg {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.compose-modal__close { font-size: 0.9em; }
+
+.compose-modal__hint,
+.compose-modal__quote-hint {
+  margin-bottom: 8px;
+  color: var(--sky-muted);
+  font-size: 0.9em;
+}
+
+/* The composer card itself — strip the feed-card chrome */
+.message-card.compose {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.message-card.compose:hover { background: transparent; }
+
+.compose .column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compose .row.compose__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* The Browse (attach) control reuses the left-rail .nav__icon, whose 1.65rem
+ * glyph is sized for the nav rail. At button scale it made the Browse label
+ * taller than the icon-less action button beside it, so the two didn't line up.
+ * Size the icon to the button's own text so their heights match. */
+.compose .btn .nav__icon {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+/* Preview/confirm step (the Publish/Cancel buttons under the rendered message).
+ * These render as a raw Bootstrap .row inside the message-card, so without this
+ * they collapse flush against the message body and against each other. Give the
+ * row real separation from the body and a gap between the two buttons.
+ * row-reverse right-packs the group and puts Publish (first in the DOM) at the
+ * far right with Cancel to its left, matching the compose step where the primary
+ * Preview button sits at the bottom-right. */
+.message-confirm__controls {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* The preview reuses the feed .message-card (square, borderless) so on the dark
+ * overlay it read as a flat white rectangle next to the rounded compose dialog
+ * it follows. Give it the same dialog chrome so both steps of the publish flow
+ * match. */
+.message-confirm .message-card {
+  border-radius: 16px;
+  border: 1px solid var(--sky-border);
+  box-shadow: var(--sky-shadow);
+}
+
+.compose textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  box-shadow: none;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.compose textarea:focus {
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+  outline: none;
+}
+
+.compose textarea::placeholder,
+.nav-search::placeholder { color: var(--sky-muted-soft); }
+
+/* ============================================================
+ * Quotes, embeds, git, media
+ * ============================================================ */
+
+.btn-primary {
+  background: var(--sky-blue);
+  border-color: var(--sky-blue);
+  color: #fff;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--sky-blue-hover);
+  border-color: var(--sky-blue-hover);
+  color: #fff;
+}
+
+/* Destructive action — outlined red that fills on hover. */
+.btn-danger {
+  background: var(--sky-surface);
+  border-color: var(--sky-red);
+  color: var(--sky-red);
+}
+.btn-danger:hover,
+.btn-danger:focus {
+  background: var(--sky-red);
+  border-color: var(--sky-red);
+  color: #fff;
+}
+
+/* ============================================================
+ * Keys page (#key) — stacked sections inside one card.
+ * ============================================================ */
+.key-card { display: flex; flex-direction: column; gap: 0; }
+.key-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 0;
+  border-top: 1px solid var(--sky-border);
+}
+.key-card .key-section:first-child { padding-top: 0; border-top: none; }
+.key-card .key-section:last-child { padding-bottom: 0; }
+.key-card__title { margin: 0; font-size: 1.25em; font-weight: 700; color: var(--sky-text); }
+.key-section__title { margin: 0; font-size: 1.02em; font-weight: 700; color: var(--sky-text); }
+.key-card__hint { margin: 0; color: var(--sky-text-secondary); font-size: 0.92em; line-height: 1.45; }
+.key-secret-wrap { display: flex; flex-direction: column; gap: 10px; }
+.key-secret {
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--sky-surface-soft);
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  overflow: auto;
+  max-height: 220px;
+}
+.key-secret code {
+  font-size: 0.82em;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--sky-text);
+}
+.key-form { display: flex; flex-direction: column; gap: 10px; margin: 0; }
+.key-import {
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-size: 0.9em;
+  line-height: 1.4;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.key-import:focus { outline: none; border-color: var(--sky-blue); }
+/* Button rows: right-aligned, wrap gracefully on narrow screens. */
+.key-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.key-danger .key-section__title { color: var(--sky-red); }
+
+/* Post media — Bluesky rounds images with a hairline border */
+.message img,
+.message_content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--sky-border);
+}
+
+/* Markdown content inside posts */
+.markdown a,
+.message_content a { color: var(--sky-blue); }
+.markdown a:hover,
+.message_content a:hover { text-decoration: underline; }
+
+.markdown code,
+.message_content code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--sky-surface-soft);
+  font-size: 0.92em;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.markdown pre,
+.message_content pre {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  border: 1px solid var(--sky-border);
+  overflow-x: auto;
+}
+
+.markdown pre code,
+.message_content pre code { padding: 0; background: none; }
+
+.markdown blockquote,
+.message_content blockquote {
+  margin: 6px 0;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--sky-border-strong);
+  color: var(--sky-muted);
+}
+
+.markdown h1, .markdown h2, .markdown h3,
+.markdown h4, .markdown h5, .markdown h6 {
+  margin: 10px 0 6px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.markdown ul, .markdown ol { padding-left: 22px; }
+
+.markdown hr {
+  border: 0;
+  border-top: 1px solid var(--sky-border);
+  margin: 12px 0;
+}
+
+.quoted-post,
+.repost-card,
+.embedded-post,
+.repost-inner,
+.compose-quote-hint-inner {
+  border-color: var(--sky-border);
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  border-radius: 12px;
+}
+
+.quoted-post:hover,
+.repost-inner:hover {
+  background: var(--sky-hover);
+  border-color: var(--sky-border-strong);
+}
+
+.git-message-compose,
+.git-message-compose__result {
+  background: var(--sky-surface-soft);
+  border-color: var(--sky-border);
+  color: var(--sky-muted);
+}
+
+.git-sha {
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  user-select: all;
+}
+
+/* Repositories list — ssbski never loaded Decent's repos-card CSS, so cards
+ * stacked full-width and long clone URLs overflowed. */
+/* Match the 16px horizontal inset of .repos-grid so the heading and the
+ * "New Repository" button line up with the repo cards below. */
+.repos-header {
+  padding: 0 16px;
+}
+
+.repos-heading {
+  margin: 16px 0 12px;
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--sky-text);
+}
+
+.repos-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 20px;
+}
+
+.repos-empty { padding: 20px 0; color: var(--sky-muted); font-size: 0.9em; }
+
+.repos-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: var(--sky-surface-soft);
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.repos-card:hover {
+  border-color: var(--sky-border-strong);
+  background: var(--sky-hover);
+}
+
+.repos-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85em;
+  color: var(--sky-muted);
+}
+
+.repos-card-name { margin: 0; font-size: 1.05em; font-weight: 700; }
+.repos-card-name a { color: var(--sky-blue); text-decoration: none; }
+.repos-card-name a:hover { text-decoration: underline; }
+
+.repos-card-meta { font-size: 0.82em; color: var(--sky-muted-soft); }
+
+.repos-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.repos-card-clone {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.75em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.git-clone-url {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+}
+
+.git-label { font-size: 0.82em; color: var(--sky-muted); white-space: nowrap; }
+
+.git-clone-input {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  white-space: nowrap;
+  overflow-x: auto;
+  user-select: all;
+}
+
+.git-clone-command { color: var(--sky-text); font-weight: 600; }
+
+.lightbox { background: rgba(15, 20, 25, 0.62); }
+
+/* hyperlightbox centres .lightbox__content with margin:auto against the whole
+ * window, so the modal drifts left and overlaps the fixed navbar. Inset the
+ * centring box by the rail/right-column widths so popovers sit centred in the
+ * content column. The backdrop still fills the screen (padding shows the dim). */
+.lightbox {
+  padding-left: var(--sky-rail-width);
+  padding-right: var(--sky-right-width);
+}
+
+/* Avatar size classes (used by repos, lists, embeds, etc.). ssbski never
+ * loaded these from Decent, so unsized avatars rendered at natural size. */
+.avatar--thumbnail {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar--large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatar--fullsize {
+  width: 50%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* ============================================================
+ * Git forge — repo home, tree, blob, diff, log, commit, ref picker,
+ * issue/PR lists, reviews, activity. ssbski loads INSTEAD OF Decent's
+ * style.css, so the entire forge (~130 .git-* classes) was unstyled here.
+ * Structure is ported from Decent's style.css and re-themed onto the ALF
+ * (--sky-*) tokens so the forge reads as part of the Bluesky skin and follows
+ * dark mode. GitHub greys/blues are mapped: borders -> --sky-border, soft
+ * surfaces -> --sky-surface-soft, links -> --sky-blue, diff add/del -> green/red.
+ * ============================================================ */
+
+/* Forge screens fill the centre column just like every other route. The feed
+ * is full-width here (--sky-feed-width: none), so let the forge track it rather
+ * than capping at a fixed 1120px (which left the git route narrower than the
+ * rest of the app). */
+.scroller__wrapper:has(> .git-forge-layout),
+.scroller__wrapper:has(.git-browser) {
+  max-width: var(--sky-feed-width);
+}
+
+.git-forge-layout {
+  background: var(--sky-bg);
+  min-height: 80vh;
+}
+
+/* ── Forge header: repo title + tab bar ─────────────────────────────────── */
+.git-forge-header {
+  background: var(--sky-surface);
+  border-bottom: 1px solid var(--sky-border);
+  padding: 16px 24px 0 24px;
+  margin-bottom: 16px;
+}
+
+.git-forge-repo-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 1.25em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.git-forge-repo-title > a:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.git-forge-repo-title a {
+  color: var(--sky-blue);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.git-forge-repo-title a:hover { text-decoration: underline; }
+
+.git-forge-repo-title .git-forge-sep {
+  color: var(--sky-muted-soft);
+  font-weight: 400;
+}
+
+.git-forge-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: -1px;
+}
+
+.git-forge-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--sky-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 10px 10px 0 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.git-forge-tab-label { white-space: nowrap; }
+
+.git-forge-tab:hover {
+  background: var(--sky-hover);
+  color: var(--sky-text);
+}
+
+.git-forge-tab.active {
+  background: var(--sky-bg);
+  border-color: var(--sky-border);
+  border-bottom-color: var(--sky-bg);
+  color: var(--sky-text);
+}
+
+.git-forge-tab-icon {
+  opacity: 0.8;
+  font-size: 1.1em;
+  vertical-align: -3px;
+}
+
+.git-forge-container { padding: 0 24px 32px 24px; }
+.git-forge-main { display: block; }
+.git-forge-content { min-width: 0; }
+
+.git-forge-card {
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  background: var(--sky-surface);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.git-forge-card-header {
+  background: var(--sky-surface-soft);
+  border-bottom: 1px solid var(--sky-border);
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.git-forge-card-body { padding: 14px; }
+
+/* ── Repo code-home toolbar & clone popover ─────────────────────────────── */
+.git-forge-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.git-forge-toolbar-left,
+.git-forge-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.git-clone-button { position: relative; }
+
+.git-clone-button-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font: inherit;
+  font-size: 0.9em;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.git-clone-button-trigger:hover { background: var(--sky-hover); }
+
+.git-clone-button.is-open .git-clone-button-trigger {
+  background: var(--sky-hover);
+  border-color: var(--sky-border-strong);
+}
+
+.git-clone-button-icon { font-size: 1.05em; }
+.git-clone-caret { font-size: 1.2em; margin-left: 2px; color: var(--sky-muted); }
+
+.git-clone-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  width: min(420px, calc(100vw - 40px));
+  padding: 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow);
+  z-index: 20;
+  display: none;
+}
+
+.git-clone-button.is-open .git-clone-popover { display: block; }
+
+.git-clone-popover-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--sky-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.git-clone-popover-row { display: flex; gap: 6px; }
+
+.git-clone-popover-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+}
+
+.git-clone-popover-copy {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  cursor: pointer;
+}
+
+.git-clone-popover-copy:hover { background: var(--sky-hover); }
+
+/* Composite home card: latest-commit banner + tree table share one frame. */
+.git-forge-home-card {
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  background: var(--sky-surface);
+}
+
+.git-forge-home-card .git-tree-latest-commit {
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid var(--sky-border);
+  margin: 0;
+  background: var(--sky-surface-soft);
+}
+
+.git-forge-home-card .git-tree-table {
+  border: none;
+  border-radius: 0;
+}
+
+/* ── Tree table + latest-commit banner ──────────────────────────────────── */
+.git-tree-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  font-size: 0.9em;
+  overflow: hidden;
+}
+
+.git-tree-table tr {
+  border-bottom: 1px solid var(--sky-border);
+  transition: background-color 0.1s ease;
+}
+
+.git-tree-table tr:last-child,
+.git-tree-table tr:last-child td { border-bottom: none; }
+
+.git-tree-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.git-tree-table tr:hover { background: var(--sky-hover); }
+
+.git-tree-icon {
+  width: 2.2em;
+  text-align: center;
+  color: var(--sky-muted);
+}
+
+.git-tree-icon .material-symbols-outlined {
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+.git-tree-name a {
+  color: var(--sky-blue);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.git-tree-name a:hover { text-decoration: underline; }
+
+.git-tree-meta {
+  color: var(--sky-muted);
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.git-tree-latest-commit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  font-size: 0.88em;
+  color: var(--sky-muted);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.git-tree-latest-commit:empty { display: none; }
+.git-tree-latest-sha { flex-shrink: 0; text-decoration: none; }
+
+.git-tree-latest-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--sky-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-tree-latest-title:hover { color: var(--sky-blue); text-decoration: underline; }
+
+.git-tree-latest-author,
+.git-tree-latest-time { flex-shrink: 0; color: var(--sky-muted); }
+
+/* ── Breadcrumbs, subheader, section title, browser shell ───────────────── */
+.git-browser { width: 100%; padding: 12px 0; }
+
+.git-browser-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.git-browse-link { font-size: 0.85em; margin-left: auto; }
+
+.git-section-title {
+  margin: 16px 0 6px 0;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--sky-text);
+}
+
+.git-breadcrumbs { font-size: 0.9em; margin-bottom: 0; color: var(--sky-muted); }
+.git-bc-sep { color: var(--sky-muted-soft); }
+
+.git-repo-subheader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 14px 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.git-repo-subheader-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.git-repo-subheader-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.git-repo-subheader-hint {
+  font-size: 0.78em;
+  color: var(--sky-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Ref picker ─────────────────────────────────────────────────────────── */
+.git-ref-picker { position: relative; }
+
+.git-ref-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  cursor: pointer;
+}
+
+.git-ref-picker-button:hover { background: var(--sky-hover); }
+
+.git-ref-picker-button:disabled {
+  cursor: default;
+  color: var(--sky-muted);
+  background: var(--sky-surface-soft);
+}
+
+.git-ref-picker.is-open .git-ref-picker-button {
+  border-color: var(--sky-blue);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.git-ref-picker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  padding: 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  box-shadow: var(--sky-shadow);
+  display: none;
+  z-index: 20;
+}
+
+.git-ref-picker.is-open .git-ref-picker-popover { display: block; }
+
+.git-ref-picker-tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+
+.git-ref-picker-tab {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-muted);
+  font-size: 0.82em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.git-ref-picker-tab.active { background: var(--sky-blue-soft); color: var(--sky-blue); }
+
+.git-ref-picker-search {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+}
+
+.git-ref-picker-list { max-height: 260px; overflow-y: auto; }
+
+.git-ref-picker-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.git-ref-picker-item:hover,
+.git-ref-picker-item.active { background: var(--sky-hover); }
+
+.git-ref-picker-item-name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--sky-text);
+}
+
+.git-ref-picker-item-meta {
+  font-size: 0.76em;
+  color: var(--sky-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.git-ref-picker-empty { padding: 10px; color: var(--sky-muted); font-size: 0.88em; }
+
+/* ── Blob: action row, content, line numbers ────────────────────────────── */
+.git-blob-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--sky-border);
+  border-bottom: none;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  background: var(--sky-surface-soft);
+  font-size: 0.88em;
+}
+
+.git-blob-meta { color: var(--sky-muted); }
+
+.git-blob-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.git-blob-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-size: 0.88em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.git-blob-action:hover { background: var(--sky-hover); color: var(--sky-blue); }
+
+.git-blob-action.is-disabled,
+.git-blob-action:disabled {
+  color: var(--sky-muted-soft);
+  background: var(--sky-surface-soft);
+  cursor: default;
+}
+
+.git-blob-action .material-symbols-outlined { font-size: 1.1em; }
+
+.git-blob-content {
+  margin: 0 0 12px 0;
+  padding: 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.git-blob-pane {
+  margin-top: 0;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.git-blob-readme { margin-top: 0; }
+
+.git-highlighted {
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  border: 1px solid var(--sky-border);
+  padding: 0;
+  margin: 0;
+}
+
+.git-blob-line {
+  display: flex;
+  align-items: flex-start;
+  min-height: 1.45em;
+  padding: 0 12px 0 0;
+}
+
+.git-blob-line-no {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+  padding: 0 12px 0 8px;
+  text-align: right;
+  color: var(--sky-muted-soft);
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.git-blob-line-no:hover { color: var(--sky-blue); }
+
+.git-blob-line-code {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: pre;
+  font-family: inherit;
+}
+
+.git-blob-line.is-highlighted,
+.git-blob-line:target { background: var(--sky-mark); }
+
+.git-blob-line.is-highlighted .git-blob-line-no {
+  color: var(--sky-text);
+  background: var(--sky-mark-strong);
+}
+
+/* ── README / markdown blob ─────────────────────────────────────────────── */
+.git-readme {
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0 12px 0;
+  background: var(--sky-surface);
+}
+
+.git-readme-content { line-height: 1.6; }
+
+.git-readme-content h1,
+.git-readme-content h2,
+.git-readme-content h3 { margin-top: 1em; margin-bottom: 0.4em; }
+
+.git-md-heading { scroll-margin-top: 80px; }
+
+.git-md-heading-anchor {
+  display: inline-block;
+  margin-right: 0.35em;
+  color: var(--sky-muted-soft);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 80ms ease-in;
+  font-weight: normal;
+}
+
+.git-md-heading:hover .git-md-heading-anchor,
+.git-md-heading-anchor:focus { opacity: 1; }
+.git-md-heading-anchor:hover { text-decoration: underline; }
+
+.git-readme-content pre,
+.git-readme-content code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--sky-surface-soft);
+  border-radius: 5px;
+  padding: 1px 4px;
+}
+
+.git-readme-content pre { padding: 8px; overflow-x: auto; }
+
+/* ── Image viewer ───────────────────────────────────────────────────────── */
+.git-image-view {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12px;
+  background: repeating-conic-gradient(var(--sky-surface-soft) 0% 25%, var(--sky-surface) 0% 50%) 0 0 / 16px 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  min-height: 100px;
+}
+
+.git-blob-image {
+  max-width: 100%;
+  max-height: 60vh;
+  display: block;
+  box-shadow: var(--sky-shadow);
+}
+
+/* ── Inline diff view ───────────────────────────────────────────────────── */
+.git-diff { margin: 6px 0 16px 0; }
+
+.git-diff-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.85em;
+  color: var(--sky-muted);
+}
+
+.git-diff-stat-files { font-weight: 500; }
+.git-diff-stat-add { color: var(--sky-green); font-weight: 600; }
+.git-diff-stat-del { color: var(--sky-red); font-weight: 600; }
+
+.git-diff-file {
+  margin-bottom: 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.85em;
+}
+
+.git-diff-file summary { list-style: none; cursor: pointer; }
+.git-diff-file summary::-webkit-details-marker { display: none; }
+
+.git-diff-file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--sky-surface-soft);
+  border-bottom: 1px solid var(--sky-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.git-diff-status { font-weight: 700; width: 1.4em; text-align: center; flex-shrink: 0; }
+.git-diff-status-added    { color: var(--sky-green); }
+.git-diff-status-deleted  { color: var(--sky-red); }
+.git-diff-status-modified { color: var(--sky-warn); }
+.git-diff-status-renamed  { color: var(--sky-blue); }
+
+.git-diff-path { font-size: 0.95em; word-break: break-all; }
+.git-diff-truncated { font-size: 0.8em; color: var(--sky-muted-soft); font-style: italic; }
+
+.git-diff-binary,
+.git-diff-empty {
+  padding: 8px 12px;
+  color: var(--sky-muted-soft);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.git-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  line-height: 1.5;
+}
+
+.git-diff-hunk-header td {
+  padding: 2px 8px;
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  font-style: italic;
+  font-size: 0.85em;
+}
+
+.git-diff-line td { padding: 1px 4px; vertical-align: top; white-space: pre; }
+.git-diff-line-add { background: var(--sky-green-soft); }
+.git-diff-line-del { background: var(--sky-red-soft); }
+.git-diff-line-equal { background: var(--sky-surface); }
+.git-diff-line-add .git-diff-code { color: var(--sky-green); }
+.git-diff-line-del .git-diff-code { color: var(--sky-red); }
+
+.git-diff-ln {
+  min-width: 2.5em;
+  padding-right: 8px !important;
+  text-align: right;
+  color: var(--sky-muted-soft);
+  user-select: none;
+  border-right: 1px solid var(--sky-border);
+}
+
+.git-diff-prefix {
+  width: 1em;
+  padding: 0 4px !important;
+  color: var(--sky-muted-soft);
+  user-select: none;
+}
+
+.git-diff-line-add .git-diff-prefix { color: var(--sky-green); }
+.git-diff-line-del .git-diff-prefix { color: var(--sky-red); }
+
+/* ── Commit / log message rows ──────────────────────────────────────────── */
+.git-branch-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+}
+
+.git-branch-badge::before { content: '\238B\00a0'; }
+
+.git-repo-name { margin: 0 0 8px 0; font-size: 1.1em; font-weight: 600; }
+
+/* ── Push (git-update) feed card ─────────────────────────────────────────── */
+/* Header: icon + "pushed to <repo>" with branch badges pushed to the right,
+ * separated from the commit list by a hairline. */
+.git-push-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding-bottom: 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--sky-border);
+}
+.git-push-icon { font-size: 1.15em; color: var(--sky-muted); }
+.git-push-summary { color: var(--sky-text); }
+
+/* Branch badges now sit inline as a wrapping row, pinned right via auto margin
+ * (was a vertical column, one badge per line). */
+.git-refs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: auto; }
+.git-ref { display: inline-flex; align-items: center; gap: 6px; }
+.git-ref-deleted { color: var(--sky-red); font-style: italic; }
+
+/* Commits hang off a vertical rail with a dot per commit, so the list reads as
+ * one group rather than a flat run of paragraphs. */
+.git-timeline { position: relative; margin: 6px 0 0 0; padding-left: 18px; }
+.git-timeline:empty { display: none; }
+.git-timeline::before {
+  content: '';
+  position: absolute;
+  left: 4px; top: 8px; bottom: 8px;
+  width: 1.5px;
+  background: var(--sky-border-strong);
+}
+.git-commit { position: relative; padding: 5px 0; }
+.git-commit::before {
+  content: '';
+  position: absolute;
+  left: -17px; top: 9px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--sky-surface);
+  border: 1.5px solid var(--sky-border-strong);
+}
+
+/* sha + title on the top line, +/- stats pinned right. Title flexes and wraps
+ * internally; stats never wrap away. */
+.git-commit-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+}
+.git-commit-title { flex: 1 1 auto; min-width: 0; }
+.git-commit-stats-wrap { flex-shrink: 0; white-space: nowrap; }
+
+.git-log-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--sky-border);
+  font-size: 0.9em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.git-log-row:last-child { border-bottom: none; }
+
+.git-log-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--sky-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-log-title:hover { color: var(--sky-blue); text-decoration: underline; }
+
+.git-log-authors,
+.git-log-time { flex-shrink: 0; font-size: 0.85em; color: var(--sky-muted); }
+.git-log-authors { max-width: 30%; overflow: hidden; text-overflow: ellipsis; }
+
+.git-commit-meta { margin: 4px 0 8px 0; font-size: 0.82em; color: var(--sky-muted); }
+
+.git-commit-body {
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+}
+
+.git-commit-files { display: flex; flex-direction: column; gap: 3px; margin: 4px 0; font-size: 0.85em; }
+.git-commit-files-count { font-size: 0.8em; color: var(--sky-muted-soft); }
+.git-commit-stats { color: var(--sky-muted-soft); }
+/* On-palette stat colours: additions take the skin's one accent (blue), removals
+ * stay muted gray alongside the "N files" count. The +/- signs carry the meaning,
+ * so colour serves the palette rather than re-signalling add vs remove. */
+.git-stat-add { color: var(--sky-blue); font-weight: 600; }
+.git-stat-del { color: var(--sky-muted); font-weight: 600; }
+/* pre-line (not pre-wrap): body text is reflowed in git.js so only the blank
+ * lines between paragraphs remain as breaks; everything else fills the width.
+ * Clamped to 2 lines so a chatty commit can't out-tower the rest of the card —
+ * the full message is one click away on the commit page. */
+.git-commit-body-preview {
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+.git-commits-more { color: var(--sky-muted-soft); font-style: italic; }
+
+/* ── State badges (issue/PR open/closed/merged) ─────────────────────────── */
+.git-state-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.78em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  border: 1px solid var(--sky-border);
+  background: var(--sky-surface-soft);
+  color: var(--sky-muted);
+}
+
+.git-state-open { background: var(--sky-green-soft); color: var(--sky-green); border-color: transparent; }
+.git-state-closed { background: var(--sky-warn-soft); color: var(--sky-warn); border-color: transparent; }
+.git-state-merged { background: var(--sky-purple-soft); color: var(--sky-purple); border-color: transparent; }
+
+/* ── Issue / PR lists ───────────────────────────────────────────────────── */
+.git-forge-list {
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.git-forge-list-header {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--sky-surface-soft);
+  border-bottom: 1px solid var(--sky-border);
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.git-forge-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.git-forge-list-item:last-child { border-bottom: none; }
+.git-forge-list-item:hover { background: var(--sky-hover); }
+.git-forge-list-item-main { flex: 1; min-width: 0; }
+
+.git-forge-list-item-title {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 1em;
+  color: var(--sky-text);
+  text-decoration: none;
+}
+
+.git-forge-list-item-title:hover { color: var(--sky-blue); }
+.git-forge-list-item-meta { font-size: 0.8em; color: var(--sky-muted); }
+.git-forge-list-empty { padding: 32px; text-align: center; color: var(--sky-muted); }
+
+.git-forge-list-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+
+.git-forge-btn-primary {
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--sky-blue);
+  color: #fff;
+  font-size: 0.88em;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.git-forge-btn-primary:hover { background: var(--sky-blue-hover); }
+
+/* ── Inline diff reviews ────────────────────────────────────────────────── */
+.git-diff-inline-comment-row td { padding: 0 !important; background: var(--sky-surface); }
+
+.git-diff-inline-comment {
+  margin: 8px 16px 8px 48px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+}
+
+.git-diff-inline-comment-header {
+  padding: 4px 12px;
+  background: var(--sky-surface-soft);
+  border-bottom: 1px solid var(--sky-border);
+  font-size: 0.8em;
+  color: var(--sky-muted);
+}
+
+.git-diff-inline-comment-body { padding: 8px 12px; font-size: 0.9em; }
+
+.git-diff-ln:hover::after { content: " +"; color: var(--sky-blue); cursor: pointer; }
+
+.git-diff-add-comment-btn {
+  opacity: 0;
+  padding: 0 4px;
+  color: var(--sky-blue);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+tr:hover .git-diff-add-comment-btn { opacity: 1; }
+
+.git-diff-inline-compose {
+  margin: 8px 16px 8px 48px;
+  padding: 8px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+}
+
+.git-review-comments { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; }
+
+.git-review-comment {
+  padding: 8px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  font-size: 0.9em;
+}
+
+.git-review-comment-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 0.82em;
+  color: var(--sky-muted);
+}
+
+.git-review-comment-body { white-space: pre-wrap; line-height: 1.5; }
+.git-review-compose { margin: 8px 0; }
+.git-review-add-comment { font-size: 0.85em; color: var(--sky-blue); }
+
+/* ── Activity timeline & fork cards ─────────────────────────────────────── */
+.git-forge-activity-item {
+  position: relative;
+  margin-left: 20px;
+  padding-left: 24px;
+  padding-bottom: 20px;
+  border-left: 2px solid var(--sky-border);
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.git-forge-activity-item::before {
+  content: "";
+  position: absolute;
+  left: -9px;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sky-surface);
+  border: 2px solid var(--sky-border);
+}
+
+.git-forge-activity-item.push::before { border-color: var(--sky-green); background: var(--sky-green-soft); }
+.git-forge-activity-item.comment::before { border-color: var(--sky-blue); background: var(--sky-blue-soft); }
+.git-forge-activity-item.issue::before { border-color: var(--sky-warn); background: var(--sky-warn-soft); }
+
+.git-network-forks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+
+.git-fork-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface);
+  font-size: 0.88em;
+}
+
+/* ── Syntax highlighting (Prism, GitHub-ish light palette) ──────────────── */
+.token.comment, .token.prolog, .token.doctype, .token.cdata { color: #6a737d; }
+.token.punctuation { color: #24292e; }
+.token.namespace { opacity: 0.7; }
+.token.property, .token.tag, .token.boolean, .token.number,
+.token.constant, .token.symbol, .token.deleted { color: #005cc5; }
+.token.selector, .token.attr-name, .token.string, .token.char,
+.token.builtin, .token.inserted { color: #032f62; }
+.token.operator, .token.entity, .token.url,
+.language-css .token.string, .style .token.string { color: #d73a49; }
+.token.atrule, .token.attr-value, .token.keyword { color: #d73a49; }
+.token.function, .token.class-name { color: #6f42c1; }
+.token.regex, .token.important, .token.variable { color: #e36209; }
+.token.important, .token.bold { font-weight: bold; }
+.token.italic { font-style: italic; }
+.token.entity { cursor: help; }
+
+/* Dark-mode syntax palette (GitHub dark) so code stays readable on the
+ * dark blob surface — ssbski follows the OS via prefers-color-scheme. */
+@media (prefers-color-scheme: dark) {
+  .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #8b949e; }
+  .token.punctuation { color: #c9d1d9; }
+  .token.property, .token.tag, .token.boolean, .token.number,
+  .token.constant, .token.symbol, .token.deleted { color: #79c0ff; }
+  .token.selector, .token.attr-name, .token.string, .token.char,
+  .token.builtin, .token.inserted { color: #a5d6ff; }
+  .token.operator, .token.entity, .token.url,
+  .language-css .token.string, .style .token.string { color: #ff7b72; }
+  .token.atrule, .token.attr-value, .token.keyword { color: #ff7b72; }
+  .token.function, .token.class-name { color: #d2a8ff; }
+  .token.regex, .token.important, .token.variable { color: #ffa657; }
+}
+
+/* ── Forge responsive ───────────────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .git-forge-container { padding: 0 16px 24px 16px; }
+  .git-forge-header { padding: 16px 16px 0 16px; }
+  .git-repo-subheader { flex-direction: column; align-items: stretch; }
+  .git-repo-subheader-right { align-items: flex-start; }
+  .git-ref-picker-popover { width: min(320px, calc(100vw - 48px)); }
+}
+
+@media (max-width: 640px) {
+  .git-forge-tabs { gap: 4px; }
+  .git-forge-tab { justify-content: center; padding: 8px 10px; }
+  .git-forge-tab-label { display: none; }
+  .git-forge-tab-icon { margin: 0; opacity: 0.9; }
+}
+
+/* ============================================================
+ * Profile page — structure ported from Decent, themed with ALF tokens
+ * ============================================================ */
+
+.profile-card {
+  margin: 0;
+  background: var(--sky-surface);
+  border-bottom: 1px solid var(--sky-border);
+  overflow: hidden;
+}
+
+.profile-banner {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--sky-blue) 32%, var(--sky-surface)) 0%,
+    color-mix(in srgb, var(--sky-blue) 14%, var(--sky-surface)) 100%);
+  background-size: cover;
+  background-position: center;
+}
+
+.profile-banner--editable { cursor: pointer; }
+
+.profile-banner-edit-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+  font-size: 0.88em;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.profile-body { padding: 0 16px 16px; }
+
+.profile-body-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  margin-top: -42px;
+  flex-shrink: 0;
+}
+
+.profile-avatar-wrap img,
+.profile-avatar-wrap canvas,
+.profile-avatar-wrap svg,
+.avatar--profile {
+  display: block;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 4px solid var(--sky-surface);
+  background: var(--sky-surface);
+  object-fit: cover;
+}
+
+.profile-avatar--editable { cursor: pointer; }
+
+.profile-avatar--editable::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.32);
+  pointer-events: none;
+}
+
+.profile-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.profile-edit-btn {
+  min-height: 40px;
+  padding: 7px 16px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.profile-edit-btn:hover { background: var(--sky-hover); }
+
+.profile-card-actions div,
+.profile-card-actions a { font-size: 0.9em; }
+
+.profile-name {
+  margin-bottom: 2px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--sky-text);
+}
+
+.profile-handle {
+  margin-bottom: 10px;
+  font-size: 0.9em;
+  color: var(--sky-muted);
+  word-break: break-all;
+}
+
+.profile-bio {
+  margin-bottom: 12px;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: var(--sky-text);
+  white-space: pre-wrap;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 4px;
+}
+
+.profile-stat {
+  font-size: 0.9em;
+  color: var(--sky-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.profile-stat:hover {
+  color: var(--sky-text);
+  text-decoration: underline;
+}
+
+.profile-stat strong { color: var(--sky-text); font-weight: 700; }
+
+.profile-list-expand {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--sky-border);
+}
+
+.profile-list-title {
+  margin-bottom: 8px;
+  font-size: 0.82em;
+  font-weight: 700;
+  color: var(--sky-muted-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-list-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.profile-list-grid a img,
+.profile-list-grid a canvas {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-edit-form { margin-bottom: 12px; }
+
+.profile-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.profile-edit-label {
+  margin-top: 6px;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--sky-muted);
+}
+
+.profile-name-input,
+.profile-bio-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-size: 0.95em;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.profile-name-input:focus,
+.profile-bio-input:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.profile-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Copy-pubkey button — small ghost icon beside the handle, not a boxed button.
+ * (ssbski never loaded a .profile-copy-btn rule, so it fell back to the bare
+ * <button> chrome.) */
+.profile-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sky-muted-soft);
+  vertical-align: -6px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.profile-copy-btn:hover { background: var(--sky-hover); color: var(--sky-blue); }
+
+/* Follow / unfollow action (api.avatar_action) — a classless
+ * <div><label/><a>follow</a></div>. Promote the link to a Bluesky-style pill
+ * and demote the relationship label to a small muted hint. */
+.profile-card-actions > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-card-actions > div > label {
+  font-size: 0.82em;
+  color: var(--sky-muted);
+  cursor: default;
+}
+
+.profile-card-actions > div > label:empty { display: none; }
+
+.profile-card-actions a {
+  display: inline-flex;
+  align-items: center;
+  /* Match .profile-action-btn (Message/Mention) box metrics so the Follow pill
+   * lines up beside them. The shared min-height keeps the text-only Follow the
+   * same height as the icon-bearing Message/Mention (whose 16px icon otherwise
+   * makes them taller); the transparent border keeps the solid-blue look while
+   * occupying the same 1px the others' border does. */
+  min-height: 40px;
+  padding: 7px 16px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--sky-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9em;
+  text-transform: capitalize;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.profile-card-actions a:hover { background: var(--sky-blue-hover); color: #fff; }
+
+/* The link wraps its label after a <br>; the pill wants it on one line. */
+.profile-card-actions a br { display: none; }
+
+/* ── Send actions (Message / Mention) on another user's profile ─────────── */
+.profile-send-actions { display: inline-flex; align-items: center; gap: 8px; }
+
+.profile-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 7px 16px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  font-size: 0.9em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+}
+.profile-action-btn:hover { background: var(--sky-hover); }
+.profile-action-btn.btn-primary {
+  border-color: transparent;
+  background: var(--sky-blue);
+  color: #fff;
+}
+.profile-action-btn.btn-primary:hover { background: var(--sky-blue-hover); }
+
+/* Composer hosted in a lightbox when messaging from a profile. The app's nav
+ * rail is position:fixed; z-index:50, so lift this lightbox above it. */
+.profile-compose-lightbox { z-index: 1000; }
+.profile-compose {
+  width: min(92vw, 560px);
+  margin: 32px auto;
+  padding: 16px;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+.profile-compose .compose { margin: 0; }
+.profile-compose__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.profile-compose__title { font-weight: 800; font-size: 1.05em; color: var(--sky-text); }
+.profile-compose__close {
+  padding: 5px 14px;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+.profile-compose__close:hover { background: var(--sky-hover); }
+
+/* ── Petname control (your name for another feed) ───────────────────────── */
+/* Unstyled in ssbski before; the input also rendered unconditionally. Hide it
+ * until the add/edit affordance is engaged (JS toggles .petname--adding /
+ * .petname--editing on the container). */
+.profile-petname {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 2px 0 12px;
+  font-size: 0.9em;
+  color: var(--sky-muted);
+}
+
+/* Collapsed trigger: ghost pill — "＋ Add nickname" / "✎ Edit nickname". */
+.petname-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-muted);
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.petname-trigger:hover {
+  background: var(--sky-hover);
+  color: var(--sky-blue);
+  border-color: var(--sky-border-strong);
+}
+
+/* Editing row: [input] [Save] [Cancel]. Save/Cancel reuse .btn/.btn-primary. */
+.petname-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 280px;
+  padding: 7px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: inherit;
+  font-size: 0.95em;
+}
+
+.petname-input:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+.petname-save,
+.petname-cancel { padding: 7px 14px; font-size: 0.9em; }
+.petname-save:disabled { opacity: 0.5; cursor: default; }
+
+/* ============================================================
+ * Key page — the secret-key dump is a bare <pre> with no wrapping, so the
+ * long private-key line ran off the column; the import field was an unstyled
+ * 172px textarea. Scoped to the key screen's bare <pre>/<form> children
+ * (feed posts nest theirs inside .message_content, so these don't collide).
+ * ============================================================ */
+.message-card > pre,
+.message-card > p > pre {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--sky-border);
+  border-radius: 12px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+}
+
+.message-card > pre code,
+.message-card > p > pre code { padding: 0; background: none; }
+
+.message-card > form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 520px;
+  margin-top: 14px;
+}
+
+.message-card > form textarea {
+  width: 100%;
+  min-height: 64px;
+  padding: 9px 12px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  font-family: inherit;
+  font-size: 0.92em;
+  resize: vertical;
+}
+
+.message-card > form textarea:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  background: var(--sky-surface);
+  box-shadow: 0 0 0 3px var(--sky-blue-soft);
+}
+
+/* Empty-state placeholder (profile with no posts, no notifications, no DMs). */
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--sky-muted);
+}
+
+.feed-empty__icon { font-size: 40px; color: var(--sky-muted-soft); }
+
+.feed-empty__title {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: var(--sky-text);
+}
+
+.feed-empty__body { max-width: 320px; font-size: 0.92em; line-height: 1.4; }
+
+/* ============================================================
+ * Responsive
+ * ============================================================ */
+
+/* Bluesky breakpoints: right column hides below 1100, the left rail collapses
+ * to an icon strip below 1300 (ALF useLayoutBreakpoints). */
+
+/* Collapse the rail to an icon-only strip */
+@media (max-width: 1300px) {
+  :root { --sky-rail-width: 80px; }
+
+  .navbar .container-fluid { padding: 14px 10px; }
+
+  .navbar .nav.pull-left li a {
+    justify-content: center;
+    gap: 0;
+    padding: 0;
+  }
+
+  .nav__label { display: none; }
+
+  .navbar-avatar { justify-content: center; padding: 8px 0; }
+  .navbar-avatar__meta { display: none; }
+
+  .compose-trigger {
+    left: 14px;
+    width: 52px;
+  }
+
+  .compose-trigger__button { padding: 0; }
+  .compose-trigger__button::after { display: none; }
+}
+
+/* Drop the right column */
+@media (max-width: 1100px) {
+  .navbar .pull-right { display: none; }
+  .lightbox { padding-right: 0; }
+  .screen__content,
+  .screen__content.column { margin-right: 0; }
+}
+
+/* Mobile: the left rail becomes a bottom tab bar (Bluesky mobile layout) */
+@media (max-width: 600px) {
+  /* Rail is now a 56px bottom bar: drop the left inset, clear the bar height. */
+  .lightbox { padding-left: 0; padding-bottom: 56px; }
+
+  .navbar {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: auto;
+    height: 56px;
+    border-right: 0;
+    border-top: 1px solid var(--sky-border);
+    background: color-mix(in srgb, var(--sky-surface) 92%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .navbar .container-fluid {
+    flex-direction: row;
+    align-items: center;
+    height: 100%;
+    padding: 0 4px;
+    gap: 0;
+  }
+
+  .navbar .nav.pull-left {
+    flex-direction: row;
+    flex: 1;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .navbar .nav.pull-left li { width: auto; }
+
+  .navbar .nav.pull-left li a {
+    width: 48px;
+    height: 48px;
+    min-height: 0;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .nav__icon { font-size: 1.6rem; }
+
+  .navbar-avatar {
+    order: 0;
+    margin-top: 0;
+    padding: 0 6px;
+  }
+  .navbar-avatar img { width: 32px; height: 32px; }
+
+  /* content clears the bottom bar and goes full-width. The feed scrolls
+   * internally now, so reserve the bar's height by shrinking the column
+   * rather than with margin-bottom (which .screen's overflow:hidden clips). */
+  .screen__content,
+  .screen__content.column {
+    margin-left: 0;
+    margin-right: 0;
+    height: calc(100vh - 56px);
+  }
+
+  .scroller__wrapper,
+  .feed-header { border-left: 0; border-right: 0; }
+
+  /* New Post becomes a floating action button above the tab bar */
+  .compose-trigger {
+    left: auto;
+    right: 16px;
+    bottom: 72px;
+    width: 52px;
+  }
+  .compose-trigger__button { padding: 0; }
+  .compose-trigger__button::after { display: none; }
+
+  .message-card:not(.message--mini):not(.compose) { padding-left: 60px; }
+  .message-card:not(.message--mini):not(.compose) > .title .avatar img,
+  .message-card:not(.message--mini):not(.compose) > .title .avatar canvas,
+  .message-card:not(.message--mini):not(.compose) > .title .avatar svg { left: 12px; }
+
+  .lightbox__content { margin: 16px auto; }
+}
+
+/* ============================================================
+ * Chat (DMs) — Bluesky-style conversation list + thread.
+ * Single-pane per route: #private = inbox, #dm/<feed> = thread.
+ * ============================================================ */
+
+/* ── conversation list (inbox) ── */
+.chat-list__wrapper { padding: 0; }
+.chat-list__head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--sky-surface);
+  border-bottom: 1px solid var(--sky-border);
+}
+.chat-list__title { font-size: 17px; font-weight: 700; color: var(--sky-text); }
+.chat-new-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sky-blue);
+  cursor: pointer;
+}
+.chat-new-btn:hover { background: var(--sky-blue-soft); }
+.chat-new-btn .material-symbols-outlined { font-size: 20px; }
+
+.chat-list__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sky-border);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.chat-list__row:hover { background: var(--sky-hover); }
+.chat-row__avatar img,
+.chat-row__avatar .avatar--thumbnail {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.chat-row__body { flex: 1; min-width: 0; }
+.chat-row__top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.chat-row__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sky-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-row__time { font-size: 12px; color: var(--sky-muted-soft); flex-shrink: 0; }
+.chat-row__preview {
+  font-size: 13px;
+  color: var(--sky-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chat-list__row--unread .chat-row__name { font-weight: 700; }
+.chat-list__row--unread .chat-row__preview { color: var(--sky-text); font-weight: 500; }
+.chat-row__unread {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--sky-blue);
+  flex-shrink: 0;
+}
+
+/* ── thread view ── */
+/* Fill the full centre column (the band between the rail and right column),
+ * matching the feed. Bubbles keep their own readable cap below so they don't
+ * stretch edge-to-edge on a wide monitor. */
+.chat-thread {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: var(--sky-surface);
+}
+.chat-thread__head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--sky-border);
+  background: var(--sky-surface);
+}
+.chat-thread__who { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.chat-thread__avatar img,
+.chat-thread__avatar .avatar--thumbnail { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.chat-thread__id { display: flex; flex-direction: column; line-height: 1.2; }
+.chat-thread__name { font-size: 15px; font-weight: 700; color: var(--sky-text); }
+.chat-thread__handle { font-size: 12px; color: var(--sky-muted-soft); }
+
+.chat-thread__scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px; }
+.chat-thread__msgs { display: flex; flex-direction: column; }
+
+.chat-day { text-align: center; font-size: 12px; color: var(--sky-muted-soft); margin: 12px 0 8px; }
+
+.chat-group { display: flex; align-items: flex-end; gap: 8px; margin: 2px 0; }
+.chat-group--mine { flex-direction: row-reverse; }
+.chat-group--theirs { flex-direction: row; }
+.chat-group__avatar img,
+.chat-group__avatar .avatar--thumbnail { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.chat-group__bubbles { display: flex; flex-direction: column; gap: 2px; max-width: min(74%, 640px); }
+.chat-group--mine .chat-group__bubbles { align-items: flex-end; }
+.chat-group--theirs .chat-group__bubbles { align-items: flex-start; }
+
+/* Bubble + hover-revealed raw-JSON toggle alongside it. */
+.chat-bubble-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+.chat-group--mine .chat-bubble-row { flex-direction: row-reverse; }
+.chat-bubble__raw {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sky-muted-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.chat-bubble-row:hover .chat-bubble__raw,
+.chat-bubble__raw:focus-visible,
+.chat-bubble__raw--on { opacity: 1; }
+.chat-bubble__raw:hover { background: var(--sky-hover); color: var(--sky-text); }
+.chat-bubble__raw--on { color: var(--sky-blue); }
+.chat-bubble__raw .material-symbols-outlined { font-size: 16px; }
+
+/* Raw view: neutral surface so the JSON is legible regardless of bubble colour. */
+.chat-bubble--raw {
+  background: var(--sky-surface-soft) !important;
+  color: var(--sky-text) !important;
+  border: 1px solid var(--sky-border);
+}
+.chat-bubble__rawwrap { display: flex; flex-direction: column; gap: 4px; }
+.chat-bubble__rawlabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sky-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.chat-bubble__rawlabel + .chat-bubble__rawjson { margin-top: 0; }
+.chat-bubble__rawjson {
+  margin: 0 0 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--sky-bg);
+  border: 1px solid var(--sky-border);
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow: auto;
+  color: var(--sky-text);
+}
+
+.chat-bubble {
+  padding: 8px 12px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.35;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+.chat-bubble__body p:first-child { margin-top: 0; }
+.chat-bubble__body p:last-child { margin-bottom: 0; }
+.chat-bubble--mine {
+  background: var(--sky-blue);
+  color: #fff;
+  border-bottom-right-radius: 5px;
+}
+.chat-bubble--mine a { color: #fff; text-decoration: underline; }
+.chat-bubble--theirs {
+  background: var(--sky-surface-soft);
+  color: var(--sky-text);
+  border: 1px solid var(--sky-border);
+  border-bottom-left-radius: 5px;
+}
+.chat-bubble--pending { opacity: 0.6; }
+.chat-error { color: var(--sky-red); font-size: 13px; text-align: center; margin: 8px 0; }
+
+/* ── composer (pinned to bottom of thread) ── */
+.chat-composer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--sky-border);
+  background: var(--sky-surface);
+}
+.chat-composer__input {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 18px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.3;
+  background: var(--sky-bg);
+  color: var(--sky-text);
+  max-height: 140px;
+  overflow-y: auto;
+}
+.chat-composer__input:focus { outline: none; border-color: var(--sky-blue); }
+.chat-composer__send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--sky-blue);
+  color: #fff;
+  cursor: pointer;
+}
+.chat-composer__send:hover { background: var(--sky-blue-hover); }
+.chat-composer__send .material-symbols-outlined { font-size: 20px; }
+
+/* ── new chat modal ── */
+.chat-newchat {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+  background: rgba(15, 20, 25, 0.45);
+}
+.chat-newchat__card {
+  width: 420px;
+  max-width: 90vw;
+  background: var(--sky-surface);
+  border: 1px solid var(--sky-border);
+  border-radius: 14px;
+  box-shadow: var(--sky-shadow);
+  padding: 18px;
+}
+.chat-newchat__head { font-size: 17px; font-weight: 700; color: var(--sky-text); margin-bottom: 12px; }
+.chat-newchat__input {
+  width: 100%;
+  border: 1px solid var(--sky-border-strong);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  background: var(--sky-bg);
+  color: var(--sky-text);
+  box-sizing: border-box;
+}
+.chat-newchat__input:focus { outline: none; border-color: var(--sky-blue); }
+.chat-newchat__input--err { border-color: var(--sky-red); }
+.chat-newchat__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+
+/* New-profile-photo thumbnail inside an "about" mini message. */
+.about-mini__photo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+/* New-profile-background (banner) thumbnail inside an "about" mini message. */
+.about-mini__banner {
+  width: 66px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+  vertical-align: middle;
+  margin-left: 2px;
+}
