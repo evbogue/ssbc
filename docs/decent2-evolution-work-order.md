@@ -8,6 +8,36 @@
 >
 > **Deferred to a follow-up:** the topbar Connect button + manual light/dark toggle (decent2 uses `prefers-color-scheme` for midnight in this cut); glossing the git/forge, profile, and chat screens (they currently inherit base.css's flat look); mobile polish; and `docs/decent-evolution.md` with the side-by-side captures.
 
+## Widget / component inventory (toward full mock parity)
+
+**A. Done — glossed for decent2**
+- Top navbar: brand wordmark, labelled nav + glossy active state, light/dark toggle
+- Left column: identity card, "New post" primary compose button
+- Centre: feed tabs (Discover/Following), post cards, mini git-push rows
+- Action buttons: Reply/Repost/Quote (icon+label) + react, glossy
+- Button range: `.btn` default + `.btn-primary`, the dark-bar `.theme-toggle`
+- Reaction pill / chips, git branch badge
+- Right column: Trending card, footer links, brand tile, search field
+
+**B. Exists in the app but still inherits base.css's FLAT look — needs a decent2 gloss pass**
+1. Composer modal (New post dialog): textareas, attach control, preview/Publish/Cancel buttons
+2. Reaction system surfaces: quick-react tray, full emoji picker panel, who-reacted popover
+3. Quoted / embedded post cards, repost cards
+4. Profile page: header/banner, Follow / Message / Mention buttons, petname (nickname) control
+5. Git/forge screens: repo home, file tree table, blob view, inline diff, commit log, issue/PR lists + state badges, syntax highlighting palette
+6. Chat / DMs: conversation list, thread bubbles, bottom composer, new-chat modal
+7. Notifications list, Keys page, search results
+8. Image lightbox, the "more" dropdown menu, empty states
+
+**C. Button range to formalise (Bootstrap-2 set)**
+Default ✓, primary ✓, toggle ✓ — still to add as needed: small/large sizes, disabled state, destructive/danger variant, a true connected `.btn-group` (for static rows where the react-tray problem doesn't apply), and a plain icon-button variant.
+
+**D. In the mock but NOT in the real DOM (new widgets — optional, need JS not just CSS)**
+- Left **nav-list** sidebar (Public/Channels/Git/Settings) under the identity card — the real nav lives only in the top bar; adding a left list duplicates it (skip unless wanted)
+- Right-column **"Active pubs"** status widget (dots) and a **"Discover the network"** hero — the real right column shows Trending + footer instead
+
+**Known layout divergences from the mock (by design):** search sits at the top of the right column (not in the bar); the topbar holds the only nav (no left nav-list). Both are intentional to avoid duplicated navigation.
+
 _Original plan below (kept for context); the decisions in §2 are now resolved as above._
 
 **Status (original):** Draft — two decisions to confirm (§2) before implementation
