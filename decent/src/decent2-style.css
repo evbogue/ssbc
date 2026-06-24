@@ -597,13 +597,22 @@ body {
   box-shadow: var(--d2-bevel);
 }
 
-/* badges (git branch) — glossy blue */
+/* badges (git branch) — glossy blue. The badge is an <a> inside
+   .message_content, whose link color (base.css) is more specific than a plain
+   .git-branch-badge rule, so override the text colour with matching reach. */
 .git-branch-badge {
-  color: #fff;
   background: linear-gradient(var(--sky-blue), var(--d2-blue2));
   border: 1px solid rgba(0, 0, 0, 0.18);
   text-shadow: var(--d2-txt-deboss);
   box-shadow: var(--d2-primary-bevel);
+}
+.git-branch-badge,
+.message_content a.git-branch-badge {
+  color: #fff;
+}
+.message_content a.git-branch-badge:hover {
+  color: #fff;
+  text-decoration: none;
 }
 
 /* nav-list active (left rail lists, e.g. settings) — glossy blue */
