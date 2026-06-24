@@ -448,8 +448,11 @@ module.exports = {
         setMode('qr')
       }
 
+      // Theme machinery is shared by the top-bar skins (ssbpro + decent2). The
+      // 'ssbpro:theme' localStorage key and data-ssbpro-theme attribute are
+      // reused as-is (origins are per-port, so there is no cross-skin leakage).
       function readSsbproTheme () {
-        if (!isSsbpro) return 'system'
+        if (!isTopbar) return 'system'
         try {
           var stored = window.localStorage.getItem('ssbpro:theme')
           if (stored === 'light' || stored === 'dark') return stored
@@ -458,7 +461,7 @@ module.exports = {
       }
 
       function applySsbproTheme (theme) {
-        if (!isSsbpro) return
+        if (!isTopbar) return
         if (theme === 'light' || theme === 'dark') {
           document.documentElement.setAttribute('data-ssbpro-theme', theme)
         } else {
@@ -814,8 +817,8 @@ module.exports = {
           h('div.container-fluid',
             isTopbar ? null : profileLink,
             nav,
-            isSsbpro ? h('div.topbar-actions',
-              makeConnectButton(),
+            isTopbar ? h('div.topbar-actions',
+              isSsbpro ? makeConnectButton() : null,
               makeThemeToggle(),
               // The profile avatar otherwise lives only in the left rail, which
               // collapses on mobile — leaving no way to reach your own profile.

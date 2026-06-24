@@ -14,7 +14,11 @@
  */
 @import url('/base.css');
 
-:root {
+/* Light is the default and also the explicit "force light" override (the shared
+ * theme toggle sets data-ssbpro-theme on <html>; see app.js). The midnight block
+ * below applies on OS-dark unless the user has forced light. */
+:root,
+:root[data-ssbpro-theme="light"] {
   color-scheme: light;
   /* palette consumed by base.css */
   --sky-bg: #e7e9ec;
@@ -77,7 +81,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-ssbpro-theme="light"]) {
     color-scheme: dark;
     --sky-bg: #191b1e;
     --sky-surface: #2c2f34;
@@ -123,6 +127,55 @@
     --d2-txt-emboss: 0 -1px 0 rgba(0, 0, 0, 0.4);
     --d2-txt-deboss: 0 -1px 0 rgba(0, 0, 0, 0.45);
   }
+}
+
+/* Explicit "force dark" (toggle) — same midnight tokens, applied regardless of
+ * the OS preference. Mirrors the @media block above. */
+:root[data-ssbpro-theme="dark"] {
+  color-scheme: dark;
+  --sky-bg: #191b1e;
+  --sky-surface: #2c2f34;
+  --sky-surface-soft: #24262b;
+  --sky-hover: #313539;
+  --sky-border: #34383e;
+  --sky-border-strong: #474c53;
+  --sky-text: #e7eaed;
+  --sky-muted: #9aa2ac;
+  --sky-muted-soft: #6c747e;
+  --sky-blue: #2f9fe0;
+  --sky-blue-hover: #54b2ec;
+  --sky-blue-soft: rgba(47, 159, 224, 0.18);
+  --sky-green: #5bbf6a;
+  --sky-green-soft: rgba(91, 191, 106, 0.16);
+  --sky-pink: #e6857d;
+  --sky-pink-soft: rgba(230, 133, 125, 0.16);
+  --sky-red: #e5736b;
+  --sky-red-soft: rgba(229, 115, 107, 0.16);
+  --sky-warn: #d4b15e;
+  --sky-warn-soft: rgba(212, 177, 94, 0.18);
+  --sky-purple: #b08ce0;
+  --sky-purple-soft: rgba(176, 140, 224, 0.18);
+  --sky-mark: rgba(212, 177, 94, 0.20);
+  --sky-mark-strong: rgba(212, 177, 94, 0.40);
+  --sky-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --sky-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+
+  --d2-surf-top: #2f3237;
+  --d2-surf-bot: #25282c;
+  --d2-well-top: #282b30;
+  --d2-well-bot: #202327;
+  --d2-nav-top: #24262b;
+  --d2-nav-bot: #131518;
+  --d2-nav-link: #9097a0;
+  --d2-btn-top: #353940;
+  --d2-btn-bot: #2a2e33;
+  --d2-blue2: #1c7fc0;
+  --d2-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.45);
+  --d2-well-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  --d2-card-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.5);
+  --d2-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --d2-txt-emboss: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  --d2-txt-deboss: 0 -1px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* ============================================================
@@ -270,19 +323,66 @@ body {
 .nav__icon { font-size: 1.05rem; }
 .nav__label { font-size: 0.9rem; line-height: 1; }
 
-/* search box: inset glossy field in the dark bar */
+/* search box: light glossy inset field at the top of the right column */
 .nav-search {
   flex: 0 0 auto;
-  height: 32px;
-  margin-left: auto;
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  background: rgba(0, 0, 0, 0.28);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
-  color: #e7eaee;
-  font-size: 0.85rem;
+  width: 100%;
+  height: 36px;
+  border-radius: 6px;
+  border: 1px solid var(--sky-border-strong);
+  background: var(--sky-surface);
+  box-shadow: var(--d2-well-inset);
+  color: var(--sky-text);
+  font-size: 0.9rem;
 }
-.nav-search::placeholder { color: rgba(255, 255, 255, 0.5); }
+
+/* topbar actions (right side of the dark bar): the light/dark toggle.
+   Glossy buttons tuned to read on the dark navbar gradient. */
+.topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.theme-toggle,
+.nav-connect-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 5px;
+  background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  color: #e7eaee;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.82rem;
+  line-height: 1;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 1px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible,
+.nav-connect-btn:hover,
+.nav-connect-btn:focus-visible {
+  filter: brightness(1.14);
+  color: #fff;
+  outline: none;
+}
+
+.theme-toggle__icon,
+.nav-connect-btn__icon { font-size: 1.05rem; }
+.theme-toggle__label,
+.nav-connect-btn__label { font-size: 0.82rem; }
+
+/* The compact profile avatar only belongs on mobile (it duplicates the left
+   identity card); the left stack stays visible until 880px, so hide it here. */
+.navbar-avatar-mobile { display: none; }
 
 /* ---- right column ---- */
 .navbar .pull-right {
