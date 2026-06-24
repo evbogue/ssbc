@@ -20,6 +20,17 @@ function isSsbproSkin () {
     !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
 }
 
+// The modern skins (ssbski/ssbpro/decent2) share base.css's button system, so
+// render the follow action as a real .btn there to keep it consistent with the
+// Message/Mention buttons. Classic Decent keeps its own classless markup.
+function isNetworkSkin () {
+  return typeof document !== 'undefined' && !!document.querySelector(
+    'link[rel="stylesheet"][href*="ssbski-style.css"],' +
+    'link[rel="stylesheet"][href*="ssbpro-style.css"],' +
+    'link[rel="stylesheet"][href*="decent2-style.css"]'
+  )
+}
+
 function contactRelation (content) {
   if (isSsbproSkin()) {
     if (content.blocking) return 'mutes'
@@ -114,8 +125,10 @@ exports.create = function (api) {
             : 'Follow this person to replicate their posts (publishes a public follow)'
     }
 
+    var modern = isNetworkSkin()
     return h('div', state,
-      actionLink = h('a', {href:'#', title: 'Follow or unfollow this person', onclick: function () {
+      actionLink = h(modern ? 'a.btn.btn-primary.profile-action-btn' : 'a',
+        {href:'#', title: 'Follow or unfollow this person', onclick: function () {
         api.message_confirm({
           type: 'contact',
           contact: id,
@@ -125,7 +138,7 @@ exports.create = function (api) {
           you_follow = msg.value.content.following
           update()
         })
-      }}, h('br'), label)
+      }}, modern ? label : [h('br'), label])
     )
   }
   return exports

@@ -3436,31 +3436,11 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 
 .profile-card-actions > div > label:empty { display: none; }
 
-.profile-card-actions a {
-  display: inline-flex;
-  align-items: center;
-  /* Match .profile-action-btn (Message/Mention) box metrics so the Follow pill
-   * lines up beside them. The shared min-height keeps the text-only Follow the
-   * same height as the icon-bearing Message/Mention (whose 16px icon otherwise
-   * makes them taller); the transparent border keeps the solid-blue look while
-   * occupying the same 1px the others' border does. */
-  min-height: 40px;
-  padding: 7px 16px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: var(--sky-blue);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.9em;
-  text-transform: capitalize;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.profile-card-actions a:hover { background: var(--sky-blue-hover); color: #fff; }
-
-/* The link wraps its label after a <br>; the pill wants it on one line. */
-.profile-card-actions a br { display: none; }
+/* The follow action renders as a real .btn.btn-primary.profile-action-btn on
+ * the modern skins (see follow.js), so it inherits the same button styling as
+ * Message/Mention — no bespoke pill rule needed here. Capitalise the lower-case
+ * "follow"/"subscribe" label so it reads as a button. */
+.profile-card-actions a.profile-action-btn { text-transform: capitalize; }
 
 /* ── Send actions (Message / Mention) on another user's profile ─────────── */
 .profile-send-actions { display: inline-flex; align-items: center; gap: 8px; }
