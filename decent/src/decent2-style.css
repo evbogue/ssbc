@@ -321,7 +321,15 @@ body {
 }
 
 .nav__icon { font-size: 1.05rem; }
-.nav__label { font-size: 0.9rem; line-height: 1; }
+/* Show the nav text labels in the top bar (base hides them for ssbski's
+   icon-only rail). High specificity so it wins; the mobile query below
+   re-hides them with matching specificity. */
+.navbar .nav.pull-left .nav__label {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+}
 
 /* search box: light glossy inset field at the top of the right column */
 .nav-search {
@@ -533,23 +541,53 @@ body {
   box-shadow: var(--d2-well-inset);
 }
 
-/* action row — Bootstrap .btn-group style grouped glossy buttons */
-.message-card .actions { gap: 0; }
+/* Action row — individual glossy Bootstrap buttons. The primary actions
+ * (reply / repost / quote) carry an icon + text label like the mock; the
+ * utility extras (raw / save / share / more) stay compact icon buttons.
+ * (Not a connected btn-group: the quick-react tray injects hidden sibling
+ * buttons, which makes :first/:last-child rounding unreliable.) */
+.message-card .actions {
+  width: auto;
+  max-width: none;
+  justify-content: flex-start;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .action-btn {
-  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
+  min-height: 30px;
+  padding: 0 10px;
   border: 1px solid var(--sky-border-strong);
-  border-radius: 0;
-  margin-left: -1px;
+  border-radius: 5px;
+  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
   color: var(--sky-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
   text-shadow: var(--d2-txt-emboss);
   box-shadow: var(--d2-bevel);
 }
-.message-card .actions .action-btn:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
-.message-card .actions .action-btn:last-of-type { border-radius: 0 5px 5px 0; }
-.action-btn:hover { filter: brightness(1.03); color: var(--sky-blue); }
+.action-btn .action-icon { font-size: 16px; }
+.action-btn:hover {
+  filter: brightness(1.04);
+  color: var(--sky-blue);
+  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
+}
+.action-btn:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.14); }
 .action-btn--active,
 .action-btn--reacted,
-.action-btn--reposted { color: var(--sky-blue); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12); }
+.action-btn--reposted {
+  color: var(--sky-blue);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.14);
+}
+
+/* Text labels for the primary actions (icon + label, like the mock). */
+.action-btn--reply::after { content: 'Reply'; }
+.action-btn--repost::after { content: 'Repost'; }
+.action-btn--quote::after { content: 'Quote'; }
+.action-btn--reply::after,
+.action-btn--repost::after,
+.action-btn--quote::after { font-size: 0.8rem; font-weight: 600; }
+
+.message_actions_extra { gap: 6px; }
 
 /* reaction pill / chips — glossy rounded */
 .reaction-pill,
@@ -594,5 +632,5 @@ body {
     margin-right: 16px;
   }
   .navbar .nav.pull-left li a { padding: 0 11px; }
-  .nav__label { display: none; }
+  .navbar .nav.pull-left .nav__label { display: none; }
 }
