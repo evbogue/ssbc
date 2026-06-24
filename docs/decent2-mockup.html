@@ -1,0 +1,247 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #cfd2d6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .caption { font: 600 13px/1 "Helvetica Neue"; color: #555; padding: 22px 24px 8px; letter-spacing: .04em; text-transform: uppercase; }
+
+  .app { width: 1180px; padding: 0 0 28px; }
+
+  /* ---- theme tokens ---- */
+  .light {
+    --bg:#e7e9ec; --text:#2b3138; --muted:#717a85; --faint:#9aa2ab;
+    --blue:#0088cc; --blue2:#0a64b8; --border:#ccd1d8; --hair:#dfe3e8;
+    --surf-top:#ffffff; --surf-bot:#f6f7f9;
+    --well-top:#f9fafb; --well-bot:#eef1f4; --well-bd:#d6dbe1;
+    --nav-top:#3b4045; --nav-bot:#23262b; --nav-link:#aeb4ba; --nav-hi:rgba(255,255,255,.10);
+    --btn-top:#ffffff; --btn-bot:#e8ebee; --btn-bd:#c2c8cf; --btn-tx:#3a4048;
+    --bevel: inset 0 1px 0 rgba(255,255,255,.7), 0 1px 2px rgba(0,0,0,.06);
+    --well-inset: inset 0 1px 2px rgba(0,0,0,.05);
+    --card-bevel: inset 0 1px 0 rgba(255,255,255,.8), 0 1px 2px rgba(0,0,0,.07);
+  }
+  .dark {
+    --bg:#191b1e; --text:#e7eaed; --muted:#9aa2ac; --faint:#6c747e;
+    --blue:#2f9fe0; --blue2:#1b78bd; --border:#34383e; --hair:#2c2f34;
+    --surf-top:#2c2f34; --surf-bot:#232529;
+    --well-top:#26282d; --well-bot:#1e2024; --well-bd:#383c42;
+    --nav-top:#24262b; --nav-bot:#141619; --nav-link:#9097a0; --nav-hi:rgba(255,255,255,.06);
+    --btn-top:#34373d; --btn-bot:#2a2d33; --btn-bd:#43474e; --btn-tx:#d6dbe0;
+    --bevel: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 2px rgba(0,0,0,.4);
+    --well-inset: inset 0 1px 0 rgba(255,255,255,.04), inset 0 0 0 1px rgba(0,0,0,.15);
+    --card-bevel: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 3px rgba(0,0,0,.45);
+  }
+
+  .shell { background: var(--bg); color: var(--text); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+
+  /* ---- navbar ---- */
+  .navbar { display:flex; align-items:center; gap:6px; height:46px; padding:0 14px;
+    background: linear-gradient(var(--nav-top), var(--nav-bot));
+    box-shadow: inset 0 1px 0 var(--nav-hi), 0 1px 4px rgba(0,0,0,.35); }
+  .brand { font-size:19px; font-weight:700; color:#fff; text-shadow:0 -1px 0 rgba(0,0,0,.4); margin-right:14px; letter-spacing:-.01em; }
+  .brand b { color: var(--blue); }
+  .navlink { color:var(--nav-link); text-decoration:none; font-size:13px; padding:0 12px; height:46px; line-height:46px; text-shadow:0 -1px 0 rgba(0,0,0,.4); transition:color .12s; }
+  .navlink:hover { color:#fff; }
+  .navlink.on { color:#fff; box-shadow: inset 0 2px 0 var(--blue); background:rgba(0,0,0,.18); }
+  .nav-search { margin-left:auto; display:flex; align-items:center; background:rgba(0,0,0,.25); border:1px solid rgba(0,0,0,.4);
+    border-radius:14px; padding:4px 10px; box-shadow: inset 0 1px 2px rgba(0,0,0,.4); }
+  .nav-search input { background:transparent; border:0; outline:0; color:#dfe3e8; font-size:12px; width:130px; }
+  .nav-search i::before{content:"\\1F50D"; font-style:normal; opacity:.5; font-size:11px; margin-right:5px;}
+
+  /* ---- shared button ---- */
+  .btn { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--btn-tx);
+    background: linear-gradient(var(--btn-top), var(--btn-bot)); border:1px solid var(--btn-bd); border-radius:5px;
+    padding:5px 11px; cursor:pointer; text-shadow:0 1px 0 rgba(255,255,255,.5); box-shadow: var(--bevel); transition:filter .12s; }
+  .dark .btn { text-shadow:0 -1px 0 rgba(0,0,0,.4); }
+  .btn:hover { filter:brightness(1.03); }
+  .btn-primary { color:#fff; background: linear-gradient(var(--blue), var(--blue2)); border-color: rgba(0,0,0,.18);
+    text-shadow:0 -1px 0 rgba(0,0,0,.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.18); }
+  .btn-sm { padding:3px 8px; font-size:11px; }
+
+  /* ---- three-zone grid ---- */
+  .grid { display:grid; grid-template-columns: 248px 1fr 300px; gap:16px; padding:16px; align-items:start; }
+
+  /* ---- wells / cards ---- */
+  .well { background: linear-gradient(var(--well-top), var(--well-bot)); border:1px solid var(--well-bd); border-radius:7px;
+    box-shadow: var(--well-inset); padding:14px; margin-bottom:16px; }
+  .well h4 { margin:0 0 10px; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
+  .card { background: linear-gradient(var(--surf-top), var(--surf-bot)); border:1px solid var(--border); border-radius:7px;
+    box-shadow: var(--card-bevel); padding:14px 16px; margin-bottom:14px; }
+
+  /* identity */
+  .me { display:flex; align-items:center; gap:11px; }
+  .ava { border-radius:50%; flex:none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15), 0 1px 2px rgba(0,0,0,.25); }
+  .a1{background:conic-gradient(from 20deg,#e85d75,#f0a868,#6cc4a1,#5b8def,#e85d75);}
+  .a2{background:conic-gradient(from 90deg,#5b8def,#8d6cf0,#e85d9c,#f0a868,#5b8def);}
+  .a3{background:conic-gradient(from 200deg,#6cc4a1,#5b8def,#b06cf0,#6cc4a1);}
+  .a4{background:conic-gradient(from 320deg,#f0c059,#e8795d,#b06cf0,#f0c059);}
+  .me .nm { font-size:15px; font-weight:700; }
+  .me .id { font-size:11px; color:var(--faint); font-family:Menlo,monospace; }
+
+  /* nav-list */
+  .nl { list-style:none; margin:0; padding:0; }
+  .nl li a { display:flex; align-items:center; gap:9px; padding:7px 11px; border-radius:5px; text-decoration:none;
+    color:var(--text); font-size:13px; font-weight:500; margin:1px 0; transition:background .12s; }
+  .nl li a:hover { background: rgba(127,127,127,.12); }
+  .nl li a.on { color:#fff; background: linear-gradient(var(--blue), var(--blue2));
+    text-shadow:0 -1px 0 rgba(0,0,0,.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.2); }
+  .nl .ic { width:16px; text-align:center; opacity:.85; }
+  .nl .ct { margin-left:auto; font-size:11px; opacity:.6; }
+  .nl li a.on .ct { opacity:.9; }
+
+  /* feed tabs */
+  .tabs { display:flex; gap:2px; border-bottom:1px solid var(--border); margin-bottom:14px; padding:0 2px; }
+  .tab { padding:9px 16px; font-size:13px; font-weight:600; color:var(--muted); cursor:pointer; border:1px solid transparent; border-bottom:0;
+    border-radius:6px 6px 0 0; position:relative; top:1px; }
+  .tab.on { color:var(--text); background: linear-gradient(var(--surf-top), var(--surf-bot)); border-color:var(--border); border-bottom:1px solid var(--surf-bot); }
+
+  /* post */
+  .post-h { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .post-h .nm { font-weight:700; font-size:14px; }
+  .post-h .hd { color:var(--faint); font-size:12px; }
+  .post-h .tm { color:var(--faint); font-size:12px; margin-left:auto; }
+  .post-b { font-size:14px; line-height:1.55; margin:0 0 12px; }
+  .acts { display:flex; align-items:center; gap:8px; }
+  .group { display:inline-flex; }
+  .group .btn { border-radius:0; margin-left:-1px; }
+  .group .btn:first-child { border-radius:5px 0 0 5px; margin-left:0; }
+  .group .btn:last-child { border-radius:0 5px 5px 0; }
+  .pill { margin-left:auto; display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:600; color:var(--blue);
+    background: linear-gradient(var(--well-top), var(--well-bot)); border:1px solid var(--well-bd); border-radius:14px; padding:3px 10px; box-shadow:var(--well-inset); }
+
+  /* mini git row */
+  .mini { display:flex; align-items:center; gap:9px; font-size:13px; padding:9px 14px; margin-bottom:14px;
+    background: linear-gradient(var(--well-top), var(--well-bot)); border:1px solid var(--well-bd); border-radius:7px; box-shadow:var(--well-inset); }
+  .mini .nm{font-weight:700;} .mini .tm{margin-left:auto;color:var(--faint);font-size:12px;}
+  .badge{font-size:11px;font-weight:700;color:#fff;background:linear-gradient(var(--blue),var(--blue2));border-radius:11px;padding:2px 9px;text-shadow:0 -1px 0 rgba(0,0,0,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.2);}
+
+  /* trending list */
+  .trow{display:flex;align-items:center;padding:7px 0;border-top:1px solid var(--hair);}
+  .trow:first-of-type{border-top:0;}
+  .trow .t{font-weight:600;font-size:13px;color:var(--blue);} .trow .s{margin-left:auto;font-size:11px;color:var(--faint);}
+  .dot{width:8px;height:8px;border-radius:50%;margin-right:8px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);}
+  .dot.up{background:radial-gradient(circle at 35% 30%,#8be78b,#3aa83a);}
+  .dot.idle{background:radial-gradient(circle at 35% 30%,#f0d275,#c79a1e);}
+  .pubrow{display:flex;align-items:center;padding:7px 0;border-top:1px solid var(--hair);font-size:13px;}
+  .pubrow:first-of-type{border-top:0;} .pubrow .s{margin-left:auto;font-size:11px;color:var(--faint);}
+  .hero{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 10px;}
+</style>
+</head>
+<body>
+
+<div id="m1" class="caption">Decent — "Bootstrap 2, evolved" · light</div>
+<div id="root-light"></div>
+<div id="m2" class="caption">Decent — "Bootstrap 2, evolved" · midnight</div>
+<div id="root-dark"></div>
+
+<script>
+function feed(){return `
+  <div class="shell">
+    <div class="navbar">
+      <span class="brand"><b>d</b>ecent</span>
+      <a class="navlink on" href="#">Discover</a>
+      <a class="navlink" href="#">Following</a>
+      <a class="navlink" href="#">Mentions</a>
+      <a class="navlink" href="#">Git</a>
+      <span class="nav-search"><i></i><input value="search the network"></span>
+      <button class="btn btn-primary" style="margin:0 0 0 10px">✎ New post</button>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div>
+        <div class="well">
+          <div class="me">
+            <span class="ava a1" style="width:42px;height:42px"></span>
+            <div><div class="nm">Ev Bogue</div><div class="id">@YND…cC0zX</div></div>
+          </div>
+        </div>
+        <div class="well" style="padding:8px">
+          <ul class="nl">
+            <li><a class="on" href="#"><span class="ic">⌂</span> Public <span class="ct">128</span></a></li>
+            <li><a href="#"><span class="ic">★</span> Following <span class="ct">41</span></a></li>
+            <li><a href="#"><span class="ic">@</span> Mentions <span class="ct">3</span></a></li>
+            <li><a href="#"><span class="ic">#</span> Channels</a></li>
+            <li><a href="#"><span class="ic">❮❯</span> Git</a></li>
+            <li><a href="#"><span class="ic">✉</span> Private <span class="ct">2</span></a></li>
+            <li><a href="#"><span class="ic">⚙</span> Settings</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div>
+        <div class="tabs">
+          <div class="tab on">Discover</div>
+          <div class="tab">Following</div>
+        </div>
+
+        <div class="card">
+          <div class="post-h">
+            <span class="ava a2" style="width:38px;height:38px"></span>
+            <span class="nm">someone</span><span class="hd">@Y8L8…FEvKX</span><span class="tm">57m</span>
+          </div>
+          <p class="post-b">hello everyone — testing out the new three-zone layout. feels roomy but still very much itself.</p>
+          <div class="acts">
+            <span class="group">
+              <button class="btn btn-sm">↩ Reply</button>
+              <button class="btn btn-sm">⇄ Repost</button>
+              <button class="btn btn-sm">♥ Like</button>
+            </span>
+            <span class="pill">😄 4 · ♥ 7</span>
+          </div>
+        </div>
+
+        <div class="mini">
+          <span class="ava a3" style="width:24px;height:24px"></span>
+          <span class="nm">ssbski</span> pushed to <span class="badge">⌥ main</span>
+          <span class="tm">15h</span>
+        </div>
+
+        <div class="card">
+          <div class="post-h">
+            <span class="ava a4" style="width:38px;height:38px"></span>
+            <span class="nm">gwhra9y/c</span><span class="hd">announced a pub</span><span class="tm">15h</span>
+          </div>
+          <p class="post-b">new pub online at <span style="font-family:Menlo,monospace;font-size:12px;background:rgba(127,127,127,.14);padding:1px 6px;border-radius:4px">ssb.evbogue.com:8008</span> — invites available, ping me.</p>
+          <div class="acts">
+            <span class="group">
+              <button class="btn btn-sm">↩ Reply</button>
+              <button class="btn btn-sm">⇄ Repost</button>
+              <button class="btn btn-sm">♥ Like</button>
+            </span>
+            <span class="pill">♥ 12</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div>
+        <div class="well">
+          <h4>Discover the network</h4>
+          <p class="hero">You follow 41 of 128 feeds your pubs can see. 6 new this week.</p>
+          <button class="btn" style="width:100%;justify-content:center">Browse people →</button>
+        </div>
+        <div class="well">
+          <h4>Trending channels</h4>
+          <div class="trow"><span class="t">#scuttlebutt</span><span class="s">24 posts</span></div>
+          <div class="trow"><span class="t">#solarpunk</span><span class="s">11 posts</span></div>
+          <div class="trow"><span class="t">#design</span><span class="s">8 posts</span></div>
+          <div class="trow"><span class="t">#git-ssb</span><span class="s">5 posts</span></div>
+        </div>
+        <div class="well">
+          <h4>Active pubs</h4>
+          <div class="pubrow"><span class="dot up"></span>ssb.evbogue.com<span class="s">online</span></div>
+          <div class="pubrow"><span class="dot up"></span>pub.gwei.network<span class="s">online</span></div>
+          <div class="pubrow"><span class="dot idle"></span>hermies.club<span class="s">idle</span></div>
+        </div>
+      </div>
+    </div>
+  </div>`;}
+
+document.getElementById('root-light').innerHTML = '<div class="app light">'+feed()+'</div>';
+document.getElementById('root-dark').innerHTML  = '<div class="app dark">'+feed()+'</div>';
+</script>
+</body>
+</html>

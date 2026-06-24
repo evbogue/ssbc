@@ -29,7 +29,13 @@ module.exports = {
       }
       var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
       var isSsbpro = !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
-      var isNetworkSkin = isSsbski || isSsbpro
+      // decent2: the "Bootstrap 2, evolved" skin. It is a network skin (gets the
+      // three-zone scaffold) laid out with a top navbar like ssbpro. isTopbar
+      // gates the structural top-bar DOM (left stack, profile placement) shared
+      // by ssbpro and decent2; branding stays per-skin below.
+      var isDecent2 = !!document.querySelector('link[rel="stylesheet"][href*="decent2-style.css"]')
+      var isNetworkSkin = isSsbski || isSsbpro || isDecent2
+      var isTopbar = isSsbpro || isDecent2
       var ssbproTheme = readSsbproTheme()
       applySsbproTheme(ssbproTheme)
 
@@ -630,15 +636,17 @@ module.exports = {
 
       // Network skins render a large brand tile at the bottom of the right
       // column. Decent keeps its own header, so this only renders for skins.
+      var brandWord = isSsbpro ? 'SSBPRO' : isDecent2 ? 'DECENT2' : 'SSBSKI'
+      var brandLogo = isSsbpro ? '/icons/ssbpro-512.png' : isDecent2 ? '/icons/decent-512.png' : '/ssbski-logo.png'
       var rightBrand = isNetworkSkin ? h('a.right-brand', {
         href: '#/',
-        'aria-label': isSsbpro ? 'ssbpro home' : 'ssbski home'
+        'aria-label': brandWord.toLowerCase() + ' home'
       }, [
         h('img.right-brand__logo', {
-          src: isSsbpro ? '/icons/ssbpro-512.png' : '/ssbski-logo.png',
-          alt: isSsbpro ? 'ssbpro' : 'ssbski'
+          src: brandLogo,
+          alt: brandWord.toLowerCase()
         }),
-        h('span.right-brand__word', isSsbpro ? 'SSBPRO' : 'SSBSKI')
+        h('span.right-brand__word', brandWord)
       ]) : null
 
       // Right-column card built from real SSB data. Prefer channel/hashtag
@@ -800,11 +808,11 @@ module.exports = {
         return panel
       }
 
-      var ssbproLeftStack = isSsbpro ? h('div.ssbpro-left-stack', profileLink) : null
+      var ssbproLeftStack = isTopbar ? h('div.ssbpro-left-stack', profileLink) : null
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            isSsbpro ? null : profileLink,
+            isTopbar ? null : profileLink,
             nav,
             isSsbpro ? h('div.topbar-actions',
               makeConnectButton(),
@@ -888,7 +896,7 @@ module.exports = {
       }
 
       function setTitle (route, view) {
-        var base = isSsbpro ? 'ssbpro' : isSsbski ? 'ssbski' : 'Decent SSB'
+        var base = isSsbpro ? 'ssbpro' : isDecent2 ? 'decent2' : isSsbski ? 'ssbski' : 'Decent SSB'
         var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }
