@@ -2028,6 +2028,10 @@ button { border-radius: 999px; }
  * centring box by the rail/right-column widths so popovers sit centred in the
  * content column. The backdrop still fills the screen (padding shows the dim). */
 .lightbox {
+  /* Modal tier: lift the whole overlay above the sticky feed-header (z-index 30)
+   * and the navbar (z 50/80). hyperlightbox leaves z-index:auto, so without this
+   * the feed tabs paint over the composer/modal. Matches .profile-compose-lightbox. */
+  z-index: 1000;
   padding-left: var(--sky-rail-width);
   padding-right: var(--sky-right-width);
 }
