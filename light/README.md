@@ -79,6 +79,13 @@ reachable from a browser.
 So: identity, signing, and publishing are 100% serverless; reaching other peers
 needs one ws-capable relay node, which `relay.js` connects to.
 
+### Try it: the standalone demo
+
+`light/demo/` is a complete serverless client in one HTML page — generate an
+identity, connect to a node, publish, and watch a feed update live. Build it with
+`npm run build:demo` and open `light/demo/index.html`. See
+[`light/demo/README.md`](demo/README.md).
+
 ### Browser bundling note
 
 `ssb-client` pulls in `multiserver`'s `unix-socket` transport, which references

@@ -1,6 +1,10 @@
 .db
 .privatekey
 node_modules
+
+# generated demo bundle (build with `npm run build:demo`)
+light/demo/index.html
+light/demo/.unix-stub.js
 .ssbrc
 *.log
 coverage
