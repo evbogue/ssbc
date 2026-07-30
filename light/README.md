@@ -35,14 +35,58 @@ None of that needs a server. The only stateful thing a light node must keep is
 its own feed tip (`previous` id + `sequence`) so the chain stays linked — this
 module tracks that in `ssb-validate` state and persists the log to storage.
 
-## The one real caveat: creating ≠ gossiping
+## Syncing through a real SSB node: `light/relay.js`
 
 A light node can **create, sign, store, and verify** a fully valid feed on its
 own. What it *cannot* do alone is **gossip** — pushing those messages to other
 peers. SSB replication is muxrpc over secret-handshake, and browsers can't open
 raw TCP; to reach the network a browser must WebSocket into an always-on peer
-(a pub/room) that relays for it. So: identity, signing, and publishing are
-100% serverless; broadcasting to others still needs at least one peer.
+(a pub/room) that relays for it.
+
+`light/relay.js` provides exactly that: it connects a `Light` node to any SSB
+node that speaks WebSocket, over the **real** protocol (secret-handshake +
+muxrpc, via `ssb-client`), and replicates with classic history streams:
+
+- **push** — upload our own signed messages with `add`
+- **pull** — download other feeds with `createHistoryStream`, validating every
+  message before keeping it
+
+```js
+const Light = require('./light/light')
+const Relay = require('./light/relay')
+
+const node  = new Light()
+const relay = new Relay(node, {
+  remote: 'ws://a-pub.example:8989~shs:<pubPublicKey>',   // a ws-capable SSB node
+  // caps: { shs: '<network key>' }  // defaults to the main SSB network
+})
+
+relay.connect((err) => {
+  if (err) throw err
+  relay.sync([friendFeedId], (err) => {
+    // our feed is now on the pub, and friendFeedId is pulled into relay.get(friendFeedId)
+  })
+  relay.follow(friendFeedId)   // stay live for new messages
+})
+```
+
+The transport is the same stack the Decent frontend already browserifies, so
+the relay runs in the browser. It stays "light" because replication is plain
+history streams — no flume, no EBT, no server-side plugins. A pub only needs to
+expose a WebSocket address (`ws://…~shs:…`); pubs that are TCP-only aren't
+reachable from a browser.
+
+So: identity, signing, and publishing are 100% serverless; reaching other peers
+needs one ws-capable relay node, which `relay.js` connects to.
+
+### Browser bundling note
+
+`ssb-client` pulls in `multiserver`'s `unix-socket` transport, which references
+Node's `fs`/`os` and isn't used in a browser (we only dial `ws`). When bundling
+for the browser, stub it out — e.g. browserify `-i multiserver/plugins/unix-socket`,
+or an esbuild alias to an empty module — and force the pure-JS crypto path with
+`process.env.CHLORIDE_JS = '1'` (alias `chloride` → `sodium-browserify-tweetnacl`).
+The existing `npm run build:web` pipeline already handles the crypto side.
 
 ## Usage
 
@@ -79,6 +123,14 @@ generation, a signed and linked feed, independent id recomputation,
 verification, tamper and broken-chain rejection, acceptance by a fresh
 independent validator, and persistence across a storage reload.
 
-This module has also been bundled and executed in real headless Chromium to
-confirm keygen, signing, publishing, and verification all run in-page against
-the browser's own `localStorage`.
+`test/light-relay.js` (also run by `npm test`) stands up a **real** secret-stack
+node with `ssb-ws` and proves two light nodes sync through it as a relay:
+connecting over secret-handshake + muxrpc, pushing their own feeds up, pulling
+each other's feeds down and validating them, and having the node reject a forged
+message.
+
+Both modules have also been bundled and executed in real headless Chromium:
+`light.js` to confirm keygen/signing/publishing/verification run in-page against
+the browser's own `localStorage`, and `relay.js` to confirm a real browser
+completes a secret-handshake to a real SSB node over WebSocket and replicates
+its signed feed to it.
