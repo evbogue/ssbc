@@ -47,9 +47,12 @@ function Relay (light, opts) {
   this.hmacKey   = light.hmacKey || null      // message-signing hmac (null = main net)
   this.onMessage = opts.onMessage || function () {}
 
-  this.sbot  = null
-  this.feeds = {}                             // feedId -> [ { key, value } ] we pulled
-  this._live = {}                             // feedId -> abort fn for live streams
+  this.sbot   = null
+  this.feeds  = {}                            // feedId -> [ { key, value } ] we pulled
+  this._live  = {}                            // feedId -> abort fn for live streams
+  this._pulled = {}                           // feedId -> true once pulled this session
+  this.store  = opts.store || light.store     // where pulled feeds are persisted
+  this.persist = opts.persist !== false       // durable by default
 
   // Replication state across every feed we track, seeded with our own log so
   // history resumes at the right sequence and the relay echoing our own
@@ -58,6 +61,52 @@ function Relay (light, opts) {
   const log = light.log()
   for (let i = 0; i < log.length; i++)
     this.state = validate.append(this.state, this.hmacKey, log[i].value)
+
+  // Reload any feeds we replicated in a previous session so history resumes
+  // where it left off instead of re-downloading from scratch.
+  this._loadPersisted()
+}
+
+const RELAY_INDEX  = 'ssb-light/relay/feeds'
+const RELAY_PREFIX = 'ssb-light/relay/feed/'
+
+Relay.prototype._loadPersisted = function () {
+  if (!this.persist || !this.store) return
+  let index = []
+  try {
+    const raw = this.store.getItem(RELAY_INDEX)
+    if (raw && raw !== 'undefined') index = JSON.parse(raw)
+  } catch (_) {}
+  for (let i = 0; i < index.length; i++) {
+    const feedId = index[i]
+    if (feedId === this.light.id) continue     // our own feed comes from light
+    let msgs = []
+    try {
+      const raw = this.store.getItem(RELAY_PREFIX + feedId)
+      if (raw && raw !== 'undefined') msgs = JSON.parse(raw)
+    } catch (_) {}
+    for (let j = 0; j < msgs.length; j++) {
+      try { this.state = validate.append(this.state, this.hmacKey, msgs[j].value) }
+      catch (e) { break }                      // stop at first bad/forked entry
+    }
+    if (msgs.length) this.feeds[feedId] = msgs
+  }
+}
+
+Relay.prototype._persistFeed = function (feedId) {
+  if (!this.persist || !this.store) return
+  try {
+    this.store.setItem(RELAY_PREFIX + feedId, JSON.stringify(this.feeds[feedId] || []))
+    let index = []
+    try {
+      const raw = this.store.getItem(RELAY_INDEX)
+      if (raw && raw !== 'undefined') index = JSON.parse(raw)
+    } catch (_) {}
+    if (index.indexOf(feedId) === -1) {
+      index.push(feedId)
+      this.store.setItem(RELAY_INDEX, JSON.stringify(index))
+    }
+  } catch (_) {}
 }
 
 // connect([cb]) — open the secret-handshake + muxrpc session to the relay.
@@ -117,9 +166,11 @@ Relay.prototype.pull = function (feedId, opts, cb) {
     } catch (e) { return }
     const kv = { key: validate.id(value), value: value }
     ;(self.feeds[feedId] = self.feeds[feedId] || []).push(kv)
+    self._persistFeed(feedId)
     self.onMessage(kv, feedId)
   }, function (err) {
     delete self._live[feedId]
+    self._pulled[feedId] = true
     if (cb) cb(err)
   })
 
@@ -146,6 +197,63 @@ Relay.prototype.sync = function (feeds, cb) {
       if (i >= list.length) return cb && cb(null)
       self.pull(list[i++], { live: false }, next)
     })()
+  })
+  return this
+}
+
+// following(feedId) — the feeds `feedId` follows, derived from its own contact
+// messages (following:true adds, following:false removes). Defaults to us.
+Relay.prototype.following = function (feedId) {
+  feedId = feedId || this.light.id
+  const msgs = feedId === this.light.id ? this.light.log() : (this.feeds[feedId] || [])
+  const set = {}
+  for (let i = 0; i < msgs.length; i++) {
+    const c = msgs[i].value.content
+    if (c && typeof c === 'object' && c.type === 'contact' && c.contact) {
+      if (c.following === true) set[c.contact] = true
+      else if (c.following === false) delete set[c.contact]
+    }
+  }
+  return Object.keys(set)
+}
+
+// syncFollows([opts], [cb]) — push our feed up, then pull everyone in our follow
+// graph out to `opts.hops` hops (default 1: the people we follow; 2 also pulls
+// the people they follow, etc.). One-shot; use follow(id) for live streams.
+// Calls back with the list of feed ids replicated.
+Relay.prototype.syncFollows = function (opts, cb) {
+  if (typeof opts === 'function') { cb = opts; opts = {} }
+  opts = opts || {}
+  const hops = opts.hops || 1
+  const self = this
+  if (!self.sbot) return cb && cb(new Error('not connected'))
+
+  self.push(function (err) {
+    if (err) return cb && cb(err)
+    const wanted = {}
+    self.following(self.light.id).forEach((id) => { wanted[id] = true })
+    let round = 1
+    pullRound()
+
+    function pullRound () {
+      const ids = Object.keys(wanted).filter((id) => !self._pulled[id] && id !== self.light.id)
+      let i = 0
+      ;(function next (err) {
+        if (err) return cb && cb(err)
+        if (i >= ids.length) return afterRound()
+        self.pull(ids[i++], { live: false }, next)
+      })()
+    }
+
+    function afterRound () {
+      if (round >= hops) return cb && cb(null, Object.keys(wanted))
+      round++
+      // expand the frontier: add the follows of everyone we've pulled
+      Object.keys(wanted).forEach((fid) => {
+        self.following(fid).forEach((id) => { wanted[id] = true })
+      })
+      pullRound()
+    }
   })
   return this
 }

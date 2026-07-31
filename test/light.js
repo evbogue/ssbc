@@ -72,6 +72,30 @@ test('light node: messages are real SSB messages any peer would accept', (t) => 
   t.end()
 })
 
+test('light node: private (encrypted) messages', (t) => {
+  const A = new Light({ store: sharedStore() })
+  const B = new Light({ store: sharedStore() })
+  const C = new Light({ store: sharedStore() })
+
+  // A sends B a private message.
+  const pm = A.publishPrivate({ type: 'post', text: 'for your eyes only' }, [B.id])
+
+  t.equal(typeof pm.value.content, 'string', 'on the wire the content is an opaque string')
+  t.ok(/\.box$/.test(pm.value.content), 'content is a .box ciphertext')
+  t.equal(A.verify(pm), true, 'the private message is still a validly signed message')
+
+  t.deepEqual(B.unbox(pm), { type: 'post', text: 'for your eyes only' }, 'recipient B can decrypt it')
+  t.deepEqual(A.unbox(pm), { type: 'post', text: 'for your eyes only' }, 'sender A can decrypt it too (self is a recipient)')
+  t.equal(C.unbox(pm), null, 'a non-recipient C cannot decrypt it')
+
+  const pub = A.publish({ type: 'post', text: 'public' })
+  t.equal(A.unbox(pub), null, 'unbox returns null for a normal public message')
+
+  t.throws(() => A.publishPrivate({ text: 'x' }, []), /recipients/, 'rejects an empty recipient list')
+
+  t.end()
+})
+
 test('light node: identity and feed persist across a storage reload', (t) => {
   const store = sharedStore()
   const first = new Light({ store })

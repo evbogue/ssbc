@@ -16,6 +16,15 @@ const Relay        = require('../light/relay')
 
 const CAPS = { shs: '1KHLiKZvAvjbY1ziZEHMXawbCEIM6qwjCDm3VYRan/s=' }
 
+function memStore () {
+  const m = {}
+  return {
+    getItem: (k) => (k in m ? m[k] : null),
+    setItem: (k, v) => { m[k] = String(v) },
+    removeItem: (k) => { delete m[k] }
+  }
+}
+
 // A minimal but real pub: secret-stack + ssb-ws transport, with classic
 // createHistoryStream/add backed by an in-memory validated store.
 function startPub (port, cb) {
@@ -110,6 +119,81 @@ test('light node syncs through a real SSB relay (shs + muxrpc over ws)', (t) => 
         })
       })
     })
+  })
+})
+
+test('relay: syncFollows replicates the follow graph, durably', (t) => {
+  const PORT = 21000 + Math.floor(Math.random() * 400)
+  startPub(PORT, (err, pub, addr) => {
+    t.error(err, 'pub started')
+
+    const A = new Light({ store: memStore(), caps: { sign: null } })
+    const B = new Light({ store: memStore(), caps: { sign: null } })
+    const C = new Light({ store: memStore(), caps: { sign: null } })
+
+    B.publish({ type: 'post', text: 'b1' })
+    C.publish({ type: 'post', text: 'c1' })
+    C.publish({ type: 'post', text: 'c2' })
+
+    // A's own feed declares who it follows — no hand-listing of feed ids.
+    A.publish({ type: 'contact', contact: B.id, following: true })
+    A.publish({ type: 'contact', contact: C.id, following: true })
+
+    // Put B's and C's feeds on the pub first.
+    const rB = new Relay(B, { remote: addr, caps: CAPS })
+    const rC = new Relay(C, { remote: addr, caps: CAPS })
+    rB.connect(() => rB.push(() => rC.connect(() => rC.push(() => {
+      const rA = new Relay(A, { remote: addr, caps: CAPS })
+      rA.connect(() => {
+        t.deepEqual(rA.following().sort(), [B.id, C.id].sort(),
+          'A derives its follow set from its own contact messages')
+
+        rA.syncFollows((err, ids) => {
+          t.error(err, 'syncFollows completed')
+          t.equal(rA.get(B.id).length, 1, 'auto-pulled B (followed) without naming it')
+          t.equal(rA.get(C.id).length, 2, 'auto-pulled C (followed)')
+          t.ok(A.verifyChain(rA.get(C.id)), 'pulled C feed validates')
+
+          // Durability: a fresh relay over the SAME store reloads B and C from
+          // disk before connecting to anything.
+          const rA2 = new Relay(A, { remote: addr, caps: CAPS })
+          t.equal(rA2.get(B.id).length, 1, 'new relay reloaded B from storage (no network)')
+          t.equal(rA2.get(C.id).length, 2, 'new relay reloaded C from storage')
+
+          rA.close(() => rB.close(() => rC.close(() => pub.close(() => t.end()))))
+        })
+      })
+    }))))
+  })
+})
+
+test('relay: syncFollows follows friends-of-friends at hops:2', (t) => {
+  const PORT = 21500 + Math.floor(Math.random() * 400)
+  startPub(PORT, (err, pub, addr) => {
+    t.error(err, 'pub started')
+
+    const A = new Light({ store: memStore(), caps: { sign: null } })
+    const B = new Light({ store: memStore(), caps: { sign: null } })
+    const C = new Light({ store: memStore(), caps: { sign: null } })
+
+    C.publish({ type: 'post', text: 'from C' })
+    B.publish({ type: 'post', text: 'from B' })
+    B.publish({ type: 'contact', contact: C.id, following: true }) // B follows C
+    A.publish({ type: 'contact', contact: B.id, following: true }) // A follows B
+
+    const rB = new Relay(B, { remote: addr, caps: CAPS })
+    const rC = new Relay(C, { remote: addr, caps: CAPS })
+    rB.connect(() => rB.push(() => rC.connect(() => rC.push(() => {
+      const rA = new Relay(A, { remote: addr, caps: CAPS })
+      rA.connect(() => {
+        rA.syncFollows({ hops: 2 }, (err) => {
+          t.error(err, 'syncFollows hops:2 completed')
+          t.equal(rA.get(B.id).length, 2, 'pulled B (hop 1)')
+          t.equal(rA.get(C.id).length, 1, 'pulled C via B\'s follows (hop 2)')
+          rA.close(() => rB.close(() => rC.close(() => pub.close(() => t.end()))))
+        })
+      })
+    }))))
   })
 })
 

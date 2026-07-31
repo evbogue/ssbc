@@ -111,6 +111,35 @@ Light.prototype.publish = function (content, timestamp) {
   return kv
 }
 
+// box(content, recipients) -> encrypted ".box" string. Encrypts content to a
+// list of feed ids (private-box / ssb-private1). Up to 7 recipients.
+Light.prototype.box = function (content, recipients) {
+  return ssbKeys.box(content, recipients)
+}
+
+// publishPrivate(content, recipients) -> { key, value }
+// Encrypts content to the recipients (ourselves always included so we can read
+// it back) and publishes it as a normal message with an encrypted body. On the
+// wire it's an opaque ".box" string; only recipients can decrypt it.
+Light.prototype.publishPrivate = function (content, recipients, timestamp) {
+  if (!Array.isArray(recipients) || recipients.length === 0)
+    throw new Error('recipients must be a non-empty array of feed ids')
+  const recps = recipients.indexOf(this.id) === -1 ? recipients.concat(this.id) : recipients
+  if (recps.length > 7) throw new Error('at most 7 recipients (including yourself)')
+  return this.publish(ssbKeys.box(content, recps), timestamp)
+}
+
+// unbox(msg) -> content | null. Decrypts a private message addressed to us,
+// returning the plaintext content, or null if it isn't ours to read (or isn't
+// a private message at all).
+Light.prototype.unbox = function (msg) {
+  const value = msg && msg.value ? msg.value : msg
+  const c = value && value.content
+  if (typeof c !== 'string') return null
+  const opened = ssbKeys.unbox(c, this.keys)
+  return opened || null
+}
+
 // verify(msg) -> boolean. Checks one message's ed25519 signature.
 Light.prototype.verify = function (msg) {
   const value = msg && msg.value ? msg.value : msg

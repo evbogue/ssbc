@@ -70,6 +70,19 @@ relay.connect((err) => {
 })
 ```
 
+**Follow-graph sync.** Instead of naming feeds by hand, replicate whoever your
+own feed follows (from your `contact` messages):
+
+```js
+relay.following()                     // -> [ feedId, … ] derived from your contacts
+relay.syncFollows({ hops: 2 }, cb)    // push yours up, pull your follows (and theirs)
+```
+
+**Durable.** Feeds the relay pulls are persisted to the same store as your
+identity, so a new `Relay` over that store reloads them and resumes history where
+it left off instead of re-downloading. Pass `{ persist: false }` to keep it all
+in memory.
+
 The transport is the same stack the Decent frontend already browserifies, so
 the relay runs in the browser. It stays "light" because replication is plain
 history streams — no flume, no EBT, no server-side plugins. A pub only needs to
@@ -110,6 +123,21 @@ console.log(node.verify(msg))       // true
 node.verifyChain(node.log())        // true — the whole local feed validates
 ```
 
+### Private (encrypted) messages
+
+End-to-end encrypted DMs use `ssb-keys` box/unbox — pure JS, browser and Node.
+
+```js
+const pm = node.publishPrivate({ type: 'post', text: 'shh' }, [recipientId])
+// on the wire pm.value.content is an opaque "…​.box" string; the message is
+// still a normally-signed entry in your feed.
+
+node.unbox(pm)          // -> { type:'post', text:'shh' }  for a recipient (you're always one)
+node.unbox(someOther)   // -> null if it isn't addressed to you / isn't private
+```
+
+Up to 7 recipients (you are added automatically so you can read it back).
+
 ### Storage
 
 Storage is pluggable. In a browser it defaults to `localStorage`; pass your own
@@ -123,6 +151,26 @@ new Light({ store: myStore, keys: existingKeys, caps: { sign: hmacKey } })
 `caps.sign` is the network's HMAC key; omit it for the main SSB network
 (`null`), matching the default sbot configuration.
 
+## Headless CLI
+
+`light/cli.js` runs a light node from the terminal — no browser, no GUI, no
+server. Identity and replicated feeds live under `$SSB_LIGHT_PATH`
+(default `~/.ssb-light`), stored via `light/store-fs.js`.
+
+```bash
+node light/cli.js whoami
+node light/cli.js publish "hello world"
+node light/cli.js private @feedId "a secret"        # encrypted DM
+node light/cli.js log                                 # your feed (private msgs decrypted for you)
+node light/cli.js follow-add @feedId                  # record a follow in your feed
+node light/cli.js following
+node light/cli.js sync  ws://host:8989~shs:<pubkey>   # push + pull (follow graph if no @feeds given)
+node light/cli.js watch ws://host:8989~shs:<pubkey>   # like sync, but stay live
+```
+
+Set `$SSB_LIGHT_REMOTE` for a default relay and `$SSB_LIGHT_CAPS` for a
+non-default network.
+
 ## Tests
 
 `test/light.js` (run by `npm test`) proves the full lifecycle: identity
@@ -130,11 +178,14 @@ generation, a signed and linked feed, independent id recomputation,
 verification, tamper and broken-chain rejection, acceptance by a fresh
 independent validator, and persistence across a storage reload.
 
-`test/light-relay.js` (also run by `npm test`) stands up a **real** secret-stack
-node with `ssb-ws` and proves two light nodes sync through it as a relay:
-connecting over secret-handshake + muxrpc, pushing their own feeds up, pulling
-each other's feeds down and validating them, and having the node reject a forged
-message.
+`test/light.js` also covers private message encrypt/decrypt and recipient
+isolation. `test/light-relay.js` (also run by `npm test`) stands up a **real**
+secret-stack node with `ssb-ws` and proves two light nodes sync through it as a
+relay: connecting over secret-handshake + muxrpc, pushing their own feeds up,
+pulling each other's feeds down and validating them, replicating the follow
+graph (including friends-of-friends at `hops: 2`), reloading persisted feeds from
+storage, and having the node reject a forged message. `test/light-cli.js` drives
+the CLI as a child process end to end, including a real ws sync to a pub.
 
 Both modules have also been bundled and executed in real headless Chromium:
 `light.js` to confirm keygen/signing/publishing/verification run in-page against
