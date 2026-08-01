@@ -27,6 +27,7 @@ const EXPECTED_ORDER = [
   'decent-ui',
   'ssbski-ui',
   'ssbpro-ui',
+  'decent2-ui',
   'ssb-local',
   'ssb-logging',
   'ssb-query',
@@ -84,6 +85,7 @@ test('a server built from the registry still produces the expected manifest', (t
     decent: { port: false },
     ssbski: { port: false },
     ssbpro: { port: false },
+    decent2: { port: false },
     gossip: { local: false }
   }
 

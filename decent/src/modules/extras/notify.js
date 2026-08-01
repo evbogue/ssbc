@@ -47,13 +47,8 @@ exports.create = function (api) {
       var ourId = keys.id
       var ourIds = {}
       ourIds[ourId] = true
-      var skinLink = document.querySelector(
-        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-      )
-      var skin = skinLink
-        ? skinLink.href.indexOf('ssbpro-style.css') !== -1 ? 'ssbpro' : 'ssbski'
-        : 'decent'
+      var activeSkin = require('../../skin').get()
+      var skin = activeSkin === 'ssbpro' ? 'ssbpro' : activeSkin === 'ssbski' ? 'ssbski' : 'decent'
       var icon = '/icons/' + skin + '-192.png'
       // Only notify for messages that arrive after the app opened, so a reconnect
       // or backfill never replays a burst of already-seen history.

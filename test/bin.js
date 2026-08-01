@@ -33,6 +33,8 @@ function ssbServer(t, argv, opts) {
     argv.push('--ssbski.port=0')
   if (!argv.some((arg) => /^--ssbpro\.port(?:=|$)/.test(arg)))
     argv.push('--ssbpro.port=0')
+  if (!argv.some((arg) => /^--decent2\.port(?:=|$)/.test(arg)))
+    argv.push('--decent2.port=0')
 
   const home = fs.mkdtempSync(join(os.tmpdir(), 'ssb-server-home-'))
 

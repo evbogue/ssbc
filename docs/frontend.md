@@ -1,33 +1,39 @@
 # Frontend
 
-This document describes the current frontend in this repository, which ships in three skins:
-**Decent**, **ssbski**, and **ssbpro**.
+This document describes the current frontend in this repository, which ships as one shared
+browser app with several served entry points.
 
-## What Decent, ssbski, and ssbpro are
+## What Decent, ssbski, ssbpro, and decent2 are
 
 Decent is the browser UI for this repo’s local SSB node. It is served by
 `plugins/decent-ui.js` and, by default, is available at:
 
 - `http://127.0.0.1:8888/`
 
-ssbski is a second skin of the same UI — a Bluesky-style layout with Discover/Following feed
-tabs, a trending sidebar, and a sticky centre-column header. It is served by
-`plugins/ssbski-ui.js` (both plugins delegate to `lib/ui-server.js`) and, by default, is
+ssbski is a modern skin of the same UI with a rail layout, a trending sidebar, and a
+sticky centre-column header. It is served by `plugins/ssbski-ui.js` and, by default, is
 available at:
 
 - `http://127.0.0.1:8990/`
 
-ssbpro is a professional-network skin of the same UI — Feed/Network tabs, denser post
-cards, profile-forward surfaces, and a right discovery column. It is served by
+ssbpro is a professional-network skin of the same UI, with denser post cards,
+profile-forward surfaces, and a right discovery column. It is served by
 `plugins/ssbpro-ui.js` and, by default, is available at:
 
 - `http://127.0.0.1:8991/`
 
-All three are **the same JavaScript bundle** talking to **the same local SSB node** — only
-the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski, and
-`ssbpro-style.css` for ssbpro). UI modules that need to vary behavior between skins detect
-the active stylesheet link (see `decent/src/modules/core/app.js`). The public instances on
-the network are [decent.evbogue.com](https://decent.evbogue.com/) and
+decent2 is the modernized Decent skin. It is served by `plugins/decent2-ui.js` and, by
+default, is available at:
+
+- `http://127.0.0.1:8992/`
+
+All four entry points are **the same JavaScript bundle** talking to **the same local SSB
+node**. The legacy Decent entry point uses `style.css`; the modern live-switchable skins
+use `decent2-style.css`, `ssbpro-style.css`, or `ssbski-style.css`. `lib/ui-server.js`
+injects `<html data-skin="...">` for the entry point's default skin, and
+`decent/src/skin.js` lets the app persist and live-switch among `decent2`, `ssbpro`, and
+`ssbski`. The public instances on the network are
+[decent.evbogue.com](https://decent.evbogue.com/) and
 [ssbski.evbogue.com](https://ssbski.evbogue.com/).
 
 None is a separate web app backed by a generic REST API. They are browser clients built specifically around the local SSB server behavior exposed by this repo.
@@ -51,10 +57,11 @@ in `decent/.gitignore`), so a fresh clone must run `npm run build:web` once befo
 web UI will serve.
 
 The current build flow browserifies the frontend entrypoint and generates the served
-`index.html` and stylesheet assets. Because Decent, ssbski, and ssbpro share one JS bundle
-and differ only in CSS, this single command builds all skins — it emits `style.css` for
-Decent, `ssbski-style.css` for ssbski, and `ssbpro-style.css` for ssbpro. Always rebuild
-after any frontend or stylesheet change; never leave one skin stale.
+`index.html` and stylesheet assets. Because all entry points share one JS bundle and differ
+only in CSS/default skin, this single command builds every skin — it emits `style.css` for
+legacy Decent plus `base.css`, `decent2-style.css`, `ssbpro-style.css`, and
+`ssbski-style.css` for the modern skins. Always rebuild after any frontend or stylesheet
+change; never leave one skin stale.
 
 ## Runtime model
 
@@ -75,6 +82,8 @@ The important frontend areas are:
   - plugin wiring/combinator behavior
 - `decent/src/modules/core/`
   - low-level core client behavior
+- `decent/src/skin.js`
+  - runtime skin detection, persistence, and stylesheet swapping
 - `decent/src/modules/ui/`
   - main user-facing UI modules
 - `decent/src/modules/git/`
@@ -87,6 +96,8 @@ The important frontend areas are:
   - ssbski stylesheet source
 - `decent/src/ssbpro-style.css`
   - ssbpro stylesheet source
+- `decent/src/decent2-style.css`
+  - decent2 stylesheet source
 
 ## Plugin/module architecture
 
@@ -103,8 +114,9 @@ This pattern is important to the frontend architecture and should be preserved i
 
 ## HTTP integration
 
-The frontend is tightly integrated with the HTTP server in `plugins/decent-ui.js` (and, for
-the ssbski skin, `plugins/ssbski-ui.js`; both share `lib/ui-server.js`).
+The frontend is tightly integrated with the HTTP servers in `plugins/decent-ui.js`,
+`plugins/ssbski-ui.js`, `plugins/ssbpro-ui.js`, and `plugins/decent2-ui.js`. Each delegates
+to `lib/ui-server.js`.
 
 That plugin serves:
 - the HTML and assets for its skin
@@ -116,9 +128,9 @@ That plugin serves:
 
 ## Installability and desktop notifications
 
-Both skins are installable Progressive Web Apps. `lib/ui-server.js` injects the
-per-skin manifest link and service-worker registration, and serves distinct names,
-theme colors, and icons for Decent and ssbski.
+Each served entry point is an installable Progressive Web App. `lib/ui-server.js` injects
+the per-skin manifest link and service-worker registration, and serves distinct names,
+theme colors, icons, and default `data-skin` values.
 
 The service worker does not cache the app shell. It exists to support installation
 and notification-click routing without risking a stale frontend against the live

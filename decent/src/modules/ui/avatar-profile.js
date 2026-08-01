@@ -24,9 +24,11 @@ exports.needs = {
 exports.gives = 'avatar_profile'
 
 exports.create = function (api) {
+  // The enhanced profile (relation label, profile hints, activity summary,
+  // Improve-bio) is shared by every modern skin; legacy Decent keeps the basic
+  // profile card.
   function isSsbproSkin () {
-    return typeof document !== 'undefined' &&
-      !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
+    return require('../../skin').isNetwork()
   }
 
   function wordCount (text) {
@@ -38,7 +40,7 @@ exports.create = function (api) {
     if (!bio) return {
       tone: 'warn',
       label: 'Add a short bio',
-      detail: 'Say what people can subscribe to you for.'
+      detail: 'Say what people can follow you for.'
     }
     if (bio.length > 180) return {
       tone: 'warn',
@@ -176,7 +178,7 @@ exports.create = function (api) {
         status.appendChild(h('strong', analysis.label))
         status.appendChild(h('span', analysis.detail))
         previewName.textContent = name
-        previewBio.textContent = bio.trim() || 'A concise bio helps people know why to subscribe.'
+        previewBio.textContent = bio.trim() || 'A concise bio helps people know why to follow you.'
         saveBtn.disabled = !nameInput.value.trim() && !bio.trim()
       }
 
@@ -256,9 +258,9 @@ exports.create = function (api) {
               api.avatar_image(id, 'thumbnail'),
               h('div', previewName, previewBio)
             ),
-            h('button.bio-preview-subscribe', {type: 'button', disabled: true}, 'Subscribe')
+            h('button.bio-preview-subscribe', {type: 'button', disabled: true}, 'Follow')
           ),
-          h('div.bio-preview-note', 'This is how your bio appears in profile cards and QR subscribe previews.')
+          h('div.bio-preview-note', 'This is how your bio appears in profile cards and QR follow previews.')
         )
       ))
       modal.appendChild(h('div.bio-improve-footer',
@@ -522,10 +524,10 @@ exports.create = function (api) {
 
     function renderRelation (youFollow, followsYou) {
       if (!isSsbproSkin() || isSelf) return
-      var label = youFollow && followsYou ? 'Mutual subscription'
-        : youFollow ? 'You subscribe to this profile'
-        : followsYou ? 'This profile subscribes to you'
-        : 'You are not subscribed yet'
+      var label = youFollow && followsYou ? 'Mutual follow'
+        : youFollow ? 'You follow this profile'
+        : followsYou ? 'This profile follows you'
+        : 'You are not following yet'
       var icon = youFollow && followsYou ? 'sync_alt'
         : youFollow ? 'check_circle'
         : followsYou ? 'person_add'
@@ -589,9 +591,7 @@ exports.create = function (api) {
       listExpandEl.innerHTML = ''
       var data = type === 'following' ? followingData : followersData
       listExpandEl.appendChild(h('div.profile-list-title',
-        type === 'following'
-          ? isSsbproSkin() ? 'Subscriptions' : 'Following'
-          : isSsbproSkin() ? 'Subscribers' : 'Followers'))
+        type === 'following' ? 'Following' : 'Followers'))
       var grid = h('div.profile-list-grid')
       data.forEach(function (fid) {
         grid.appendChild(api.avatar_image_link(fid, 'thumbnail'))
@@ -603,9 +603,9 @@ exports.create = function (api) {
     var statsEl = h('div.profile-stats',
       h('span.profile-stat', postCountEl, ' Posts'),
       h('span.profile-stat', {onclick: function () { toggleList('following') }},
-        followingCountEl, isSsbproSkin() ? ' Subscriptions' : ' Following'),
+        followingCountEl, ' Following'),
       h('span.profile-stat', {onclick: function () { toggleList('followers') }},
-        followersCountEl, isSsbproSkin() ? ' Subscribers' : ' Followers')
+        followersCountEl, ' Followers')
     )
 
     // ── Petname (others' profiles): inline "add / edit nickname" ──────

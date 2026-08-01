@@ -38,12 +38,10 @@ exports.gives = {
 exports.create = function (api) {
   var id = keys.id
 
+  // The DM inbox + thread view is shared by every modern skin; legacy Decent
+  // keeps the flat private stream with no thread route.
   function isSsbskiSkin () {
-    return typeof document !== 'undefined' &&
-      !!document.querySelector(
-        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-      )
+    return require('../../skin').isNetwork()
   }
 
   // ── private message stream ──────────────────────────────────────────────

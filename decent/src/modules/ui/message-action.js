@@ -80,10 +80,7 @@ exports.create = function (api) {
   // ssbski/ssbpro render a full DM inbox + thread view (route '#dm/<feed>');
   // Decent only has the legacy flat private stream and no thread route.
   function hasThreadView () {
-    return !!document.querySelector(
-      'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-      'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-    )
+    return require('../../skin').isNetwork()
   }
 
   return {

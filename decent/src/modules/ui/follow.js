@@ -15,29 +15,14 @@ function isRelated(value, name) {
   return value ? name : value === false ? 'un'+name : ''
 }
 
-function isSsbproSkin () {
-  return typeof document !== 'undefined' &&
-    !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
-}
-
 // The modern skins (ssbski/ssbpro/decent2) share base.css's button system, so
 // render the follow action as a real .btn there to keep it consistent with the
 // Message/Mention buttons. Classic Decent keeps its own classless markup.
 function isNetworkSkin () {
-  return typeof document !== 'undefined' && !!document.querySelector(
-    'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-    'link[rel="stylesheet"][href*="ssbpro-style.css"],' +
-    'link[rel="stylesheet"][href*="decent2-style.css"]'
-  )
+  return require('../../skin').isNetwork()
 }
 
 function contactRelation (content) {
-  if (isSsbproSkin()) {
-    if (content.blocking) return 'mutes'
-    if (content.following) return 'subscribes to'
-    if (content.following === false) return 'unsubscribes from'
-    return ''
-  }
   var relation = isRelated(content.following, 'follows')
   if (content.blocking) relation = 'blocks'
   return relation
@@ -97,32 +82,17 @@ exports.create = function (api) {
     })
 
     function update () {
-      var pro = isSsbproSkin()
-      state.textContent = pro
-        ? (
-          follows_you && you_follow ? 'mutual subscription'
-        : follows_you               ? 'subscribed to you'
-        : you_follow                ? 'subscribed'
-        :                             ''
-        )
-        : (
+      state.textContent =
           follows_you && you_follow ? 'friend'
         : follows_you               ? 'follows you'
         : you_follow                ? 'you follow'
         :                             ''
-        )
 
-      label.textContent = pro
-        ? you_follow ? 'unsubscribe' : 'subscribe'
-        : you_follow ? 'unfollow' : 'follow'
+      label.textContent = you_follow ? 'unfollow' : 'follow'
       if (actionLink)
         actionLink.title = you_follow
-          ? pro
-            ? 'Stop subscribing to this person (publishes a public unfollow)'
-            : 'Stop following this person (publishes a public unfollow)'
-          : pro
-            ? 'Subscribe to this person to replicate their posts (publishes a public follow)'
-            : 'Follow this person to replicate their posts (publishes a public follow)'
+          ? 'Stop following this person (publishes a public unfollow)'
+          : 'Follow this person to replicate their posts (publishes a public follow)'
     }
 
     var modern = isNetworkSkin()

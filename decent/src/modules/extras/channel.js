@@ -20,18 +20,11 @@ exports.gives = {
 exports.create = function (api) {
 
   var channels
-  var starterGroups = [
-    {name: 'intro', label: 'Introductions', prompt: 'Introduce yourself to the network.'},
-    {name: 'jobs', label: 'Jobs', prompt: 'Share a role, gig, or useful opportunity.'},
-    {name: 'hiring', label: 'Hiring', prompt: 'Tell people who you are looking for.'},
-    {name: 'available', label: 'Available', prompt: 'Let people know what work you are open to.'},
-    {name: 'ask', label: 'Ask', prompt: 'Ask for help, feedback, or introductions.'},
-    {name: 'projects', label: 'Projects', prompt: 'Share what you are building.'}
-  ]
 
+  // Channel browsing (the Channels page + per-channel header) is shared by every
+  // modern skin; legacy Decent keeps its plain channel stream.
   function isSsbproSkin () {
-    return typeof document !== 'undefined' &&
-      !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
+    return require('../../skin').isNetwork()
   }
 
   function cleanChannel (name) {
@@ -67,18 +60,6 @@ exports.create = function (api) {
     if (!isPublicPost(msg)) return false
     var c = msg.value.content
     return cleanChannel(c.channel) === channel || hasTag(c.text, channel)
-  }
-
-  function templateText (channel, kind) {
-    if (channel === 'intro' || kind === 'intro')
-      return 'Hi, I am ___. I am working on ___ and interested in ___.'
-    if (channel === 'jobs' || channel === 'hiring' || kind === 'hiring')
-      return 'Hiring: ___\n\nLooking for someone who can ___.\n\nRemote/location: ___\nContact: ___'
-    if (channel === 'available' || kind === 'available')
-      return 'Available for: ___\n\nI can help with ___.\nBest way to reach me: ___'
-    if (kind === 'ask')
-      return 'Ask: I am looking for help with ___.\n\nUseful context: ___'
-    return 'Project update: ___\n\nWhat changed: ___\nWhat I need next: ___'
   }
 
   function loadGroupSummaries (cb) {
@@ -125,7 +106,6 @@ exports.create = function (api) {
             }
           })
         })
-        starterGroups.forEach(function (group) { ensure(group.name) })
         cb(null, Object.keys(byName).map(function (name) {
           return byName[name]
         }).sort(function (a, b) {
@@ -150,19 +130,18 @@ exports.create = function (api) {
     screen_view: function (path) {
       if (path === 'groups' && isSsbproSkin()) {
         var groupsWrap = h('div.groups-dashboard')
-        var loading = h('div.groups-empty', 'Loading groups...')
+        var loading = h('div.groups-empty', 'Loading channels...')
         groupsWrap.appendChild(loading)
         var groupsView = h('div.column.scroller', {style: {'overflow': 'auto'}},
           h('div.scroller__wrapper', groupsWrap))
         groupsView.setAttribute('data-icon', 'forum')
-        groupsView.title = 'Groups'
+        groupsView.title = 'Channels'
 
         groupsWrap.appendChild(h('section.groups-hero',
           h('div',
-            h('h1.groups-hero__title', 'Groups'),
+            h('h1.groups-hero__title', 'Channels'),
             h('p.groups-hero__copy', 'Public channels and hashtags from your local network.')
-          ),
-          h('a.btn.btn-primary', {href: channelHref('intro')}, 'Post an intro')
+          )
         ))
 
         loadGroupSummaries(function (err, groups) {
@@ -171,22 +150,6 @@ exports.create = function (api) {
             groupsWrap.appendChild(h('div.groups-empty', err.message))
             return
           }
-          var starterGrid = h('div.groups-grid.groups-grid--starter')
-          starterGroups.forEach(function (starter) {
-            starterGrid.appendChild(h('a.group-card.group-card--starter', {href: channelHref(starter.name)},
-              h('span.group-card__kicker', 'Starter group'),
-              h('strong.group-card__name', '#' + starter.name),
-              h('span.group-card__copy', starter.prompt)
-            ))
-          })
-          groupsWrap.appendChild(h('section.groups-section',
-            h('div.groups-section__head',
-              h('h2.groups-section__title', 'Start here'),
-              h('span.groups-section__subtitle', 'Common professional channels.')
-            ),
-            starterGrid
-          ))
-
           var active = groups.filter(function (group) { return group.count > 0 })
           var activeGrid = h('div.groups-grid')
           if (!active.length) activeGrid.appendChild(h('div.groups-empty', 'No channel posts found yet. Start with #intro.'))
@@ -195,7 +158,7 @@ exports.create = function (api) {
           })
           groupsWrap.appendChild(h('section.groups-section',
             h('div.groups-section__head',
-              h('h2.groups-section__title', 'Active groups'),
+              h('h2.groups-section__title', 'Active channels'),
               h('span.groups-section__subtitle', 'Recent public channel activity.')
             ),
             activeGrid
@@ -231,7 +194,7 @@ exports.create = function (api) {
           )
         )
         div.setAttribute('data-icon', 'forum')
-        div.title = isSsbproSkin() ? 'Group #' + channel : '#' + channel
+        div.title = '#' + channel
 
         function matchesChannel(msg) {
           if (msg.sync) console.error('SYNC', msg)
@@ -320,25 +283,12 @@ exports.create = function (api) {
     )
   }
 
-  function groupHeader (channel, renderComposer) {
-    function starterButton (label, kind) {
-      return h('button.group-template-btn', {
-        type: 'button',
-        onclick: function () { renderComposer(templateText(channel, kind)) }
-      }, label)
-    }
+  function groupHeader (channel) {
     return h('section.group-page-head',
       h('div',
-        h('a.group-page-head__back', {href: '#groups'}, 'Groups'),
+        h('a.group-page-head__back', {href: '#groups'}, 'Channels'),
         h('h1.group-page-head__title', '#' + channel),
         h('p.group-page-head__copy', 'Public posts tagged with this channel.')
-      ),
-      h('div.group-template-row',
-        starterButton('Intro', 'intro'),
-        starterButton('Hiring', 'hiring'),
-        starterButton('Available', 'available'),
-        starterButton('Ask', 'ask'),
-        starterButton('Project update', 'project')
       )
     )
   }

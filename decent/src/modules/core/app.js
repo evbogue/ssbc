@@ -6,6 +6,7 @@ var QRCode = require('qrcode')
 var jsQR = require('jsqr')
 var ssbRef = require('ssb-ref')
 var qrConnect = require('../ui/qr-connect')
+var skin = require('../../skin')
 
 module.exports = {
   needs: {
@@ -27,17 +28,39 @@ module.exports = {
           h('style', {'data-decent-style': 'true'}, require('../../style.css.json'))
         )
       }
-      var isSsbski = !!document.querySelector('link[rel="stylesheet"][href*="ssbski-style.css"]')
-      var isSsbpro = !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
-      // decent2: the "Bootstrap 2, evolved" skin. It is a network skin (gets the
-      // three-zone scaffold) laid out with a top navbar like ssbpro. isTopbar
-      // gates the structural top-bar DOM (left stack, profile placement) shared
-      // by ssbpro and decent2; branding stays per-skin below.
-      var isDecent2 = !!document.querySelector('link[rel="stylesheet"][href*="decent2-style.css"]')
-      var isNetworkSkin = isSsbski || isSsbpro || isDecent2
-      var isTopbar = isSsbpro || isDecent2
-      var ssbproTheme = readSsbproTheme()
-      applySsbproTheme(ssbproTheme)
+      var previewMode = false
+      var querySkin = null
+      try {
+        var params = new URLSearchParams(window.location.search)
+        previewMode = params.get('preview') === '1'
+        var requestedSkin = params.get('skin')
+        if (skin.list().indexOf(requestedSkin) !== -1) querySkin = requestedSkin
+      } catch (e) {}
+
+      // Skin is a runtime value (see ../../skin). The chrome DOM is now a
+      // superset rendered for every network skin; CSS (keyed on the linked
+      // stylesheet + html[data-skin]) decides the rail-vs-topbar presentation,
+      // so a skin swap is pure CSS. isTopbar no longer gates DOM — it only
+      // gates two JS behaviours: the light/dark theme machinery and the
+      // compose-trigger relocation into the left stack (topbar skins only).
+      var activeSkin = previewMode && querySkin ? querySkin : skin.get()
+      if (previewMode && querySkin) skin.set(querySkin, {persist: false})
+      var isSsbski = activeSkin === 'ssbski'
+      var isSsbpro = activeSkin === 'ssbpro'
+      var isDecent2 = activeSkin === 'decent2'
+      var isNetworkSkin = activeSkin !== 'decent'
+      // Expose the active skin to CSS so skin-specific layout/visual rules can
+      // be selected with html[data-skin="…"] (and swapped live in the Themes
+      // page) instead of depending on which stylesheet is linked.
+      document.documentElement.setAttribute('data-skin', activeSkin)
+      // One app, many entry points: honor a saved skin even when this port
+      // linked a different default stylesheet, so reloading any port (or an
+      // installed PWA) renders the visitor's chosen skin, not the port's default.
+      if (skin.list().indexOf(activeSkin) !== -1) skin.swapStylesheet(activeSkin)
+      var decentTheme = readDecentTheme()
+      applyDecentTheme(decentTheme)
+
+      if (previewMode) return renderSkinPreview(activeSkin)
 
       window.addEventListener('error', window.onError = function (e) {
         // "ResizeObserver loop completed with undelivered notifications" is a
@@ -78,6 +101,121 @@ module.exports = {
 
       var selfId = require('../../keys').id
       var topbarLightbox = null
+
+      function renderSkinPreview (name) {
+        var brand = name === 'ssbpro' ? 'SSBPRO' : name === 'decent2' ? 'DECENT2' : 'SSBSKI'
+        var logo = name === 'ssbski' ? '/ssbski-logo.png'
+          : name === 'ssbpro' ? '/icons/ssbpro-512.png'
+          : '/icons/decent-512.png'
+        var avatar = h('span.avatar.avatar--thumbnail', {style: {
+          display: 'inline-block',
+          width: '40px',
+          height: '40px',
+          borderRadius: '999px',
+          background: 'var(--sky-blue)'
+        }})
+        var profile = h('a.navbar-avatar.navbar-avatar--rail', {href: '#'},
+          avatar,
+          h('span.navbar-avatar__meta',
+            h('span.navbar-avatar__name', 'Preview User'),
+            h('span.navbar-avatar__handle', '@preview')
+          )
+        )
+        var nav = h('ul.nav.pull-left', [
+          ['public', 'newspaper', 'Public'],
+          ['friends', 'groups', 'Friends'],
+          ['private', 'mail_lock', 'Private'],
+          ['notifications', 'notifications_active', 'Notifications'],
+          ['key', 'vpn_key', 'Keys']
+        ].map(function (item) {
+          return h('li' + (item[0] === 'public' ? '.active' : ''), {'data-route': item[0]},
+            h('a', {href: '#'},
+              h('span.material-symbols-outlined.nav__icon', {'aria-hidden': 'true'}, item[1]),
+              h('span.nav__label', item[2])
+            )
+          )
+        }))
+        var settings = h('button.theme-toggle.settings-btn.settings-btn--rail', {type: 'button'},
+          h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+        var topbar = h('div.topbar-actions',
+          h('button.nav-connect-btn', {type: 'button'},
+            h('span.material-symbols-outlined.nav-connect-btn__icon', {'aria-hidden': 'true'}, 'qr_code_2'),
+            h('span.nav-connect-btn__label', 'Connect')
+          ),
+          h('button.theme-toggle.settings-btn', {type: 'button'},
+            h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+        )
+        var header = h('div.navbar',
+          h('div.navbar-inner',
+            h('div.container-fluid',
+              profile,
+              nav,
+              settings,
+              topbar,
+              h('div.pull-right',
+                h('div.trending-card',
+                  h('div.trending-card__head',
+                    h('span.trending-card__copy',
+                      h('span.trending-card__title', 'Trending'),
+                      h('span.trending-card__subtitle', 'People and topics from your local network')
+                    )
+                  ),
+                  h('div.trending__list',
+                    h('a.trending__item', {href: '#'}, h('span.trending__topic', '#intro'), h('span.trending__count', '3 posts')),
+                    h('a.trending__item', {href: '#'}, h('span.trending__topic', '#projects'), h('span.trending__count', '2 posts'))
+                  )
+                ),
+                h('a.right-brand', {href: '#'},
+                  h('img.right-brand__logo', {src: logo, alt: brand.toLowerCase()}),
+                  h('span.right-brand__word', brand)
+                )
+              )
+            )
+          )
+        )
+        var leftStack = h('div.ssbpro-left-stack',
+          h('a.navbar-avatar', {href: '#'},
+            h('span.avatar.avatar--thumbnail', {style: {
+              display: 'inline-block',
+              width: '40px',
+              height: '40px',
+              borderRadius: '999px',
+              background: 'var(--sky-blue)'
+            }}),
+            h('span.navbar-avatar__meta',
+              h('span.navbar-avatar__name', 'Preview User'),
+              h('span.navbar-avatar__handle', '@preview')
+            )
+          ),
+          h('button.compose-trigger', {type: 'button'}, 'Compose')
+        )
+        var content = h('div.screen__content.column',
+          h('div.feed-header',
+            h('button.feed-tab.feed-tab--active', {type: 'button'}, 'Public'),
+            h('button.feed-tab', {type: 'button'}, 'Friends')
+          ),
+          h('div.feed-host',
+            h('div.column.scroller',
+              h('div.scroller__wrapper',
+                h('div.message.message--card',
+                  h('div.message-header',
+                    h('strong', 'Preview User'),
+                    h('span.timestamp', 'now')
+                  ),
+                  h('div.markdown', h('p', 'A small static preview of this skin.')),
+                  h('div.actions',
+                    h('button.btn', {type: 'button'}, 'Reply'),
+                    h('button.btn', {type: 'button'}, 'Like')
+                  )
+                )
+              )
+            )
+          )
+        )
+        var screen = h('div.screen.column', header, leftStack, content)
+        document.body.appendChild(screen)
+        return screen
+      }
 
       // Gather the latest self about.name/description/image so the Connect QR can
       // carry a portable, self-describing payload. One-shot drain on modal open.
@@ -154,7 +292,7 @@ module.exports = {
           h('div.qr-connect-header',
             h('div',
               h('div.qr-connect-title', 'Connect'),
-              h('div.qr-connect-subtitle', 'Share your profile or subscribe from a code.')
+              h('div.qr-connect-subtitle', 'Share your profile or follow from a code.')
             ),
             h('button.bio-improve-close', {type: 'button', title: 'Close', onclick: closeModal},
               h('span.material-symbols-outlined', 'close'))
@@ -211,7 +349,7 @@ module.exports = {
               api.avatar_image(selfId, 'thumbnail'),
               h('div',
                 h('strong', api.avatar_name(selfId)),
-                h('span', 'Scan to view and subscribe.')
+                h('span', 'Scan to view and follow.')
               )
             )
           ))
@@ -274,7 +412,7 @@ module.exports = {
             placeholder: 'Paste a profile link or @feed.ed25519 code...'
           })
           var preview = h('div.qr-connect-preview', {style: {display: 'none'}})
-          var subscribeBtn = h('button.btn.btn-primary', {type: 'button', disabled: true}, 'Subscribe')
+          var subscribeBtn = h('button.btn.btn-primary', {type: 'button', disabled: true}, 'Follow')
 
           body.appendChild(h('label.qr-connect-label', 'Profile code or link'))
           body.appendChild(input)
@@ -433,7 +571,7 @@ module.exports = {
                   h('span.material-symbols-outlined', 'no_photography'),
                   h('span', 'Camera not available on this device.'))
           ))
-          body.appendChild(h('div.qr-connect-label', 'Subscribe by scanning a Connect QR, or upload a saved QR image.'))
+          body.appendChild(h('div.qr-connect-label', 'Follow by scanning a Connect QR, or upload a saved QR image.'))
           body.appendChild(status)
           body.appendChild(fileInput)
 
@@ -448,20 +586,18 @@ module.exports = {
         setMode('qr')
       }
 
-      // Theme machinery is shared by the top-bar skins (ssbpro + decent2). The
-      // 'ssbpro:theme' localStorage key and data-ssbpro-theme attribute are
-      // reused as-is (origins are per-port, so there is no cross-skin leakage).
-      function readSsbproTheme () {
-        if (!isTopbar) return 'system'
+      // Theme machinery is shared by all live-switchable skins. Read the old
+      // ssbpro key as a compatibility fallback, but write the neutral key.
+      function readDecentTheme () {
         try {
-          var stored = window.localStorage.getItem('ssbpro:theme')
+          var stored = window.localStorage.getItem('decent:theme') ||
+            window.localStorage.getItem('ssbpro:theme')
           if (stored === 'light' || stored === 'dark') return stored
         } catch (e) {}
         return 'system'
       }
 
-      function applySsbproTheme (theme) {
-        if (!isTopbar) return
+      function applyDecentTheme (theme) {
         if (theme === 'light' || theme === 'dark') {
           document.documentElement.setAttribute('data-ssbpro-theme', theme)
         } else {
@@ -469,18 +605,19 @@ module.exports = {
         }
       }
 
-      function getResolvedSsbproTheme () {
+      function getResolvedDecentTheme () {
         var explicit = document.documentElement.getAttribute('data-ssbpro-theme')
         if (explicit === 'light' || explicit === 'dark') return explicit
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark'
         return 'light'
       }
 
-      function rememberSsbproTheme (theme) {
-        ssbproTheme = theme
-        applySsbproTheme(theme)
+      function rememberDecentTheme (theme) {
+        decentTheme = theme
+        applyDecentTheme(theme)
         try {
-          window.localStorage.setItem('ssbpro:theme', theme)
+          window.localStorage.setItem('decent:theme', theme)
+          window.localStorage.removeItem('ssbpro:theme')
         } catch (e) {}
       }
 
@@ -498,6 +635,101 @@ module.exports = {
         } catch (e) {}
       }
 
+      // ── Live skin switching (Themes page) ──────────────────────────────
+      // The chrome DOM is a superset (see header build) so re-theming is a pure
+      // stylesheet swap + html[data-skin]; we only refresh the few JS-set bits
+      // (branding text/logo, document title, compose-trigger placement). No page
+      // reload. persist=false is used by the preview iframes so a preview never
+      // overwrites the visitor's saved choice.
+      var lastRoute = null
+      var lastView = null
+
+      function currentSkin () {
+        return document.documentElement.getAttribute('data-skin') || skin.get()
+      }
+
+      function currentIsTopbar () {
+        var s = currentSkin()
+        return s === 'ssbpro' || s === 'decent2'
+      }
+
+      function brandFor (name) {
+        if (name === 'ssbpro') return {word: 'SSBPRO', logo: '/icons/ssbpro-512.png', tag: 'ssbpro · SSB'}
+        if (name === 'decent2') return {word: 'DECENT2', logo: '/icons/decent-512.png', tag: 'decent2 · SSB'}
+        return {word: 'SSBSKI', logo: '/ssbski-logo.png', tag: 'ssbski · SSB'}
+      }
+
+      function updateBranding (name) {
+        var b = brandFor(name)
+        var word = document.querySelector('.right-brand__word')
+        if (word) word.textContent = b.word
+        var logo = document.querySelector('.right-brand__logo')
+        if (logo) { logo.setAttribute('src', b.logo); logo.setAttribute('alt', b.word.toLowerCase()) }
+        var tag = document.querySelector('.right-footer__tag')
+        if (tag) tag.textContent = b.tag
+        setTitle(lastRoute, lastView)
+      }
+
+      function applySkin (name, persist) {
+        if (skin.list().indexOf(name) === -1) return
+        if (name === currentSkin()) { if (persist) skin.set(name); return }
+        skin.set(name, {persist: persist !== false})
+        updateBranding(name)
+        syncSsbproLeftStack()
+      }
+
+      function makeSettingsButton (variant) {
+        return h('button.theme-toggle.settings-btn' + (variant ? '.' + variant : ''), {
+          type: 'button',
+          title: 'Themes & settings',
+          'aria-label': 'Themes & settings',
+          onclick: showThemesModal
+        }, h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+      }
+
+      function showThemesModal () {
+        var active = currentSkin()
+        var grid = h('div.themes-grid')
+        skin.list().forEach(function (name) {
+          var frame = h('iframe.theme-preview__frame', {
+            src: '/?skin=' + name + '&preview=1',
+            loading: 'lazy',
+            tabindex: '-1',
+            'aria-hidden': 'true'
+          })
+          var tile = h('button.theme-preview' + (name === active ? '.theme-preview--active' : ''), {
+            type: 'button',
+            onclick: function () {
+              applySkin(name, true)
+              Array.prototype.forEach.call(grid.querySelectorAll('.theme-preview'), function (t) {
+                t.classList.remove('theme-preview--active')
+              })
+              tile.classList.add('theme-preview--active')
+            }
+          }, h('div.theme-preview__viewport', frame), h('span.theme-preview__label', name))
+          grid.appendChild(tile)
+        })
+
+        var modal = h('div.qr-connect-modal.themes-modal',
+          h('div.qr-connect-header',
+            h('div',
+              h('div.qr-connect-title', 'Themes'),
+              h('div.qr-connect-subtitle', 'Pick a look. It applies instantly.')
+            ),
+            h('button.qr-connect-close', {
+              type: 'button', 'aria-label': 'Close',
+              onclick: function () { getTopbarLightbox().close() }
+            }, h('span.material-symbols-outlined', {'aria-hidden': 'true'}, 'close'))
+          ),
+          grid,
+          h('div.themes-section',
+            h('div.themes-section__label', 'Appearance'),
+            makeThemeToggle()
+          )
+        )
+        getTopbarLightbox().show(modal)
+      }
+
       function makeThemeToggle () {
         var icon = h('span.material-symbols-outlined.theme-toggle__icon', {
           'aria-hidden': 'true'
@@ -507,13 +739,13 @@ module.exports = {
           type: 'button',
           title: 'Toggle light/dark mode',
           onclick: function () {
-            rememberSsbproTheme(getResolvedSsbproTheme() === 'dark' ? 'light' : 'dark')
+            rememberDecentTheme(getResolvedDecentTheme() === 'dark' ? 'light' : 'dark')
             render()
           }
         }, icon, label)
 
         function render () {
-          var next = getResolvedSsbproTheme() === 'dark' ? 'light' : 'dark'
+          var next = getResolvedDecentTheme() === 'dark' ? 'light' : 'dark'
           icon.textContent = next === 'dark' ? 'dark_mode' : 'light_mode'
           label.textContent = next === 'dark' ? 'Dark' : 'Light'
           button.setAttribute('aria-label', 'Switch to ' + next + ' mode')
@@ -537,17 +769,9 @@ module.exports = {
         ])
       }
 
+      // Lingo is unified on ssb-default terms across all skins, so the route
+      // label is always its ssb-default fallback (Public / Friends / Private).
       function labelForRoute (route, fallback) {
-        if (!isNetworkSkin) return fallback
-        if (isSsbpro) {
-          if (route === 'public') return 'Feed'
-          if (route === 'friends') return 'Network'
-          if (route === 'private') return 'Messaging'
-        } else {
-          if (route === 'public') return 'Discover'
-          if (route === 'friends') return 'Following'
-          if (route === 'private') return 'Chat'
-        }
         return fallback
       }
 
@@ -588,14 +812,20 @@ module.exports = {
       // ssbski fills the bottom-of-rail pill with a Bluesky-style account chip
       // (avatar + display name + short handle); Decent keeps the bare avatar in
       // its horizontal header, so the name/handle only render for the skin.
-      var profileLink = h('a.navbar-avatar', {
-        href: '#' + selfId,
-        title: 'Profile',
-        'aria-label': 'Profile'
-      }, [
-        api.avatar_image(selfId, 'thumbnail'),
-        isNetworkSkin ? makeProfileMeta() : null
-      ])
+      // The profile chip is rendered into the superset DOM twice: once in the
+      // navbar (the rail position ssbski uses) and once in the left stack (the
+      // column position ssbpro/decent2 use). Each skin's CSS shows only its own,
+      // so a live skin swap is pure CSS with no DOM relocation.
+      function makeProfileLink (variant) {
+        return h('a.navbar-avatar' + (variant ? '.' + variant : ''), {
+          href: '#' + selfId,
+          title: 'Profile',
+          'aria-label': 'Profile'
+        }, [
+          api.avatar_image(selfId, 'thumbnail'),
+          isNetworkSkin ? makeProfileMeta() : null
+        ])
+      }
 
       // When no display name is set, avatar_name falls back to the truncated
       // feed id — identical to the handle — so the key would render twice. Hide
@@ -657,7 +887,7 @@ module.exports = {
       // does not disappear on quieter local datasets.
       function buildTrendingCard (onHide) {
         var list = h('div.trending__list')
-        var title = h('span.trending-card__title', isSsbpro ? 'Groups' : 'Trending')
+        var title = h('span.trending-card__title', 'Trending')
         var hideIcon = h('span.material-symbols-outlined', 'visibility_off')
         hideIcon.setAttribute('aria-hidden', 'true')
         var hideButton = h('button.trending-card__hide', {
@@ -671,7 +901,7 @@ module.exports = {
             h('span.trending-card__copy',
               title,
               h('span.trending-card__subtitle',
-                isSsbpro ? 'Channels from your local network' : 'People and topics from your local network')
+                'People and topics from your local network')
             ),
             hideButton
           ),
@@ -696,11 +926,11 @@ module.exports = {
             .sort(function (a, b) { return b[1] - a[1] })
             .slice(0, 7)
           if (entries.length) {
-            if (isSsbpro) {
+            if (isNetworkSkin) {
               list.appendChild(
                 h('a.trending__item.trending__item--groups', {href: '#groups'},
-                  h('span.trending__topic', 'All groups'),
-                  h('span.trending__count', 'Browse channels')
+                  h('span.trending__topic', 'All channels'),
+                  h('span.trending__count', 'Browse')
                 )
               )
             }
@@ -811,15 +1041,16 @@ module.exports = {
         return panel
       }
 
-      var ssbproLeftStack = isTopbar ? h('div.ssbpro-left-stack', profileLink) : null
+      var ssbproLeftStack = isNetworkSkin ? h('div.ssbpro-left-stack', makeProfileLink()) : null
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
-            isTopbar ? null : profileLink,
+            makeProfileLink('navbar-avatar--rail'),
             nav,
-            isTopbar ? h('div.topbar-actions',
-              isSsbpro ? makeConnectButton() : null,
-              makeThemeToggle(),
+            isNetworkSkin ? makeSettingsButton('settings-btn--rail') : null,
+            isNetworkSkin ? h('div.topbar-actions',
+              makeConnectButton(),
+              makeSettingsButton(),
               // The profile avatar otherwise lives only in the left rail, which
               // collapses on mobile — leaving no way to reach your own profile.
               // Surface a compact avatar here; CSS shows it only below 980px.
@@ -835,7 +1066,7 @@ module.exports = {
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
                 h('a.right-footer__link', {href: '#key'}, 'Keys'),
-                h('span.right-footer__tag', isSsbpro ? 'ssbpro · SSB' : 'ssbski · SSB')
+                h('span.right-footer__tag', (isSsbpro ? 'ssbpro' : isDecent2 ? 'decent2' : 'ssbski') + ' · SSB')
               ]) : null,
               rightBrand
             )
@@ -861,6 +1092,13 @@ module.exports = {
 
       function syncSsbproLeftStack () {
         if (!ssbproLeftStack) return
+        if (!currentIsTopbar()) {
+          // Rail skin: the compose trigger is a fixed FAB and must not be left
+          // inside the (now hidden) left stack — pull it back into the feed host.
+          var stranded = ssbproLeftStack.querySelector('.compose-trigger')
+          if (stranded && renderTarget) renderTarget.appendChild(stranded)
+          return
+        }
         if (window.innerWidth <= 980) return
         var existing = ssbproLeftStack.querySelector('.compose-trigger')
         if (existing) ssbproLeftStack.removeChild(existing)
@@ -887,10 +1125,10 @@ module.exports = {
           else if (route === 'repos') suffix = 'Repositories'
           else if (route === 'notifications') suffix = 'Notifications'
           else if (route === 'key') suffix = 'Key'
-          else if (route === 'groups') suffix = 'Groups'
+          else if (route === 'groups') suffix = 'Channels'
           else if (route.indexOf('code-search/') === 0) suffix = 'Search'
           else if (route.indexOf('dm/') === 0) suffix = 'Chat'
-          else if (route.indexOf('channel/') === 0) suffix = (isSsbpro ? 'Group #' : 'Channel ') + route.slice(8)
+          else if (route.indexOf('channel/') === 0) suffix = 'Channel ' + route.slice(8)
           else if (route[0] === '@') suffix = 'Profile'
           else if (route[0] === '%') suffix = 'Thread'
           else if (route[0] === '#') suffix = 'Message'
@@ -899,7 +1137,10 @@ module.exports = {
       }
 
       function setTitle (route, view) {
-        var base = isSsbpro ? 'ssbpro' : isDecent2 ? 'decent2' : isSsbski ? 'ssbski' : 'Decent SSB'
+        lastRoute = route
+        lastView = view
+        var s = currentSkin()
+        var base = s === 'ssbpro' ? 'ssbpro' : s === 'decent2' ? 'decent2' : s === 'ssbski' ? 'ssbski' : 'Decent SSB'
         var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }
@@ -1015,6 +1256,15 @@ module.exports = {
       }
 
       document.body.appendChild(screen)
+
+      // Preview iframes (Themes page) load /?skin=NAME&preview=1; honour it as a
+      // one-off visual swap that never persists, so a preview can't overwrite the
+      // visitor's saved skin.
+      try {
+        var wantSkin = new URLSearchParams(window.location.search).get('skin')
+        if (wantSkin && skin.list().indexOf(wantSkin) !== -1 && wantSkin !== currentSkin())
+          applySkin(wantSkin, false)
+      } catch (e) {}
 
       // Start foreground notifications for both skins. This remains dormant
       // until the user grants permission from the notifications tab.

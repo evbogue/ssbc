@@ -43,7 +43,7 @@ exports.create = function (api) {
       var feed = payload.feed
 
       var status = h('div.qr-connect-status')
-      var subscribeBtn = h('button.btn.btn-primary', {type: 'button'}, 'Subscribe')
+      var subscribeBtn = h('button.btn.btn-primary', {type: 'button'}, 'Follow')
 
       // Prefer the portable name/bio from the payload, but fall back to whatever
       // this client already knows about the feed.
@@ -71,7 +71,7 @@ exports.create = function (api) {
         api.follower_of(selfId, feed, function (err, following) {
           if (err || !following) return
           subscribeBtn.disabled = true
-          subscribeBtn.textContent = 'Subscribed'
+          subscribeBtn.textContent = 'Following'
         })
       }
 
@@ -89,7 +89,7 @@ exports.create = function (api) {
             return
           }
           if (msg) {
-            subscribeBtn.textContent = 'Subscribed'
+            subscribeBtn.textContent = 'Following'
             window.location.hash = '#' + feed
           } else {
             subscribeBtn.disabled = false

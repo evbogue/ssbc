@@ -43,6 +43,7 @@ function checkSkin(t, stylesheetName, appName, skin, themeColor) {
       t.ok(index.body.includes('rel="manifest" href="/manifest.webmanifest"'), skin + ' injects manifest link')
       t.ok(index.body.includes('navigator.serviceWorker.register("/sw.js")'), skin + ' registers service worker')
       t.ok(index.body.includes('name="theme-color" content="' + themeColor + '"'), skin + ' injects theme color')
+      t.ok(index.body.includes('<html data-skin="' + skin + '"'), skin + ' exposes its default skin')
       t.ok(index.body.includes('href="/' + stylesheetName + '?v='), skin + ' loads its cache-busted stylesheet')
       const styleLinks = index.body.split('rel="stylesheet" href="/' + stylesheetName).length - 1
       t.equal(styleLinks, 1, skin + ' has exactly one stylesheet link to its CSS')
@@ -77,4 +78,8 @@ test('ssbski serves its installable PWA shell', (t) => {
 
 test('ssbpro serves its installable PWA shell', (t) => {
   checkSkin(t, 'ssbpro-style.css', 'ssbpro', 'ssbpro', '#0a66c2')
+})
+
+test('decent2 serves its installable PWA shell', (t) => {
+  checkSkin(t, 'decent2-style.css', 'decent2', 'decent2', '#0088cc')
 })

@@ -37,7 +37,35 @@ module.exports = {
 
   create: function (api) {
     let sbot = null
-    const remote = require('../../config')().remote
+    const clientConfig = require('../../config')()
+    const remote = clientConfig.remote
+
+    if (clientConfig.preview) {
+      const offline = new Error('preview mode has no sbot connection')
+      function asyncOffline() {
+        return function () {
+          const cb = arguments[arguments.length - 1]
+          if (typeof cb === 'function') cb(offline)
+        }
+      }
+      return {
+        sbot_links: function () { return pull.empty() },
+        sbot_links2: function () { return pull.empty() },
+        sbot_query: function () { return pull.empty() },
+        sbot_messagesByType: function () { return pull.empty() },
+        sbot_log: function () { return pull.empty() },
+        sbot_user_feed: function () { return pull.empty() },
+        sbot_progress: function () { return pull.empty() },
+        sbot_get: asyncOffline(),
+        sbot_add: asyncOffline(),
+        sbot_getLatest: asyncOffline(),
+        sbot_gossip_peers: asyncOffline(),
+        sbot_gossip_connect: asyncOffline(),
+        sbot_publish: asyncOffline(),
+        sbot_whoami: asyncOffline(),
+        sbot_search: asyncOffline()
+      }
+    }
 
     const rec = Reconnect(function (isConn) {
       function notify (value) {

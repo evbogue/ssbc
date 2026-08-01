@@ -19,7 +19,6 @@ module.exports = {
   "message-name.js":  require('./message-name.js'),
   "message.js":  require('./message.js'),
   "names.js":  require('./names.js'),
-  "network-discovery.js":  require('./network-discovery.js'),
   "post.js":  require('./post.js'),
   "private.js":  require('./private.js'),
   "pub.js":  require('./pub.js'),

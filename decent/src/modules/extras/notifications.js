@@ -163,15 +163,12 @@ exports.create = function (api) {
         // Never prompt on load; browsers require this to follow a user gesture.
         if (typeof window !== 'undefined' && 'Notification' in window) {
           var banner = h('div.notify-permission')
-          var skinLink = document.querySelector(
-            'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-            'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-          )
-          var icon = skinLink
-            ? skinLink.href.indexOf('ssbpro-style.css') !== -1
-              ? '/icons/ssbpro-192.png'
-              : '/icons/ssbski-192.png'
-            : '/icons/decent-192.png'
+          var activeSkin = require('../../skin').get()
+          var icon = activeSkin === 'ssbpro'
+            ? '/icons/ssbpro-192.png'
+            : activeSkin === 'ssbski'
+              ? '/icons/ssbski-192.png'
+              : '/icons/decent-192.png'
           var deliveryStatus = h('span.notify-permission__status')
 
           function setDeliveryStatus(message, isError) {

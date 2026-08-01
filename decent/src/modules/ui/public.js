@@ -22,16 +22,6 @@ exports.gives = {
 }
 
 exports.create = function (api) {
-  function isSsbskiSkin () {
-    return !!document.querySelector(
-      'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-      'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-    )
-  }
-
-  function isSsbproSkin () {
-    return !!document.querySelector('link[rel="stylesheet"][href*="ssbpro-style.css"]')
-  }
 
   function isPublicMessage (msg) {
     var value = msg && msg.value
@@ -98,10 +88,8 @@ exports.create = function (api) {
 
     screen_view: function (path, sbot) {
       if(path === 'public' || path === 'friends') {
-        var isSsbski = isSsbskiSkin()
-        var isSsbpro = isSsbproSkin()
-        var publicLabel = isSsbpro ? 'Feed' : isSsbski ? 'Discover' : 'Public'
-        var friendsLabel = isSsbpro ? 'Network' : isSsbski ? 'Following' : 'Friends'
+        var publicLabel = 'Public'
+        var friendsLabel = 'Friends'
         var autoOpen = false
         var initialQuote = null
         if (path === 'public') {
@@ -123,8 +111,8 @@ exports.create = function (api) {
                 modal: true,
                 inline: true,
                 promptText: path === 'friends'
-                  ? (isSsbpro ? 'Share with your network...' : isSsbski ? 'Post to Following...' : 'Write to your friends...')
-                  : (isSsbpro ? 'Share an update...' : isSsbski ? 'What is happening?' : 'Write a public message...'),
+                  ? 'Write to your friends...'
+                  : 'Write a public message...',
                 triggerLabel: 'Compose',
                 listenReplyEvents: true,
                 autoOpen: autoOpen,

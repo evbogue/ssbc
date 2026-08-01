@@ -64,7 +64,7 @@
  *   text = Bluesky cool off-white   accent (--sky-blue) = Bluesky blue #1085fe
  */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-ssbpro-theme="light"]) {
     --sky-bg: #1f1e1d;            /* warm charcoal base */
     --sky-surface: #1f1e1d;
     --sky-surface-soft: #292826;  /* raised warm surface */
@@ -92,4 +92,68 @@
     --sky-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
     --sky-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
   }
+}
+
+/* Manual light/dark override. The Themes-page toggle sets data-ssbpro-theme on
+ * <html>; these explicit blocks win over :root and the prefers-color-scheme
+ * block above so the toggle works regardless of the OS setting (mirrors the
+ * ssbpro/decent2 pattern). */
+:root[data-ssbpro-theme="light"] {
+  color-scheme: light;
+  --sky-bg: #ffffff;
+  --sky-surface: #ffffff;
+  --sky-surface-soft: #eff2f6;
+  --sky-hover: #eff2f6;
+  --sky-border: #dce2ea;
+  --sky-border-strong: #c0cad8;
+  --sky-text: #0b0f14;
+  --sky-muted: #42576e;
+  --sky-muted-soft: #8798b0;
+  --sky-blue: #1085fe;
+  --sky-blue-hover: #0a7aff;
+  --sky-blue-soft: rgba(16, 133, 254, 0.12);
+  --sky-green: #09b35e;
+  --sky-green-soft: rgba(9, 179, 94, 0.12);
+  --sky-pink: #ec4899;
+  --sky-pink-soft: rgba(236, 72, 153, 0.12);
+  --sky-red: #e5484d;
+  --sky-red-soft: rgba(229, 72, 77, 0.12);
+  --sky-warn: #9a6700;
+  --sky-warn-soft: #fff5d6;
+  --sky-purple: #8250df;
+  --sky-purple-soft: rgba(130, 80, 223, 0.12);
+  --sky-mark: #fff8c5;
+  --sky-mark-strong: #fae17d;
+  --sky-shadow: 0 10px 28px rgba(15, 20, 25, 0.12);
+  --sky-shadow-sm: 0 1px 3px rgba(15, 20, 25, 0.10);
+}
+
+:root[data-ssbpro-theme="dark"] {
+  color-scheme: dark;
+  --sky-bg: #1f1e1d;
+  --sky-surface: #1f1e1d;
+  --sky-surface-soft: #292826;
+  --sky-hover: #2d2c2a;
+  --sky-border: #3a3835;
+  --sky-border-strong: #4b4843;
+  --sky-text: #eef3f8;
+  --sky-muted: #a5b2c5;
+  --sky-muted-soft: #667b99;
+  --sky-blue: #1085fe;
+  --sky-blue-hover: #4a9eff;
+  --sky-blue-soft: rgba(16, 133, 254, 0.20);
+  --sky-green: #0dd370;
+  --sky-green-soft: rgba(13, 211, 112, 0.16);
+  --sky-pink: #f472b6;
+  --sky-pink-soft: rgba(244, 114, 182, 0.16);
+  --sky-red: #ff6369;
+  --sky-red-soft: rgba(255, 99, 105, 0.16);
+  --sky-warn: #d4a72c;
+  --sky-warn-soft: rgba(212, 167, 44, 0.18);
+  --sky-purple: #b392f0;
+  --sky-purple-soft: rgba(179, 146, 240, 0.18);
+  --sky-mark: rgba(212, 167, 44, 0.22);
+  --sky-mark-strong: rgba(212, 167, 44, 0.42);
+  --sky-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  --sky-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
 }

@@ -44,12 +44,10 @@ function isRenderableMessage (msg) {
 }
 
 exports.create = function (api) {
+  // Feed-card rendering (author key, reaction-pill placement, tap-to-thread) is
+  // shared by every modern skin; legacy Decent keeps the classic message row.
   function isSsbski () {
-    return typeof document !== 'undefined' &&
-      !!document.querySelector(
-        'link[rel="stylesheet"][href*="ssbski-style.css"],' +
-        'link[rel="stylesheet"][href*="ssbpro-style.css"]'
-      )
+    return require('../../skin').isNetwork()
   }
 
   function shortFeedId (id) {

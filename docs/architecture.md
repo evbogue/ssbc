@@ -107,12 +107,19 @@ It serves:
 
 It also attaches websocket handling to the HTTP server so the frontend can connect through the same general web surface.
 
-### `plugins/ssbski-ui.js`
+### Skin entry points
 
-ssbski is a second skin of the same frontend, served on its own port (default `8990`). It
-reuses the same JavaScript bundle and the same serving logic — both `decent-ui` and `ssbski-ui`
-delegate to `lib/ui-server.js` — and differs only in the stylesheet it serves
-(`ssbski-style.css` instead of `style.css`). The two public instances are
+The related UI plugins all delegate to `lib/ui-server.js` and serve the same frontend bundle
+with different default skins:
+
+- `plugins/decent-ui.js` serves legacy Decent on port `8888` with `style.css`.
+- `plugins/ssbski-ui.js` serves ssbski on port `8990` with `ssbski-style.css`.
+- `plugins/ssbpro-ui.js` serves ssbpro on port `8991` with `ssbpro-style.css`.
+- `plugins/decent2-ui.js` serves decent2 on port `8992` with `decent2-style.css`.
+
+The server injects each entry point's default as `<html data-skin="...">`. The modern
+skins (`decent2`, `ssbpro`, and `ssbski`) can also be switched live in the browser by
+updating that attribute and swapping the active stylesheet. The two public instances are
 [decent.evbogue.com](https://decent.evbogue.com/) and
 [ssbski.evbogue.com](https://ssbski.evbogue.com/).
 
@@ -157,14 +164,15 @@ message rather than partway through the pack. The policy is evaluated in
 
 ### `decent/`
 
-The frontend is a browser-based SSB client. It is served in two skins — Decent and ssbski —
-from a single shared JavaScript bundle (see the HTTP serving layer above).
+The frontend is a browser-based SSB client served from a single shared JavaScript bundle
+(see the HTTP serving layer above).
 
 It is organized as a plugin-style frontend with modules declaring `needs` and `gives`, wired together at startup.
 
 Important frontend characteristics:
 - browserified build output
 - plugin/module architecture
+- shared runtime skin selection in `decent/src/skin.js`
 - websocket-based connection to the local sbot
 - UI modules for feed, profile, git, search, blobs, and related behavior
 

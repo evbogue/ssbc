@@ -1,6 +1,8 @@
 'use strict'
 
 module.exports = function () {
+  const preview = typeof window !== 'undefined' && window.location &&
+    /(?:^|[?&])preview=1(?:&|$)/.test(window.location.search || '')
   const remote = (typeof window !== 'undefined' && window.PATCHBAY_REMOTE)
     ? window.PATCHBAY_REMOTE
     : null
@@ -9,5 +11,5 @@ module.exports = function () {
   const blobsUrl = (typeof window !== 'undefined' && window.location)
     ? window.location.origin + '/blobs/get'
     : 'http://localhost:8888/blobs/get'
-  return { remote, blobsUrl }
+  return { remote, blobsUrl, preview }
 }
