@@ -100,6 +100,11 @@ Light.prototype.publish = function (content, timestamp) {
   // create() reads this feed's tip (id + sequence) out of state and produces a
   // fully-signed message value in canonical form.
   const feedState = this.state.feeds[this.id] // undefined for the very first msg
+
+  // ssb-validate requires strictly-increasing timestamps within a feed. Two
+  // publishes in the same millisecond would otherwise collide and throw, so
+  // advance past the feed's previous timestamp (monotonic clock).
+  if (feedState && timestamp <= feedState.timestamp) timestamp = feedState.timestamp + 1
   const value = validate.create(feedState, this.keys, this.hmacKey, content, timestamp)
 
   // append() re-validates the message we just made and advances feed state.
