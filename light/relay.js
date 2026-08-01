@@ -277,3 +277,5 @@ Relay.prototype.close = function (cb) {
 }
 
 module.exports = Relay
+// The default network the relay joins when opts.caps is omitted.
+module.exports.MAIN_CAPS = MAIN_CAPS

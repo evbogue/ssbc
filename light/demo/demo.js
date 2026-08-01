@@ -31,12 +31,21 @@ function shortId (id) { return id.slice(0, 12) + '…' + id.slice(-6) }
 // --- state -----------------------------------------------------------------
 const node = new Light()
 let relay = null
-const seen = {}   // msg key -> true (dedupe render)
+const seen = {}          // msg key -> true (dedupe)
+const messages = []      // { kv, feedId } — everything we've seen, rendered sorted
 
-// Read a default remote from ?remote= / ?caps= or window.PATCHBAY_REMOTE.
+// Where the demo remembers your last connection between reloads.
+const LS_REMOTE = 'ssb-light/demo/remote'
+const LS_CAPS   = 'ssb-light/demo/caps'
+function lsGet (k) { try { return localStorage.getItem(k) } catch (_) { return null } }
+function lsSet (k, v) { try { localStorage.setItem(k, v) } catch (_) {} }
+
+// Read a default remote from ?remote= / a saved value / window.PATCHBAY_REMOTE.
 const params = new URLSearchParams(location.search)
-const defaultRemote = params.get('remote') || (typeof window !== 'undefined' && window.PATCHBAY_REMOTE) || ''
-const defaultCaps = params.get('caps') || ''
+const defaultRemote = params.get('remote') || lsGet(LS_REMOTE) || (typeof window !== 'undefined' && window.PATCHBAY_REMOTE) || ''
+// Autoload the main SSB network caps so the field shows which network we join;
+// ?caps= or a saved value overrides, and clearing the field also falls back.
+const defaultCaps = params.get('caps') || lsGet(LS_CAPS) || Relay.MAIN_CAPS.shs
 
 // --- UI --------------------------------------------------------------------
 const feedEl   = h('div', { id: 'feed' })
@@ -51,33 +60,78 @@ function setStatus (text, ok) {
   statusEl.setAttribute('style', 'font-weight:600;color:' + (ok ? '#137333' : '#b3261e'))
 }
 
+function msgBody (v) {
+  const c = v.content
+  if (c && c.type === 'contact' && c.contact)
+    return (c.following === false ? 'unfollowed ' : 'followed ') + shortId(c.contact)
+  return (c && (c.text || c.name)) || ('[' + (c && c.type) + ']')
+}
+
+function msgEl (kv, feedId) {
+  const v = kv.value
+  return h('div', { class: 'msg', style: 'border-bottom:1px solid #e0e0e0;padding:8px 0' }, [
+    h('div', { style: 'font:12px monospace;color:#555' },
+      shortId(feedId || v.author) + '  ·  seq ' + v.sequence +
+      (v.author === node.id ? '  ·  you' : '')),
+    h('div', {}, String(msgBody(v)))
+  ])
+}
+
+// Collect a message once, then re-render the whole feed newest-first. A full
+// re-render keeps a mixed multi-feed timeline correctly ordered whether messages
+// arrive live or are replayed in a batch from storage on load.
 function render (kv, feedId) {
   if (seen[kv.key]) return
   seen[kv.key] = true
-  const v = kv.value
-  const body = (v.content && (v.content.text || v.content.name)) || ('[' + (v.content && v.content.type) + ']')
-  feedEl.insertBefore(
-    h('div', { class: 'msg', style: 'border-bottom:1px solid #e0e0e0;padding:8px 0' }, [
-      h('div', { style: 'font:12px monospace;color:#555' }, shortId(feedId || v.author) + '  ·  seq ' + v.sequence),
-      h('div', {}, String(body))
-    ]),
-    feedEl.firstChild
-  )
+  messages.push({ kv: kv, feedId: feedId || kv.value.author })
+  renderFeed()
+}
+
+function renderFeed () {
+  messages.sort((a, b) => (b.kv.value.timestamp || 0) - (a.kv.value.timestamp || 0))
+  while (feedEl.firstChild) feedEl.removeChild(feedEl.firstChild)
+  for (let i = 0; i < messages.length; i++) feedEl.appendChild(msgEl(messages[i].kv, messages[i].feedId))
+}
+
+// (Re)build the relay from the current form fields. The Relay constructor
+// reloads any feeds we synced in a previous session from storage, so this also
+// primes relay.feeds for rendering — no connection needed.
+function buildRelay () {
+  const opts = { remote: remoteIn.value.trim(), onMessage: render }
+  const caps = capsIn.value.trim()
+  if (caps) opts.caps = { shs: caps }
+  relay = new Relay(node, opts)
+  return relay
+}
+
+// Render everything already on disk: our own feed plus every synced feed the
+// relay reloaded. Called on load so a refresh shows history immediately.
+function renderPersisted () {
+  node.log().forEach((kv) => render(kv, node.id))
+  if (relay) Object.keys(relay.feeds).forEach((fid) => relay.feeds[fid].forEach((kv) => render(kv, fid)))
+}
+
+// Pull our follow graph down and keep every followed feed live.
+function resubscribe () {
+  if (!relay || !relay.sbot) return
+  relay.syncFollows({ hops: 1 }, () => {
+    relay.following().forEach((id) => relay.follow(id))
+  })
 }
 
 function connect () {
   const remote = remoteIn.value.trim()
   if (!remote) return setStatus('enter a node address first', false)
+  lsSet(LS_REMOTE, remote)                 // remember for next time
+  lsSet(LS_CAPS, capsIn.value.trim())
   setStatus('connecting…', true)
-  const opts = { remote: remote }
-  if (capsIn.value.trim()) opts.caps = { shs: capsIn.value.trim() }
-  opts.onMessage = render
-  relay = new Relay(node, opts)
+  buildRelay()
   relay.connect((err) => {
     if (err) return setStatus('connect failed: ' + (err.message || err), false)
     setStatus('connected to ' + shortId(remote), true)
     relay.push(() => {})           // upload anything we already have
     relay.follow(node.id)          // live-stream our own feed back
+    resubscribe()                  // pull + stay live on everyone we follow
   })
 }
 
@@ -92,9 +146,16 @@ function publish () {
 
 function follow () {
   const id = followIn.value.trim()
-  if (!id || !relay || !relay.sbot) return
-  relay.follow(id)
+  if (!id || id[0] !== '@') return
   followIn.value = ''
+  // Record a real follow in our own feed: it persists with our log and, once
+  // pushed, propagates as a normal SSB contact message the network understands.
+  const kv = node.publish({ type: 'contact', contact: id, following: true })
+  render(kv, node.id)
+  if (relay && relay.sbot) {
+    relay.push(() => {})           // push the contact message up
+    relay.follow(id)               // and start live-streaming the feed
+  }
 }
 
 function mount () {
@@ -115,6 +176,13 @@ function mount () {
     h('hr'),
     h('h3', {}, 'Feed'), feedEl
   ]))
+
+  // Show what's already on disk before any network: our own feed, plus every
+  // feed we synced in a past session (buildRelay reloads them from storage).
+  buildRelay()
+  renderPersisted()
+
+  // If we have a remembered relay, reconnect automatically and resume the graph.
   if (defaultRemote) connect()
 }
 
