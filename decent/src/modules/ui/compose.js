@@ -193,6 +193,13 @@ exports.create = function (api) {
 
       lb.show(modalContent)
       document.body.classList.add('lightbox-open')
+      // The controls row and the tall textarea are normally revealed by the
+      // textarea's focus handler, but a programmatic .focus() doesn't always
+      // fire on mobile browsers — which left the modal with no Preview button
+      // and no way to post. The modal is only ever opened by an explicit tap,
+      // so show them up front instead of waiting for focus.
+      if (accessories) accessories.style.display = ''
+      if (opts.shrink !== false && !ta.value) ta.style.height = '200px'
       window.requestAnimationFrame(function () {
         modalContent.classList.add('compose-modal--animate')
         ta.focus()

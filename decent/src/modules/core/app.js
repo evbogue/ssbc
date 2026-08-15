@@ -1090,21 +1090,31 @@ module.exports = {
       }
       var screen = h('div.screen.column', header, ssbproLeftStack, content)
 
+      // The left stack is only on screen for a topbar skin above its own 980px
+      // breakpoint; that is the one place the compose button renders inline. Rail
+      // skins and every narrow viewport want it back in the feed host, where CSS
+      // floats it as a fixed FAB — left inside the hidden stack it disappears.
       function syncSsbproLeftStack () {
         if (!ssbproLeftStack) return
-        if (!currentIsTopbar()) {
-          // Rail skin: the compose trigger is a fixed FAB and must not be left
-          // inside the (now hidden) left stack — pull it back into the feed host.
-          var stranded = ssbproLeftStack.querySelector('.compose-trigger')
-          if (stranded && renderTarget) renderTarget.appendChild(stranded)
+        var existing = ssbproLeftStack.querySelector('.compose-trigger')
+        if (!currentIsTopbar() || window.innerWidth <= 980) {
+          if (existing && renderTarget) renderTarget.appendChild(existing)
           return
         }
-        if (window.innerWidth <= 980) return
-        var existing = ssbproLeftStack.querySelector('.compose-trigger')
+        // A route change builds a fresh composer, so prefer the new trigger and
+        // drop whatever the previous screen left behind.
+        var trigger = renderTarget && renderTarget.querySelector('.compose-trigger')
+        if (!trigger) return
         if (existing) ssbproLeftStack.removeChild(existing)
-        var trigger = renderTarget.querySelector('.compose-trigger')
-        if (trigger) ssbproLeftStack.appendChild(trigger)
+        ssbproLeftStack.appendChild(trigger)
       }
+
+      // Placement depends on the viewport, and renderRoute alone only samples it
+      // once per navigation. window.innerWidth can still read 0 that early (a
+      // background tab or a cold PWA start hasn't laid out yet), which parked the
+      // button inline under the feed tabs until the next navigation — so
+      // re-evaluate whenever the viewport actually changes.
+      window.addEventListener('resize', syncSsbproLeftStack)
 
       function setActive (route) {
         var items = nav.querySelectorAll('li[data-route]')

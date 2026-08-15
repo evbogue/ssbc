@@ -1357,6 +1357,11 @@ html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover
   gap: 6px;
 }
 
+/* The pill is rendered for every post and stays empty until someone reacts.
+ * Skins that give it its own full-width row (ssbpro) otherwise pay a row-gap
+ * of dead space under the buttons on every unreacted post. */
+.reaction-pill:empty { display: none; }
+
 .git-message-action-group { display: inline-flex; align-items: center; }
 
 /* Floating tray (quick reactions + share) — hidden until --open */
@@ -3573,6 +3578,127 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 }
 .profile-action-btn.btn-primary:hover { background: var(--sky-blue-hover); }
 
+/* Relation / profile-hints / activity panels. avatar-profile.js renders these
+ * for every network skin (its isSsbproSkin() check is really skin.isNetwork()),
+ * but the styling used to live in ssbpro-style.css only — so on ssbski and
+ * decent2 they rendered as unstyled native buttons: light grey pills on a dark
+ * page. They are entirely token-driven, so they belong here and pick up each
+ * skin's own palette. */
+.profile-relation,
+.profile-quality,
+.profile-activity {
+  margin: 12px 0;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+}
+
+.profile-relation {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 11px;
+  color: var(--sky-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.profile-relation .material-symbols-outlined {
+  color: var(--sky-blue);
+  font-size: 1rem;
+}
+
+.profile-quality {
+  padding: 12px;
+}
+
+.profile-quality__head,
+.profile-activity__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  color: var(--sky-text);
+}
+
+.profile-quality__head .material-symbols-outlined {
+  color: var(--sky-blue);
+  font-size: 1.05rem;
+}
+
+.profile-quality__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-quality__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-blue);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.profile-quality__item:hover {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+}
+
+.profile-quality__item .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.profile-activity {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.profile-activity__head {
+  margin-bottom: 0;
+}
+
+.profile-activity__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+}
+
+.profile-activity__row > .material-symbols-outlined {
+  color: var(--sky-muted);
+  font-size: 1.05rem;
+}
+
+.profile-activity__label,
+.profile-activity__value {
+  display: block;
+}
+
+.profile-activity__label {
+  color: var(--sky-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.profile-activity__value {
+  color: var(--sky-text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 /* Composer hosted in a lightbox when messaging from a profile. The app's nav
  * rail is position:fixed; z-index:50, so lift this lightbox above it. */
 .profile-compose-lightbox { z-index: 1000; }
@@ -3862,6 +3988,62 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   .message-card:not(.message--mini):not(.compose) > .title .avatar svg { left: 12px; }
 
   .lightbox__content { margin: 16px auto; }
+
+  /* Action row: eight icon buttons have to share a ~300px card. At the desktop
+   * padding the row is wider than the card, so it either spilled past the right
+   * border (ssbski) or wrapped onto a ragged second line (ssbpro). Trim the
+   * horizontal padding and the gaps so the whole row fits on one line. */
+  .message-card .message_actions.row { gap: 8px; }
+  .message_actions_extra { gap: 0; }
+  .action-btn { padding: 6px 5px; }
+
+  /* Cluster the primary actions left and the extras right instead of spreading
+   * each group over its own share of the row: the number of primary buttons
+   * varies per post type, so space-between gave every card a different rhythm. */
+  .message-card .actions {
+    width: auto;
+    max-width: none;
+    flex: 0 1 auto;
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  /* Anchor the quick-reaction and share trays to the action row instead of to
+   * the button that opens them. A tray is ~234px wide — nearly the whole card
+   * at 375px — so hanging it off a mid-row button pushed it past the viewport
+   * edge, and even closed it stretched the feed column's scroll width (the
+   * stray horizontal scrollbar). Dropping the groups out of the positioning
+   * chain leaves .message_actions.row as the containing block, which is exactly
+   * the width the tray has to fit inside. */
+  .reaction-group,
+  .share-group { position: static; }
+
+  .reaction-tray,
+  .share-tray {
+    left: 0;
+    right: auto;
+    transform-origin: left bottom;
+  }
+
+  /* The floating compose button hovers over the bottom-right of the feed, so
+   * without this the last post's actions sit underneath it. */
+  .scroller__content { padding-bottom: 84px; }
+
+  /* Profile actions sit beside the avatar, so at 375px Follow + Message +
+   * Mention ran off the right edge with the last button half cut off. They are
+   * a nowrap row by default; let them stack instead. */
+  .profile-card-actions,
+  .profile-send-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  /* Git push cards: sha and the +/- stats are both nowrap, which on a phone
+   * left the commit subject a ~50px gutter to wrap one word at a time. Let the
+   * row wrap and give the subject its own full-width line under them. */
+  .git-commit-row { flex-wrap: wrap; row-gap: 2px; }
+  .git-commit-title { order: 1; flex: 1 1 100%; }
+  .git-commit-stats-wrap { margin-left: auto; }
 }
 
 /* ============================================================

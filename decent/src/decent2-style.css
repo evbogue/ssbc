@@ -496,7 +496,16 @@ body {
   font-size: 0.95rem;
   font-weight: 700;
 }
+/* base.css hides this label under its own 1300px breakpoint, sized for ssbski's
+   collapsing rail rather than decent2's top bar. decent2 keeps the left stack
+   (and so the inline compose button) down to 880px, where the rules further
+   down turn it into a FAB — so between 881 and 1300 the label has to come back,
+   otherwise the stack shows a wide blue bar with a lone pencil in it. */
 .compose-trigger__button::after { content: 'New post'; font-size: 0.95rem; }
+
+@media (min-width: 881px) {
+  .compose-trigger__button::after { display: inline; }
+}
 
 /* ============================================================
  * Glossy component layer (the Bootstrap 2 tactility)
@@ -643,4 +652,79 @@ body {
   }
   .navbar .nav.pull-left li a { padding: 0 11px; }
   .navbar .nav.pull-left .nav__label { display: none; }
+
+  /* The left stack that hosts the compose button is gone at this width, so the
+     button falls back into the feed — where the rules above stretched it into a
+     full-width bar wedged under the feed tabs. Float it as a FAB instead, the
+     same shape ssbpro uses on mobile. */
+  .compose-trigger {
+    position: fixed;
+    top: auto;
+    right: 16px;
+    bottom: 16px;
+    left: auto;
+    width: 56px;
+    z-index: 50;
+  }
+
+  .compose-trigger__button {
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .compose-trigger__button::after { content: ''; }
+}
+
+/* Phone: the wordmark plus five nav icons plus the action buttons are wider
+   than a 375px viewport, so the row ran off the right edge. Drop the wordmark
+   and tighten the nav, as ssbpro does at its own breakpoint. */
+@media (max-width: 600px) {
+  .navbar .container-fluid {
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .navbar .container-fluid::before { display: none; }
+
+  .navbar .nav.pull-left {
+    flex: 1;
+    min-width: 0;
+    justify-content: space-around;
+  }
+
+  .navbar .nav.pull-left li a { padding: 0 6px; }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .theme-toggle,
+  .nav-connect-btn {
+    min-width: 40px;
+    width: 40px;
+    padding: 0;
+  }
+
+  .theme-toggle__label,
+  .nav-connect-btn__label { display: none; }
+
+  /* Seven bevelled buttons — three of them carrying a text label — can't share
+     a phone-width card, so they broke into three ragged rows. Drop the labels
+     and let the row read as one strip of icons, like the other skins. */
+  .action-btn--reply::after,
+  .action-btn--repost::after,
+  .action-btn--quote::after { content: none; }
+
+  .action-btn { padding: 0 4px; }
+
+  /* Keep the group on one line — a git card's five primary actions plus the
+     four extras only fit at this padding. */
+  .message-card .actions {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
 }
