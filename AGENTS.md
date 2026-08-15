@@ -44,13 +44,17 @@ session unless Ev says otherwise in the current conversation.
    sessions; assume the tree has moved.
 2. **Work in discrete, shippable chunks.** A chunk = one coherent change that leaves the
    branch in a working state.  Don't mix unrelated changes in one chunk.
-3. **Build after every change.** Run `npm run build:web` for frontend edits — it rebuilds
-   the shared JS bundle plus **both** stylesheets (`style.css` for Decent and
-   `ssbski-style.css` for ssbski).  Always rebuild both skins after any frontend or
-   stylesheet change; never rebuild one and leave the other stale.  A broken build is never
-   an acceptable stopping point.
+3. **Build after every change — then check that it built.** Run `npm run build:web` for
+   frontend edits; it rebuilds the shared JS bundle plus every stylesheet (`base.css`,
+   the three skin files, and the legacy `style.css`).  **A clean exit is not a working
+   build.**  The script pipes browserify into indexhtmlify, so a bundler error still exits
+   0 and writes a ~1 KB `decent/build/index.html` — valid HTML, empty `<script>`, no app.
+   Confirm the file is ~3.2 MB (`ls -la decent/build/index.html`), then grep the built
+   output for a string from your change.  A broken build is never an acceptable stopping
+   point, and a build that *looks* clean has taken the public node down.
 4. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
-   UI, verify the change in the browser before declaring done.
+   UI, verify the change in the browser before declaring done — at 375px as well as desktop,
+   on every network skin (see "Verify at phone width, on every skin").
 5. **Commit every chunk.** Never leave modified files sitting in the working tree at the end
    of a task.  If the change is done, it gets committed.  No "I'll commit these together
    later" — commit now.
@@ -191,7 +195,9 @@ both sides and will notice if either model is coasting.
 | `decent/src/modules/git/` | Git and forge-related UI modules |
 | `decent/src/modules/extras/` | Optional and experimental UI modules |
 | `decent/build/` | Generated — do not edit by hand |
-| `decent/src/style.css` | All CSS (single file, no preprocessor) |
+| `decent/src/base.css` | Shared component layer for all network skins; tokens only, no palette |
+| `decent/src/{ssbski,ssbpro,decent2}-style.css` | Thin skins — `@import` `base.css`, supply a `:root` palette + layout |
+| `decent/src/style.css` | Legacy `decent` skin only; does **not** import `base.css` |
 | `test/` | Node.js tape tests |
 
 ## How to run
@@ -212,10 +218,13 @@ The server must be running before the browser app can connect.
 - `npm run coverage` – generate coverage via `nyc` (outputs `coverage/`).
 - `npm start` – run the CLI locally (`node bin.js start`), equivalent to `ssb-server start`
   when installed globally.
-- `npm run build:web` – rebuild the frontend bundle and **both** stylesheets
-  (`style.css` for Decent, `ssbski-style.css` for ssbski). ssbski reuses Decent's exact JS
-  bundle; only the stylesheet differs, so this one command produces both skins. Always run
-  it after any frontend or stylesheet change and confirm both skins build cleanly.
+- `npm run build:web` – rebuild the frontend bundle and **every** stylesheet (`base.css`,
+  `ssbski-style.css`, `ssbpro-style.css`, `decent2-style.css`, and the legacy `style.css`).
+  All skins reuse the exact same JS bundle; only the stylesheet differs, so this one command
+  produces all of them. Always run it after any frontend or stylesheet change — and check
+  the output size, because the command can exit 0 on a failed bundle (see "Rhythm of work").
+  `decent/scripts/style.js` copies an **explicit file list**, so a new CSS file reached via
+  `@import` must be added there or it 404s.
 
 ## Architecture in two sentences
 
@@ -324,6 +333,10 @@ We publish `reason: emoji` per spec.  We read `reason || expression` for backwar
 compatibility with any messages that used the old `expression` field name.
 We also handle legacy votes where `vote` is a plain string.
 
+Retracting a reaction publishes a **new** vote with `value: 0` — it does not remove the
+original.  Clicking the heart in the running UI writes one of these to Ev's real feed with
+no confirmation; see "Clicking the live UI publishes real messages".
+
 ### `type: 'pub'` — known pub advertisement
 
 ```js
@@ -383,6 +396,48 @@ The server returns the blob hash (`&...sha256`) as plain text.  Store the full
 ---
 
 ## Decent Frontend Development
+
+### Clicking the live UI publishes real messages
+
+The dev server is **Ev's actual feed**, not a sandbox.  A single click on the heart,
+repost, or follow button publishes a signed message immediately — there is no confirmation
+step on those paths, unlike the composer, which routes through `message_confirm`'s
+Publish/Cancel lightbox.  SSB is append-only: a published message cannot be deleted, it
+replicates to peers, and "undoing" a reaction publishes a *second* message rather than
+removing the first.
+
+Before clicking anything inside a feed card, know whether it writes.  `like.js` is the
+easy trap — the heart in the action row calls `reactAndClose()` straight from `onclick`,
+and the quick-reaction tray only opens on a 400ms long-press or a 300ms hover, so probing
+"what does this button do" casts a vote.
+
+To exercise a write path (publish, follow, react, blob upload), run a burner sbot — see
+`memory/project_burner_sbot_recipe.md` — rather than the running default instance.  If you
+do write to Ev's feed by accident, **say so plainly in your update**; don't quietly move on.
+
+### Verify at phone width, on every skin
+
+After any `decent/src` CSS or DOM change, check it at **375px** as well as desktop, and on
+every network skin rather than just the one you were working in.  The skins share
+`base.css` but diverge at different breakpoints — ssbski at 600px, decent2 at 880px,
+ssbpro at 980px — so a fix inside one skin's mobile block routinely leaves the others
+untouched.  decent2 in particular went a long time with no mobile rules at all.
+
+The cheap check for the most common defect: `document.querySelector('.column.scroller')`
+should have `scrollWidth === clientWidth`.  Anything wider means a row is spilling past the
+card and the feed has grown a horizontal scrollbar.
+
+### Style shared components in `base.css`, never in one skin's stylesheet
+
+If a JS module renders something for **every** network skin, its styling belongs in
+`base.css` using the `--sky-*` tokens.  Putting it in a single skin's stylesheet leaves the
+other skins rendering unstyled native controls — light grey buttons on a dark page.
+
+Check what actually gates the DOM before deciding where the CSS goes.  `isSsbproSkin()` in
+`avatar-profile.js` is literally `return require('../../skin').isNetwork()`, so the profile
+relation/hints/activity panels it guards render on all three skins; because the name reads
+as "is this ssbpro", their CSS sat in `ssbpro-style.css` and two skins showed them broken.
+Names in this area lie — read the implementation.
 
 ### Plugin system
 
@@ -482,6 +537,28 @@ always-push-to-both-remotes rule.
 
 ---
 
+## Live-verifying in a browser
+
+Two failure modes are worth knowing before you trust what a headless browser tells you.
+
+**A hidden pane has no geometry.** The in-app browser reports `window.innerWidth === 0` and
+zero-height `getBoundingClientRect()` while its pane isn't rendered.  Take a screenshot
+*before* measuring, and re-read `innerWidth` in the same call as the measurement — if it
+comes back 0, every number you just collected is meaningless.  This fabricates convincing
+bugs: a feed that looks permanently stalled (the scroller derives its loading edge from the
+column's rect height) and a compose button in the wrong container (placement is chosen from
+`window.innerWidth`).
+
+**Don't fix what you can't reproduce in a real browser.** If a symptom only appears in your
+instrumented environment, prove it outside that environment before changing shared code.
+Both symptoms above have been "fixed" by an agent that then had to revert the change.
+Reverting a speculative fix is the correct outcome, not a failure — say so in the summary
+rather than leaving the change in "just in case."
+
+**Cache-bust after a build.** The browser HTTP-caches `index.html` and a service worker is
+registered; append `?nocache=N` and confirm the new code is actually loaded by grepping the
+live DOM for a known new string before asserting a change works.
+
 ## Testing with Playwright MCP
 
 ```
@@ -511,8 +588,10 @@ sessions:
 - **The human reviews upstream and may refactor between sessions.** If a pull brings in
   substantial changes, summarize what landed before continuing — don't silently assume the
   prior state.
-- **Build and verify before committing.** Run `npm run build:web` and confirm there are no
-  errors.  A clean build is the minimum bar before a commit.
+- **Build and verify before committing — and don't trust the exit code.** Run
+  `npm run build:web`, then confirm `decent/build/index.html` is ~3.2 MB.  Around 1 KB means
+  browserify failed and the pipe swallowed it: the page is empty but the command reported
+  success.  See "Rhythm of work" step 3.
 - **Match the file's existing style.** Decent frontend modules use `var`; server modules use
   `const`/`let`.  Don't introduce style inconsistencies as a side-effect of feature work.
 
@@ -524,7 +603,9 @@ sessions:
 - `avatar-image.js` — live avatar img rendering and per-author registry.
 - `about.js` — `message_content` preview for `type:about` messages.
 - `decent-ui.js` (plugin) — HTTP server, blob endpoints, git routes.
-- `decent/src/style.css` — all CSS; search for the class name.
+- `decent/src/base.css` — shared component CSS for all network skins; search for the class
+  name here first. Per-skin palettes and overrides live in `{ssbski,ssbpro,decent2}-style.css`;
+  `style.css` is the legacy `decent` skin only.
 - `decent/src/modules/core/sbot.js` — all SSB RPC wrappers; add new API calls here.
 
 ## Security & Configuration Tips
