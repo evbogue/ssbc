@@ -182,8 +182,18 @@ process. Full deploy:
 ssh root@evbogue.com
 cd /root/ssbc
 git pull
+npm install                # deps the pull may have added — see the warning below
 npm run build:web          # REQUIRED — build/ is gitignored, pull won't update it
+ls -la decent/build/index.html   # ~3.2 MB = good; ~1 KB = the build failed
 ```
+
+> **`npm run build:web` can fail and still report success.** It pipes browserify
+> into indexhtmlify; if browserify errors, the pipe's exit status comes from
+> indexhtmlify, which happily wraps an empty stream and writes a ~1 KB
+> `index.html` — valid HTML, empty `<script>`, no app. This has taken the public
+> node down. The usual trigger is a dependency added since the last deploy, hence
+> the `npm install`: `git pull` never updates `node_modules`. **Always check the
+> file size before restarting.**
 
 Then restart the running node. It lives in tmux session `7` (find it with
 `tmux list-panes -a -F '#{session_name} #{pane_current_command} #{pane_current_path}'`):
@@ -198,6 +208,50 @@ Verify the live bundle picked up your change, e.g.:
 ```bash
 curl -s http://127.0.0.1:8989/ | grep -c 'some-string-from-your-change'
 ```
+
+### Adding a public hostname for a skin
+
+TLS and routing on the node are handled by a small Deno reverse proxy in
+`/root/reverse-proxy`, run by `reverse-proxy.service`. It maps hostname → local
+port from `domains.json`, and it loads **one** certificate:
+`/etc/letsencrypt/live/wiredove.net/`. A hostname needs an entry in both places —
+missing from `domains.json` it 404s, missing from the cert it fails TLS.
+
+DNS is already a wildcard `A` record, so any new subdomain resolves without
+touching Namecheap. Two steps, then a restart:
+
+```bash
+# 1. route it (back the file up first — the directory keeps .bak copies)
+cd /root/reverse-proxy
+cp domains.json domains.json.bak-$(date +%s)
+# add e.g.  "decent2.evbogue.com": 8992
+
+# 2. add it to the cert. --expand rewrites the SAN list, so pass EVERY existing
+#    name plus the new one, or the others drop off and break.
+certbot certificates                      # copy the current Domains: list
+systemctl stop http-redirect.service      # certbot --standalone needs :80
+certbot certonly --standalone --cert-name wiredove.net --expand \
+  --non-interactive --agree-tos \
+  -d wiredove.net -d <...every existing name...> -d newname.evbogue.com
+systemctl start http-redirect.service
+
+# 3. the proxy reads the cert once at startup
+systemctl restart reverse-proxy.service
+```
+
+Then check the new name *and* a couple of existing ones — `--expand` mistakes
+show up as TLS failures on the names you forgot to pass.
+
+> **Don't start the proxy by hand.** `serve.js` reads the certificate at startup,
+> and certbot's deploy hook renews it by restarting `reverse-proxy.service`. A
+> hand-started copy holding `:443` makes the systemd unit crash-loop on "address
+> in use", and renewals then never reach the process actually serving traffic —
+> it keeps presenting the old cert until someone notices. Use `systemctl`.
+
+Wildcard certs would remove the `--expand` dance, but `*.evbogue.com` requires
+DNS-01 validation and so an API credential for the DNS provider; Namecheap gates
+API access behind account criteria. Expanding the SAN list is the deliberate
+trade-off for now.
 
 ### Local docs
 

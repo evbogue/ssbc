@@ -23,7 +23,7 @@ npm run build:web        # REQUIRED after any decent/src change — the page ser
 ```
 
 - Cache-bust when live-verifying: the browser HTTP-caches `index.html` and a service worker is registered. Append `?nocache=N`.
-- **Check the bundle size after every build** until §1.1 is fixed: a healthy `decent/build/index.html` is ~3.2 MB. ~1 KB means the build failed and reported success.
+- **Check the bundle size after every build** until §1.1 is fixed: a healthy `decent/build/index.html` is ~3.2 MB. ~1 KB means the build failed and reported success. The README deploy steps now include this check.
 - If you verify in the in-app Claude browser, take a screenshot *before* measuring geometry — a hidden pane reports `window.innerWidth === 0` and zero-height rects, which fakes both a stalled feed and a misplaced compose button.
 
 ---
@@ -48,11 +48,20 @@ If browserify errors, the pipeline's exit status comes from `indexhtmlify`, whic
 
 ### 1.2 The deploy procedure never installs server dependencies
 
-README.md's "Deploying to a public node" is `git pull` → `npm run build:web` → restart. `git pull` does not update `node_modules`, so any dependency added since the last deploy makes the build fail — silently, per §1.1. Add `npm install` to the documented sequence, between the pull and the build.
+**Documented.** `git pull` does not update `node_modules`, so any dependency added since the last deploy makes the build fail — silently, per §1.1. The README's deploy sequence now runs `npm install` between the pull and the build, and checks the output size before restarting. Still worth doing §1.1 so the check isn't purely a habit.
 
-### 1.3 `decent2.evbogue.com` is not served
+### 1.3 `decent2.evbogue.com` is not served — **done**
 
-`https://decent2.evbogue.com/` fails with an SSL error; the other three hostnames are fine. The reverse proxy (`/root/reverse-proxy` on the node) has no entry for it, so decent2 has no public URL even though it runs on :8992 locally. Infrastructure rather than repo, but it means decent2 can only be tested by SSH port-forward.
+Resolved on 2026-08-15. `decent2.evbogue.com` → `8992` in `/root/reverse-proxy/domains.json`, and the hostname was added to the one certificate the proxy loads. The orphaned `anproto.com` certbot lineage was folded into that same cert at the same time, which also fixed `try.anproto.com` and `presentation.anproto.com` — both had been failing TLS for the same reason decent2 was. Procedure is documented in README.md under "Adding a public hostname for a skin".
+
+Two things surfaced while doing it, both now fixed but worth knowing:
+
+- **`reverse-proxy.service` had been crash-looping for nine days.** A hand-started copy of the proxy held `:443`, so the unit could never bind. Because `serve.js` reads the certificate once at startup and certbot's deploy hook renews by restarting *the unit*, renewals were never reaching the process actually serving traffic. `:443` is now owned by systemd.
+- **Wildcard certs were considered and declined.** `*.evbogue.com` needs DNS-01 validation and therefore a DNS provider API credential; Namecheap gates API access behind account criteria. Expanding the SAN list is the deliberate trade-off — see the README.
+
+### 1.4 Four hostnames are in the cert but have no route
+
+`www.wiredove.net`, `www.anproto.com`, `decent.anproto.com` and `ssb.anproto.com` have valid TLS but no `domains.json` entry, so the proxy answers 404. Pre-existing for the first two; the latter two came in with the folded `anproto.com` lineage. Decide what each should serve (the `www.` pair presumably mirrors its apex; the `*.anproto.com` pair probably belongs on `8989`) and add the entries, or drop them from the cert at the next expansion.
 
 ---
 
@@ -106,6 +115,6 @@ The audit drove modal → typing → Browse/Preview → the preview card → Can
 
 ## Success criteria
 
-- A failed bundle build fails the command, and the documented deploy sequence installs dependencies first.
+- A failed bundle build fails the command (the deploy sequence already installs dependencies and checks the output size).
 - `isSsbproSkin` / `syncSsbproLeftStack` no longer say "ssbpro" when they mean "network skin".
 - Every surface in §3 has been opened at 375px on all three network skins, with no horizontal overflow on `.column.scroller` and no element extending past the viewport.
