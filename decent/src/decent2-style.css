@@ -702,6 +702,14 @@ body {
     margin-left: 0;
   }
 
+  /* base.css reserves 56px at the bottom for ssbski's mobile tab bar and leaves
+     nothing at the top. decent2 has neither: its chrome is the fixed 52px strip
+     up top, which a modal would otherwise slide under. */
+  .lightbox {
+    padding-top: calc(var(--d2-topbar-h) + 16px);
+    padding-bottom: 32px;
+  }
+
   .theme-toggle,
   .nav-connect-btn {
     min-width: 40px;

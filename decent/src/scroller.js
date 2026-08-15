@@ -86,6 +86,25 @@ module.exports = function Scroller (scroller, content, render, top, sticky, cb) 
     else setTimeout(retry, 100)
   })
 
+  // A column with no height when the stream starts — a background tab, a cold
+  // PWA start, a display:none ancestor — measures as nowhere near the loading
+  // edge, so the stream pauses and can never resume: only a scroll event
+  // resumes it, and a column with nothing to scroll never fires one. Re-check
+  // once the box actually has a size. scroll() resumes the stream and the drain
+  // below carries on filling from there.
+  if (typeof ResizeObserver !== 'undefined') {
+    var sizeWatch = new ResizeObserver(function () {
+      if (!scroller.clientHeight) return
+      scroll()
+      // Overflowing again: ordinary scrolling drives the stream from here.
+      if (sizeWatch && scroller.scrollHeight > scroller.clientHeight) {
+        sizeWatch.disconnect()
+        sizeWatch = null
+      }
+    })
+    sizeWatch.observe(scroller)
+  }
+
   return pull(
     pause,
     pull.drain(function (e) {
