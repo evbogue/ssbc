@@ -692,7 +692,7 @@ html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  padding: 16px 0;
+  padding: 16px 18px;
 }
 .theme-preview {
   display: flex;
@@ -734,8 +734,7 @@ html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 12px;
-  margin-top: 4px;
+  padding: 14px 18px 16px;
   border-top: 1px solid var(--sky-border);
 }
 .themes-section__label { font-weight: 600; color: var(--sky-text); }
@@ -752,6 +751,39 @@ html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover
   cursor: pointer;
 }
 .qr-connect-close:hover { background: var(--sky-hover); color: var(--sky-text); }
+
+@media (max-width: 600px) {
+  .themes-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .theme-preview {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 104px;
+    align-items: stretch;
+  }
+
+  .theme-preview__viewport {
+    height: 96px;
+  }
+
+  .theme-preview__frame {
+    transform: scale(0.16);
+  }
+
+  .theme-preview__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid var(--sky-border);
+  }
+
+  .themes-section {
+    padding: 12px 14px 14px;
+  }
+}
 
 .navbar-avatar img {
   flex: 0 0 auto;
