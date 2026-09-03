@@ -593,6 +593,99 @@ html[data-skin="ssbski"] .settings-btn--rail {
 }
 html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover); color: var(--sky-text); }
 
+/* ── Shared settings/connect modal shell ────────────────────────────────── */
+.qr-connect-modal {
+  position: relative;
+  z-index: 1;
+  width: min(540px, 100%);
+  max-height: calc(100vh - 104px);
+  margin: 0 auto;
+  overflow: auto;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface);
+  color: var(--sky-text);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+}
+
+.qr-connect-header,
+.qr-connect-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.qr-connect-header {
+  border-bottom: 1px solid var(--sky-border);
+}
+
+.qr-connect-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--sky-border);
+}
+
+.qr-connect-title {
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+
+.qr-connect-subtitle {
+  color: var(--sky-muted);
+  font-size: 0.9rem;
+}
+
+.qr-connect-body {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.qr-connect-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px 0;
+}
+
+.qr-connect-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  gap: 7px;
+  border: 1px solid var(--sky-border);
+  border-radius: 999px;
+  background: var(--sky-surface);
+  color: var(--sky-muted);
+  font: inherit;
+  font-weight: 800;
+}
+
+.qr-connect-tab:hover,
+.qr-connect-tab:focus-visible,
+.qr-connect-tab--active {
+  border-color: var(--sky-blue);
+  background: var(--sky-blue-soft);
+  color: var(--sky-blue);
+  outline: none;
+}
+
+.qr-connect-tab .material-symbols-outlined {
+  font-size: 1.12rem;
+}
+
+.qr-connect-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--sky-border);
+  border-radius: 8px;
+  background: var(--sky-surface-soft);
+}
+
 /* ── Themes page (gear → modal) ─────────────────────────────────────────── */
 .themes-modal { width: min(760px, 94vw); }
 .themes-grid {
