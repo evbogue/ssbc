@@ -1,5 +1,5 @@
 'use strict'
-// Pure helpers for ssbpro portable "Connect" payloads.
+// Pure helpers for Decent portable "Connect" payloads.
 //
 // A connect payload is a small JSON object describing an SSB identity, encoded
 // as base64url and carried in a `#connect/<payload>` route or QR code. It lets
@@ -11,7 +11,8 @@
 // in plain node. The route/UI handler lives in connect-view.js.
 var ssbRef = require('ssb-ref')
 
-var CONNECT_TYPE = 'ssbpro-connect'
+var CONNECT_TYPE = 'decent-connect'
+var LEGACY_CONNECT_TYPE = 'ssbpro-connect'
 var CONNECT_VERSION = 1
 
 function toBase64url (str) {
@@ -30,7 +31,7 @@ function fromBase64url (b64u) {
 function validateConnectPayload (payload) {
   if (!payload || typeof payload !== 'object') return false
   if (payload.v !== CONNECT_VERSION) return false
-  if (payload.type !== CONNECT_TYPE) return false
+  if (payload.type !== CONNECT_TYPE && payload.type !== LEGACY_CONNECT_TYPE) return false
   if (typeof payload.feed !== 'string' || !ssbRef.isFeed(payload.feed)) return false
   // Optional fields, when present, must be strings.
   if (payload.name != null && typeof payload.name !== 'string') return false
@@ -97,6 +98,7 @@ function connectRouteFromText (text) {
 
 module.exports = {
   CONNECT_TYPE: CONNECT_TYPE,
+  LEGACY_CONNECT_TYPE: LEGACY_CONNECT_TYPE,
   CONNECT_VERSION: CONNECT_VERSION,
   buildConnectPayload: buildConnectPayload,
   validateConnectPayload: validateConnectPayload,

@@ -566,10 +566,10 @@ button { border-radius: 999px; }
  * reveals only the pieces its layout uses, so switching skin is a pure-CSS swap
  * with no DOM relocation. Default here is ssbski's rail: the navbar rail profile
  * shows (via .navbar-avatar above) while the left stack and topbar actions are
- * hidden. The topbar skins (ssbpro/decent2) override .ssbpro-left-stack /
+ * hidden. The topbar skins (ssbpro/decent2) override .skin-left-stack /
  * .topbar-actions in their own sheets and hide the rail profile via the rule
  * below. */
-html[data-skin="ssbski"] .ssbpro-left-stack,
+html[data-skin="ssbski"] .skin-left-stack,
 html[data-skin="ssbski"] .topbar-actions { display: none; }
 html:not([data-skin="ssbski"]) .navbar-avatar--rail { display: none; }
 
@@ -3579,7 +3579,7 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 .profile-action-btn.btn-primary:hover { background: var(--sky-blue-hover); }
 
 /* Relation / profile-hints / activity panels. avatar-profile.js renders these
- * for every network skin (its isSsbproSkin() check is really skin.isNetwork()),
+ * for every network skin,
  * but the styling used to live in ssbpro-style.css only — so on ssbski and
  * decent2 they rendered as unstyled native buttons: light grey pills on a dark
  * page. They are entirely token-driven, so they belong here and pick up each

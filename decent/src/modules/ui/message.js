@@ -46,7 +46,7 @@ function isRenderableMessage (msg) {
 exports.create = function (api) {
   // Feed-card rendering (author key, reaction-pill placement, tap-to-thread) is
   // shared by every modern skin; legacy Decent keeps the classic message row.
-  function isSsbski () {
+  function isNetworkSkin () {
     return require('../../skin').isNetwork()
   }
 
@@ -76,11 +76,14 @@ exports.create = function (api) {
     document.body.removeChild(input)
   }
 
-  var savedKey = 'ssbski:saved-posts'
+  var savedKey = 'decent:saved-posts'
+  var legacySavedKey = 'ssbski:saved-posts'
   function getSavedPosts () {
     if (typeof window === 'undefined' || !window.localStorage) return {}
     try {
-      return JSON.parse(window.localStorage.getItem(savedKey) || '{}') || {}
+      var saved = window.localStorage.getItem(savedKey)
+      if (!saved) saved = window.localStorage.getItem(legacySavedKey)
+      return JSON.parse(saved || '{}') || {}
     } catch (err) {
       return {}
     }
@@ -92,6 +95,7 @@ exports.create = function (api) {
     if (saved) savedPosts[key] = true
     else delete savedPosts[key]
     window.localStorage.setItem(savedKey, JSON.stringify(savedPosts))
+    window.localStorage.removeItem(legacySavedKey)
   }
 
   function makeIconButton (icon, title, className) {
@@ -473,7 +477,7 @@ exports.create = function (api) {
     var msgEl = h('div.message.message-card',
       h('div.title.row',
         h('div.avatar', api.avatar(msg.value.author, 'thumbnail')),
-        isSsbski()
+        isNetworkSkin()
           ? h('span.message-author-key', {title: msg.value.author}, shortFeedId(msg.value.author))
           : null,
         h('div.message_meta.row', api.message_meta(msg))
@@ -486,9 +490,9 @@ exports.create = function (api) {
         // card width instead of being trapped in .actions' max-width column.
         // Base Decent keeps the pill inside .actions (right-aligned) as before.
         h('div.actions', replyLink, api.message_action(msg),
-          isSsbski() ? null : api.message_reactions(msg)),
-        isSsbski() ? makeExtraActions(msg, content) : null,
-        isSsbski() ? api.message_reactions(msg) : null
+          isNetworkSkin() ? null : api.message_reactions(msg)),
+        isNetworkSkin() ? makeExtraActions(msg, content) : null,
+        isNetworkSkin() ? api.message_reactions(msg) : null
       ),
       backlinks,
       {onkeydown: function (ev) {
@@ -524,8 +528,8 @@ exports.create = function (api) {
     // never fights a real interaction, and a no-op if already reacted.
     wireDoubleTapHeart(msgEl, content)
 
-    // ── Click-anywhere-on-card → thread (ssbski feed cards only) ───────────
-    if (!full && isSsbski()) wireCardClick(msgEl, msg)
+    // ── Click-anywhere-on-card → thread (modern feed cards only) ───────────
+    if (!full && isNetworkSkin()) wireCardClick(msgEl, msg)
 
     // ── Collapse long posts by default (Twitter-style) ─────────────────────
     // Skipped on the dedicated message page (full), where we show everything.

@@ -342,7 +342,7 @@ body {
   line-height: 1.1;
 }
 
-.ssbpro-left-stack {
+.skin-left-stack {
   position: fixed;
   top: calc(var(--pro-topbar-height) + 12px);
   left: max(16px, calc((100vw - var(--pro-page-width)) / 2));
@@ -2014,7 +2014,7 @@ body {
     width: var(--pro-left-width);
   }
 
-  .ssbpro-left-stack .compose-trigger {
+  .skin-left-stack .compose-trigger {
     left: auto;
     width: 100%;
   }
@@ -2096,7 +2096,7 @@ body {
   }
 
   .navbar-avatar,
-  .ssbpro-left-stack,
+  .skin-left-stack,
   .navbar .pull-right {
     display: none;
   }

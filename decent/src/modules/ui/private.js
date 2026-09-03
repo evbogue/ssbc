@@ -40,7 +40,7 @@ exports.create = function (api) {
 
   // The DM inbox + thread view is shared by every modern skin; legacy Decent
   // keeps the flat private stream with no thread route.
-  function isSsbskiSkin () {
+  function isNetworkSkin () {
     return require('../../skin').isNetwork()
   }
 
@@ -111,9 +111,14 @@ exports.create = function (api) {
   }
 
   // ── unread tracking (per-conversation last-seen timestamp) ────────────────
-  var SEEN_KEY = 'ssbski:dm-seen'
+  var SEEN_KEY = 'decent:dm-seen'
+  var LEGACY_SEEN_KEY = 'ssbski:dm-seen'
   function getSeen () {
-    try { return JSON.parse(window.localStorage.getItem(SEEN_KEY) || '{}') || {} }
+    try {
+      var seen = window.localStorage.getItem(SEEN_KEY)
+      if (!seen) seen = window.localStorage.getItem(LEGACY_SEEN_KEY)
+      return JSON.parse(seen || '{}') || {}
+    }
     catch (e) { return {} }
   }
   function markSeen (cid, ts) {
@@ -122,6 +127,7 @@ exports.create = function (api) {
       if (!seen[cid] || ts > seen[cid]) {
         seen[cid] = ts
         window.localStorage.setItem(SEEN_KEY, JSON.stringify(seen))
+        window.localStorage.removeItem(LEGACY_SEEN_KEY)
       }
     } catch (e) {}
   }
@@ -542,9 +548,9 @@ exports.create = function (api) {
 
     screen_view: function (path) {
       if (path === 'private') {
-        return isSsbskiSkin() ? renderInbox() : renderLegacy()
+        return isNetworkSkin() ? renderInbox() : renderLegacy()
       }
-      if (path.indexOf('dm/') === 0 && isSsbskiSkin()) {
+      if (path.indexOf('dm/') === 0 && isNetworkSkin()) {
         return renderThread(path)
       }
       return

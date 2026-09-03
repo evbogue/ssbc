@@ -77,8 +77,8 @@ exports.create = function (api) {
     })
   }
 
-  // ssbski/ssbpro render a full DM inbox + thread view (route '#dm/<feed>');
-  // Decent only has the legacy flat private stream and no thread route.
+  // Modern skins render a full DM inbox + thread view (route '#dm/<feed>');
+  // Legacy Decent only has the flat private stream and no thread route.
   function hasThreadView () {
     return require('../../skin').isNetwork()
   }

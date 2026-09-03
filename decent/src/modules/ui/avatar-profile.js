@@ -27,7 +27,7 @@ exports.create = function (api) {
   // The enhanced profile (relation label, profile hints, activity summary,
   // Improve-bio) is shared by every modern skin; legacy Decent keeps the basic
   // profile card.
-  function isSsbproSkin () {
+  function isNetworkSkin () {
     return require('../../skin').isNetwork()
   }
 
@@ -497,7 +497,7 @@ exports.create = function (api) {
     }
 
     function renderProfileQuality () {
-      if (!isSsbproSkin() || !isSelf) return
+      if (!isNetworkSkin() || !isSelf) return
       var needs = profileNeeds()
       profileQualityEl.innerHTML = ''
       if (!needs.length) {
@@ -523,7 +523,7 @@ exports.create = function (api) {
     }
 
     function renderRelation (youFollow, followsYou) {
-      if (!isSsbproSkin() || isSelf) return
+      if (!isNetworkSkin() || isSelf) return
       var label = youFollow && followsYou ? 'Mutual follow'
         : youFollow ? 'You follow this profile'
         : followsYou ? 'This profile follows you'
@@ -545,7 +545,7 @@ exports.create = function (api) {
     }
 
     function renderActivity (summary) {
-      if (!isSsbproSkin()) return
+      if (!isNetworkSkin()) return
       activityEl.innerHTML = ''
       var rows = []
       if (summary.intro) rows.push({
@@ -680,7 +680,7 @@ exports.create = function (api) {
     if (isSelf) {
       editBtn = h('button.btn.profile-edit-btn', {type: 'button', title: 'Edit your name, picture, and bio', onclick: enterEdit},
         'Edit profile')
-      if (isSsbproSkin()) {
+      if (isNetworkSkin()) {
         improveBtn = h('button.btn.btn-primary.profile-improve-btn', {
           type: 'button',
           title: 'Improve your public bio',
@@ -884,7 +884,7 @@ exports.create = function (api) {
       })
     )
 
-    if (isSsbproSkin() && !isSelf) {
+    if (isNetworkSkin() && !isSelf) {
       api.follower_of(self_id, id, function (err, youFollow) {
         if (err) return
         api.follower_of(id, self_id, function (err2, followsYou) {
@@ -904,7 +904,7 @@ exports.create = function (api) {
       followersCountEl.textContent = String(followersData.length)
     }))
 
-    // Post count and ssbpro activity summary — all derived from classic posts.
+    // Post count and profile activity summary — all derived from classic posts.
     var postCount = 0
     var activitySummary = {intro: '', channels: [], mediaCount: 0}
     var channelCounts = {}
@@ -914,7 +914,7 @@ exports.create = function (api) {
         var content = msg && msg.value && msg.value.content
         if (content && typeof content === 'object' && content.type === 'post') {
           postCount++
-          if (isSsbproSkin()) {
+          if (isNetworkSkin()) {
             if (content.channel) channelCounts[content.channel] = (channelCounts[content.channel] || 0) + 1
             if (!activitySummary.intro && content.channel === 'intro')
               activitySummary.intro = content.text || ''
@@ -930,7 +930,7 @@ exports.create = function (api) {
         }
       }, function () {
         postCountEl.textContent = postCount >= 500 ? '500+' : String(postCount)
-        if (isSsbproSkin()) {
+        if (isNetworkSkin()) {
           activitySummary.channels = Object.keys(channelCounts).sort(function (a, b) {
             return channelCounts[b] - channelCounts[a]
           })

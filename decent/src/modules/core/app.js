@@ -93,7 +93,7 @@ module.exports = {
         }
         container.innerHTML = ''
         container.appendChild(view)
-        syncSsbproLeftStack()
+        syncSkinLeftStack()
         setActive(route)
         setTitle(route, view)
         renderFeedHeader(route, view)
@@ -173,7 +173,7 @@ module.exports = {
             )
           )
         )
-        var leftStack = h('div.ssbpro-left-stack',
+        var leftStack = h('div.skin-left-stack',
           h('a.navbar-avatar', {href: '#'},
             h('span.avatar.avatar--thumbnail', {style: {
               display: 'inline-block',
@@ -369,7 +369,7 @@ module.exports = {
             h('button.btn.btn-primary', {type: 'button', onclick: function () {
               var a = document.createElement('a')
               a.href = canvas.toDataURL('image/png')
-              a.download = 'ssbpro-profile-qr.png'
+              a.download = 'decent-profile-qr.png'
               a.click()
             }}, 'Download QR')
           )
@@ -509,7 +509,7 @@ module.exports = {
           function handleResult (text) {
             var route = qrConnect.connectRouteFromText(text)
             if (!route) {
-              status.textContent = 'That QR code is not an ssbpro profile.'
+              status.textContent = 'That QR code is not a Decent profile.'
               return false
             }
             closeModal()
@@ -675,7 +675,7 @@ module.exports = {
         if (name === currentSkin()) { if (persist) skin.set(name); return }
         skin.set(name, {persist: persist !== false})
         updateBranding(name)
-        syncSsbproLeftStack()
+        syncSkinLeftStack()
       }
 
       function makeSettingsButton (variant) {
@@ -1041,7 +1041,7 @@ module.exports = {
         return panel
       }
 
-      var ssbproLeftStack = isNetworkSkin ? h('div.ssbpro-left-stack', makeProfileLink()) : null
+      var skinLeftStack = isNetworkSkin ? h('div.skin-left-stack', makeProfileLink()) : null
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
@@ -1088,15 +1088,15 @@ module.exports = {
         content.appendChild(feedHost)
         renderTarget = feedHost
       }
-      var screen = h('div.screen.column', header, ssbproLeftStack, content)
+      var screen = h('div.screen.column', header, skinLeftStack, content)
 
       // The left stack is only on screen for a topbar skin above its own 980px
       // breakpoint; that is the one place the compose button renders inline. Rail
       // skins and every narrow viewport want it back in the feed host, where CSS
       // floats it as a fixed FAB — left inside the hidden stack it disappears.
-      function syncSsbproLeftStack () {
-        if (!ssbproLeftStack) return
-        var existing = ssbproLeftStack.querySelector('.compose-trigger')
+      function syncSkinLeftStack () {
+        if (!skinLeftStack) return
+        var existing = skinLeftStack.querySelector('.compose-trigger')
         if (!currentIsTopbar() || window.innerWidth <= 980) {
           if (existing && renderTarget) renderTarget.appendChild(existing)
           return
@@ -1105,8 +1105,8 @@ module.exports = {
         // drop whatever the previous screen left behind.
         var trigger = renderTarget && renderTarget.querySelector('.compose-trigger')
         if (!trigger) return
-        if (existing) ssbproLeftStack.removeChild(existing)
-        ssbproLeftStack.appendChild(trigger)
+        if (existing) skinLeftStack.removeChild(existing)
+        skinLeftStack.appendChild(trigger)
       }
 
       // Placement depends on the viewport, and renderRoute alone only samples it
@@ -1114,7 +1114,7 @@ module.exports = {
       // background tab or a cold PWA start hasn't laid out yet), which parked the
       // button inline under the feed tabs until the next navigation — so
       // re-evaluate whenever the viewport actually changes.
-      window.addEventListener('resize', syncSsbproLeftStack)
+      window.addEventListener('resize', syncSkinLeftStack)
 
       function setActive (route) {
         var items = nav.querySelectorAll('li[data-route]')

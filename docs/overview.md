@@ -53,7 +53,7 @@ The important practical consequence is that this repo should be documented in te
 
 The frontend lives in `decent/` and ships as one browser app with multiple served skins:
 
-- **Decent** — the classic client, served by `plugins/decent-ui.js` (default `http://127.0.0.1:8888/`).
+- **Decent** — the modern multi-skin client, served by `plugins/decent-ui.js` (normally `http://127.0.0.1:8989/`).
 - **ssbski** — a modern rail skin served by `plugins/ssbski-ui.js` (default `http://127.0.0.1:8990/`).
 - **ssbpro** — a professional-network skin served by `plugins/ssbpro-ui.js` (default `http://127.0.0.1:8991/`).
 - **decent2** — a modernized Decent skin served by `plugins/decent2-ui.js` (default `http://127.0.0.1:8992/`).

@@ -428,7 +428,7 @@ body {
 .right-brand { display: none; }
 
 /* ---- left column: identity well + compose ---- */
-.ssbpro-left-stack {
+.skin-left-stack {
   position: fixed;
   top: calc(var(--d2-topbar-h) + 14px);
   left: max(16px, calc((100vw - var(--d2-page-width)) / 2));
@@ -644,7 +644,7 @@ body {
 }
 
 @media (max-width: 880px) {
-  .ssbpro-left-stack { display: none; }
+  .skin-left-stack { display: none; }
   .screen__content,
   .screen__content.column {
     margin-left: 16px;

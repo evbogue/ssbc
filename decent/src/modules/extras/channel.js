@@ -23,7 +23,7 @@ exports.create = function (api) {
 
   // Channel browsing (the Channels page + per-channel header) is shared by every
   // modern skin; legacy Decent keeps its plain channel stream.
-  function isSsbproSkin () {
+  function isNetworkSkin () {
     return require('../../skin').isNetwork()
   }
 
@@ -128,7 +128,7 @@ exports.create = function (api) {
         return h('a', {href: channelHref(chan)}, '#'+chan)
     },
     screen_view: function (path) {
-      if (path === 'groups' && isSsbproSkin()) {
+      if (path === 'groups' && isNetworkSkin()) {
         var groupsWrap = h('div.groups-dashboard')
         var loading = h('div.groups-empty', 'Loading channels...')
         groupsWrap.appendChild(loading)
@@ -188,7 +188,7 @@ exports.create = function (api) {
         var div = h('div.column.scroller',
           {style: {'overflow':'auto'}},
           h('div.scroller__wrapper',
-            isSsbproSkin() ? groupHeader(channel, renderComposer) : null,
+            isNetworkSkin() ? groupHeader(channel, renderComposer) : null,
             composerSlot,
             content
           )

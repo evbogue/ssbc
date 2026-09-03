@@ -112,10 +112,10 @@ It also attaches websocket handling to the HTTP server so the frontend can conne
 The related UI plugins all delegate to `lib/ui-server.js` and serve the same frontend bundle
 with different default skins:
 
-- `plugins/decent-ui.js` serves legacy Decent on port `8888` with `style.css`.
-- `plugins/ssbski-ui.js` serves ssbski on port `8990` with `ssbski-style.css`.
-- `plugins/ssbpro-ui.js` serves ssbpro on port `8991` with `ssbpro-style.css`.
-- `plugins/decent2-ui.js` serves decent2 on port `8992` with `decent2-style.css`.
+- `plugins/decent-ui.js` serves Decent on the shared web/ws port, defaulting to `decent2-style.css`.
+- `plugins/ssbski-ui.js` serves an ssbski skin alias on port `8990`.
+- `plugins/ssbpro-ui.js` serves an ssbpro skin alias on port `8991`.
+- `plugins/decent2-ui.js` serves a direct decent2 skin alias on port `8992`.
 
 The server injects each entry point's default as `<html data-skin="...">`. The modern
 skins (`decent2`, `ssbpro`, and `ssbski`) can also be switched live in the browser by

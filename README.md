@@ -133,30 +133,32 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 
 ---
 
-## Web UI: Decent, ssbski, and ssbpro
+## Web UI: Decent and Its Skins
 
 ![A Decent profile page with avatar, bio, and feed](docs/img/decent.png)
 
-The browser UI ships in three skins, all built from `decent/`:
+The browser UI is Decent: one shared app built from `decent/`, talking to one local SSB
+node. It ships with three live-switchable modern skins:
 
-- **Decent** — the classic Patchbay-derived client, served by `plugins/decent-ui.js`.
-  Decent and the WebSocket transport share a single port — defaulting to `8989`.
-  Public instance: [decent.evbogue.com](https://decent.evbogue.com/).
-- **ssbski** — a Bluesky-style skin served by `plugins/ssbski-ui.js` on its own port
-  (default `8990`), with Discover/Following feed tabs, a trending sidebar, and a sticky
+- **decent2** — the default Decent skin, a modernized take on the classic client.
+- **ssbski** — a Bluesky-style skin alias served by `plugins/ssbski-ui.js` on its own port
+  (default `8990`), with Public/Friends feed tabs, a trending sidebar, and a sticky
   centre-column header. Public instance: [ssbski.evbogue.com](https://ssbski.evbogue.com/).
-- **ssbpro** — a professional-network skin served by `plugins/ssbpro-ui.js` on its own
+- **ssbpro** — a professional-network skin alias served by `plugins/ssbpro-ui.js` on its own
   port (default `8991`), with Feed/Network tabs, profile-forward cards, and a right
   discovery column.
 
+The main Decent entry point is served by `plugins/decent-ui.js`, defaults to `decent2`,
+and is normally available at `http://127.0.0.1:8989/`. Public instance:
+[decent.evbogue.com](https://decent.evbogue.com/).
+
 ![The ssbski skin: Discover/Following tabs and an Active people sidebar](docs/img/ssbski.png)
 
-All skins are the **same JavaScript bundle** talking to the **same local SSB node** — only
-the stylesheet differs (`style.css` for Decent, `ssbski-style.css` for ssbski,
-`ssbpro-style.css` for ssbpro). When you run `npm start`, all are served at once: open
-`http://127.0.0.1:8989/` for Decent, `http://127.0.0.1:8990/` for ssbski, or
-`http://127.0.0.1:8991/` for ssbpro. Pick whichever interface you prefer; they read and
-write the same feed.
+All modern skins are the **same JavaScript bundle** talking to the **same local SSB node**.
+Only the stylesheet/default skin differs (`decent2-style.css`, `ssbski-style.css`, or
+`ssbpro-style.css`), and the app can switch among them live from Themes. When you run
+`npm start`, open `http://127.0.0.1:8989/` for Decent; the old skin-specific ports remain
+as compatibility aliases.
 
 ### Rebuilding the frontend
 
@@ -168,8 +170,9 @@ npm run build:web
 
 This rebuilds the shared JS bundle and all stylesheets in one step.
 
-Build output: `decent/build/index.html`, `decent/build/style.css`,
-`decent/build/ssbski-style.css`, `decent/build/ssbpro-style.css`
+Build output: `decent/build/index.html`, `decent/build/base.css`,
+`decent/build/decent2-style.css`, `decent/build/ssbski-style.css`,
+`decent/build/ssbpro-style.css`, plus the historical `decent/build/style.css`.
 
 ### Deploying to a public node
 

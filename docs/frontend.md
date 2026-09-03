@@ -1,22 +1,22 @@
 # Frontend
 
 This document describes the current frontend in this repository, which ships as one shared
-browser app with several served entry points.
+browser app with several skin defaults.
 
 ## What Decent, ssbski, ssbpro, and decent2 are
 
-Decent is the browser UI for this repo’s local SSB node. It is served by
-`plugins/decent-ui.js` and, by default, is available at:
+Decent is the browser UI for this repo's local SSB node. It is served by
+`plugins/decent-ui.js`, defaults to the modern `decent2` skin, and is available at:
 
-- `http://127.0.0.1:8888/`
+- `http://127.0.0.1:8989/`
 
-ssbski is a modern skin of the same UI with a rail layout, a trending sidebar, and a
+ssbski is a modern skin alias of the same UI with a rail layout, a trending sidebar, and a
 sticky centre-column header. It is served by `plugins/ssbski-ui.js` and, by default, is
 available at:
 
 - `http://127.0.0.1:8990/`
 
-ssbpro is a professional-network skin of the same UI, with denser post cards,
+ssbpro is a professional-network skin alias of the same UI, with denser post cards,
 profile-forward surfaces, and a right discovery column. It is served by
 `plugins/ssbpro-ui.js` and, by default, is available at:
 
@@ -27,9 +27,10 @@ default, is available at:
 
 - `http://127.0.0.1:8992/`
 
-All four entry points are **the same JavaScript bundle** talking to **the same local SSB
-node**. The legacy Decent entry point uses `style.css`; the modern live-switchable skins
-use `decent2-style.css`, `ssbpro-style.css`, or `ssbski-style.css`. `lib/ui-server.js`
+All served entry points are **the same JavaScript bundle** talking to **the same local SSB
+node**. The modern live-switchable skins use `decent2-style.css`, `ssbpro-style.css`, or
+`ssbski-style.css`; the old `style.css` remains in source as the historical single-column
+stylesheet, but it is no longer Decent's default app surface. `lib/ui-server.js`
 injects `<html data-skin="...">` for the entry point's default skin, and
 `decent/src/skin.js` lets the app persist and live-switch among `decent2`, `ssbpro`, and
 `ssbski`. The public instances on the network are
@@ -58,10 +59,10 @@ web UI will serve.
 
 The current build flow browserifies the frontend entrypoint and generates the served
 `index.html` and stylesheet assets. Because all entry points share one JS bundle and differ
-only in CSS/default skin, this single command builds every skin — it emits `style.css` for
-legacy Decent plus `base.css`, `decent2-style.css`, `ssbpro-style.css`, and
+only in CSS/default skin, this single command builds every skin — it emits `base.css`,
+`decent2-style.css`, `ssbpro-style.css`, and
 `ssbski-style.css` for the modern skins. Always rebuild after any frontend or stylesheet
-change; never leave one skin stale.
+change; it also copies the historical `style.css`.
 
 ## Runtime model
 
@@ -91,7 +92,7 @@ The important frontend areas are:
 - `decent/src/modules/extras/`
   - optional/extra modules
 - `decent/src/style.css`
-  - Decent stylesheet source
+  - historical single-column stylesheet source
 - `decent/src/ssbski-style.css`
   - ssbski stylesheet source
 - `decent/src/ssbpro-style.css`
@@ -115,8 +116,8 @@ This pattern is important to the frontend architecture and should be preserved i
 ## HTTP integration
 
 The frontend is tightly integrated with the HTTP servers in `plugins/decent-ui.js`,
-`plugins/ssbski-ui.js`, `plugins/ssbpro-ui.js`, and `plugins/decent2-ui.js`. Each delegates
-to `lib/ui-server.js`.
+`plugins/ssbski-ui.js`, `plugins/ssbpro-ui.js`, and `plugins/decent2-ui.js`. Each is a
+thin alias built by `plugins/ui-skin.js` and delegates to `lib/ui-server.js`.
 
 That plugin serves:
 - the HTML and assets for its skin

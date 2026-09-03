@@ -68,8 +68,12 @@ function checkSkin(t, stylesheetName, appName, skin, themeColor) {
   })
 }
 
-test('Decent serves its installable PWA shell', (t) => {
-  checkSkin(t, 'style.css', 'Decent', 'decent', '#243447')
+test('Decent serves the modern installable PWA shell', (t) => {
+  checkSkin(t, 'decent2-style.css', 'Decent', 'decent2', '#0088cc')
+})
+
+test('legacy Decent stylesheet remains serveable as an archive surface', (t) => {
+  checkSkin(t, 'style.css', 'Decent Classic', 'decent', '#243447')
 })
 
 test('ssbski serves its installable PWA shell', (t) => {
