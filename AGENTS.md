@@ -42,9 +42,15 @@ session unless Ev says otherwise in the current conversation.
 
 1. **Pull before starting.** `git pull` on the current branch.  Ev frequently commits between
    sessions; assume the tree has moved.
-2. **Work in discrete, shippable chunks.** A chunk = one coherent change that leaves the
+2. **Start sbot and keep it running.** For normal repo work, start the local server with
+   `node bin.js start` after pulling if it is not already running, and leave it running at
+   the end of the session unless Ev explicitly asks you to stop it.  This keeps Decent,
+   the skin aliases, WebSocket access, blob routes, docs, and the `ssb` git remote live.
+   If a test needs isolated ports or a burner sbot, run that separately; do not use the
+   live default server for write-path experiments.
+3. **Work in discrete, shippable chunks.** A chunk = one coherent change that leaves the
    branch in a working state.  Don't mix unrelated changes in one chunk.
-3. **Build after every change — then check that it built.** Run `npm run build:web` for
+4. **Build after every change — then check that it built.** Run `npm run build:web` for
    frontend edits; it rebuilds the shared JS bundle plus every stylesheet (`base.css`,
    the three skin files, and the legacy `style.css`).  **A clean exit is not a working
    build.**  The script pipes browserify into indexhtmlify, so a bundler error still exits
@@ -52,13 +58,13 @@ session unless Ev says otherwise in the current conversation.
    Confirm the file is ~3.2 MB (`ls -la decent/build/index.html`), then grep the built
    output for a string from your change.  A broken build is never an acceptable stopping
    point, and a build that *looks* clean has taken the public node down.
-4. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
+5. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
    UI, verify the change in the browser before declaring done — at 375px as well as desktop,
    on every network skin (see "Verify at phone width, on every skin").
-5. **Commit every chunk.** Never leave modified files sitting in the working tree at the end
+6. **Commit every chunk.** Never leave modified files sitting in the working tree at the end
    of a task.  If the change is done, it gets committed.  No "I'll commit these together
    later" — commit now.
-6. **Push both remotes after every commit.** See "Pushing" below.  Pushing is part of
+7. **Push both remotes after every commit.** See "Pushing" below.  Pushing is part of
    committing, not a separate optional step.
 
 ### Commit messages
@@ -107,7 +113,8 @@ Rules:
 - If `ssb` is not configured, push to `origin` only and **mention it** in your update —
   do not silently skip.
 - If `ssb` is configured but push fails (e.g. sbot not running), **surface the error**
-  rather than swallowing it.  Don't move on as if the push succeeded.
+  rather than swallowing it.  Start sbot if needed, retry the `ssb` push, and then leave
+  sbot running.
 - Never `--force` push unless Ev explicitly asks.  Never force push to `main`.
 
 ### Style matching
@@ -197,18 +204,36 @@ both sides and will notice if either model is coasting.
 | `decent/build/` | Generated — do not edit by hand |
 | `decent/src/base.css` | Shared component layer for all network skins; tokens only, no palette |
 | `decent/src/{ssbski,ssbpro,decent2}-style.css` | Thin skins — `@import` `base.css`, supply a `:root` palette + layout |
-| `decent/src/style.css` | Legacy `decent` skin only; does **not** import `base.css` |
+| `decent/src/style.css` | Historical single-column stylesheet only; does **not** import `base.css` |
 | `test/` | Node.js tape tests |
 
 ## How to run
 
 ```bash
-node bin.js start          # starts SSB server + Decent UI at 127.0.0.1:8888
-                           # and ssbski UI at 127.0.0.1:8990
-npm run build:web          # rebuilds decent/build/ — both Decent and ssbski assets
+node bin.js start          # starts sbot + Decent at 127.0.0.1:8989
+                           # plus skin aliases at 8990/8991/8992
+npm run build:web          # rebuilds decent/build/ — bundle + all stylesheets
 ```
 
 The server must be running before the browser app can connect.
+
+## Current Decent Skin Model
+
+Decent is now one modern browser app with three live-switchable skins:
+
+- `decent2` — the default Decent skin served by `plugins/decent-ui.js`.
+- `ssbski` — a Bluesky-style skin alias served by `plugins/ssbski-ui.js`.
+- `ssbpro` — a professional-network skin alias served by `plugins/ssbpro-ui.js`.
+
+All modern skins share one JavaScript bundle, one DOM/component vocabulary, and the shared
+structural stylesheet `decent/src/base.css`.  The skin files
+`decent/src/{decent2,ssbpro,ssbski}-style.css` import `base.css` first and then supply
+palette/layout identity.  `plugins/ui-skin.js` is the thin helper that builds the per-port
+skin aliases; the aliases preserve bookmarks/PWAs, but they are not separate app designs.
+
+The old `decent/src/style.css` is a historical single-column stylesheet.  Do not treat it
+as the default Decent app surface, and do not add new shared behavior to it unless Ev asks
+for explicit legacy support.
 
 ## Build, Test, and Development Commands
 
@@ -433,11 +458,11 @@ If a JS module renders something for **every** network skin, its styling belongs
 `base.css` using the `--sky-*` tokens.  Putting it in a single skin's stylesheet leaves the
 other skins rendering unstyled native controls — light grey buttons on a dark page.
 
-Check what actually gates the DOM before deciding where the CSS goes.  `isSsbproSkin()` in
-`avatar-profile.js` is literally `return require('../../skin').isNetwork()`, so the profile
-relation/hints/activity panels it guards render on all three skins; because the name reads
-as "is this ssbpro", their CSS sat in `ssbpro-style.css` and two skins showed them broken.
-Names in this area lie — read the implementation.
+Check what actually gates the DOM before deciding where the CSS goes.  Recent cleanup
+renamed the worst offenders (`isSsbproSkin`, `isSsbski`, `.ssbpro-left-stack`) to network
+skin / shared skin names, but stale comments or work-order docs may still describe old
+skin-specific behavior.  Read the implementation before assuming a feature belongs to one
+skin.
 
 ### Plugin system
 
@@ -562,7 +587,7 @@ live DOM for a known new string before asserting a change works.
 ## Testing with Playwright MCP
 
 ```
-mcp__playwright__browser_navigate  →  http://127.0.0.1:8888/
+mcp__playwright__browser_navigate  →  http://127.0.0.1:8989/
 ```
 
 Use `browser_file_upload` to test avatar/banner photo uploads.
@@ -578,6 +603,8 @@ sessions:
 
 - **Always pull before starting work.** The human developer pushes to the same feature branch
   between sessions.  New files or refactors may have landed since the last session.
+- **Keep sbot running.** If `node bin.js start` is not already running, start it near the
+  beginning of the session and leave it running.  Do not stop it after pushing to `ssb`.
 - **Read files you haven't seen before a pull introduces them** — don't assume you know what
   they do from the name alone.  `render-embedded-post.js` is a real example of a new shared
   helper that changed how both `repost.js` and `post.js` work.
@@ -594,6 +621,11 @@ sessions:
   success.  See "Rhythm of work" step 3.
 - **Match the file's existing style.** Decent frontend modules use `var`; server modules use
   `const`/`let`.  Don't introduce style inconsistencies as a side-effect of feature work.
+- **Session takeaway from the skin convergence:** the goal is one cohesive Decent app with
+  selectable skins, not several branded app forks.  Default Decent is the modern `decent2`
+  skin; `ssbski` and `ssbpro` are compatibility/default-skin aliases; shared behavior and
+  copy should use Decent/SSB language, with old `ssbpro-*` / `ssbski-*` storage or payload
+  names accepted only as compatibility reads.
 
 ## Token-efficiency tips
 
@@ -602,7 +634,8 @@ sessions:
 - `avatar-profile.js` — full profile card UI (edit form, banner, avatar crop, save).
 - `avatar-image.js` — live avatar img rendering and per-author registry.
 - `about.js` — `message_content` preview for `type:about` messages.
-- `decent-ui.js` (plugin) — HTTP server, blob endpoints, git routes.
+- `decent-ui.js` (plugin) — main Decent entry point, defaulting to the modern `decent2` skin.
+- `plugins/ui-skin.js` — shared helper for the per-port skin aliases.
 - `decent/src/base.css` — shared component CSS for all network skins; search for the class
   name here first. Per-skin palettes and overrides live in `{ssbski,ssbpro,decent2}-style.css`;
   `style.css` is the legacy `decent` skin only.
