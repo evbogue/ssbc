@@ -107,8 +107,7 @@ herd defense, and that benefit materializes only when the network is (a) large,
 
 ssbc is none of those. It is a small-world, invite-gated
 ([the invite plugin](../plugins/invite/index.js)), single-maintainer-centric
-deployment ([decent.evbogue.com](https://decent.evbogue.com/),
-[ssbski.evbogue.com](https://ssbski.evbogue.com/)). Its realistic threat is not a
+deployment ([ssb.evbogue.com](https://ssb.evbogue.com/)). Its realistic threat is not a
 spam flood; it is interpersonal exclusion dynamics among a handful of central
 nodes — which is exactly the failure mode transitive blocking *worsens*. So for
 ssbc:

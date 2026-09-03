@@ -33,9 +33,8 @@ node**. The modern live-switchable skins use `decent2-style.css`, `ssbpro-style.
 stylesheet, but it is no longer Decent's default app surface. `lib/ui-server.js`
 injects `<html data-skin="...">` for the entry point's default skin, and
 `decent/src/skin.js` lets the app persist and live-switch among `decent2`, `ssbpro`, and
-`ssbski`. The public instances on the network are
-[decent.evbogue.com](https://decent.evbogue.com/) and
-[ssbski.evbogue.com](https://ssbski.evbogue.com/).
+`ssbski`. The public instance on the network is
+[ssb.evbogue.com](https://ssb.evbogue.com/).
 
 None is a separate web app backed by a generic REST API. They are browser clients built specifically around the local SSB server behavior exposed by this repo.
 

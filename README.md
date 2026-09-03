@@ -10,9 +10,8 @@ and originated Patchbay; Paul created Patchwork, the original SSB desktop client
 git-ssb; and Everett forked Patchbay into Decent in 2016. The project was abandoned in 2024.
 This is the continuation.
 
-Try it before installing — same node, same network, two different interfaces:
-[decent.evbogue.com](https://decent.evbogue.com/) (the classic Decent client) or
-[ssbski.evbogue.com](https://ssbski.evbogue.com/) (ssbski, a Bluesky-style skin).
+Try it before installing: [ssb.evbogue.com](https://ssb.evbogue.com/) is the public
+Decent node, with live-switchable skins in the browser.
 
 ![The Decent feed showing live git-over-SSB push activity](docs/img/feed.png)
 
@@ -101,7 +100,7 @@ node bin.js invite.create 1          # single-use invite
 node bin.js invite.accept "CODE"     # accept an invite from another pub
 ```
 
-`decent.evbogue.com` is one public node running on the network.
+`ssb.evbogue.com` is one public node running on the network.
 
 ---
 
@@ -143,14 +142,14 @@ node. It ships with three live-switchable modern skins:
 - **decent2** — the default Decent skin, a modernized take on the classic client.
 - **ssbski** — a Bluesky-style skin alias served by `plugins/ssbski-ui.js` on its own port
   (default `8990`), with Public/Friends feed tabs, a trending sidebar, and a sticky
-  centre-column header. Public instance: [ssbski.evbogue.com](https://ssbski.evbogue.com/).
+  centre-column header.
 - **ssbpro** — a professional-network skin alias served by `plugins/ssbpro-ui.js` on its own
   port (default `8991`), with Feed/Network tabs, profile-forward cards, and a right
   discovery column.
 
 The main Decent entry point is served by `plugins/decent-ui.js`, defaults to `decent2`,
 and is normally available at `http://127.0.0.1:8989/`. Public instance:
-[decent.evbogue.com](https://decent.evbogue.com/).
+[ssb.evbogue.com](https://ssb.evbogue.com/).
 
 ![The ssbski skin: Discover/Following tabs and an Active people sidebar](docs/img/ssbski.png)
 
@@ -212,7 +211,7 @@ Verify the live bundle picked up your change, e.g.:
 curl -s http://127.0.0.1:8989/ | grep -c 'some-string-from-your-change'
 ```
 
-### Adding a public hostname for a skin
+### Public hostnames
 
 TLS and routing on the node are handled by a small Deno reverse proxy in
 `/root/reverse-proxy`, run by `reverse-proxy.service`. It maps hostname → local
@@ -220,14 +219,17 @@ port from `domains.json`, and it loads **one** certificate:
 `/etc/letsencrypt/live/wiredove.net/`. A hostname needs an entry in both places —
 missing from `domains.json` it 404s, missing from the cert it fails TLS.
 
-DNS is already a wildcard `A` record, so any new subdomain resolves without
-touching Namecheap. Two steps, then a restart:
+The public SSB web app is consolidated at `ssb.evbogue.com`. Old SSB web hostnames such
+as `decent.evbogue.com`, `ssbski.evbogue.com`, `ssbpro.evbogue.com`, and
+`decent2.evbogue.com` redirect to `https://ssb.evbogue.com`; do not add new public
+hostnames for skins. DNS is already a wildcard `A` record, so non-SSB subdomains resolve
+without touching Namecheap. Two steps, then a restart:
 
 ```bash
 # 1. route it (back the file up first — the directory keeps .bak copies)
 cd /root/reverse-proxy
 cp domains.json domains.json.bak-$(date +%s)
-# add e.g.  "decent2.evbogue.com": 8992
+# add e.g.  "example.evbogue.com": 8123
 
 # 2. add it to the cert. --expand rewrites the SAN list, so pass EVERY existing
 #    name plus the new one, or the others drop off and break.
@@ -297,14 +299,14 @@ Or set it permanently in `~/.ssb/config`:
 
 ## Architecture
 
-`ssbc` is a SQLite-backed message store connected to a secret-stack RPC surface, with a WebSocket bridge for browser clients, a git-over-HTTP plugin, and the Decent and ssbski frontends served from the same node. The pieces are documented separately:
+`ssbc` is a SQLite-backed message store connected to a secret-stack RPC surface, with a WebSocket bridge for browser clients, a git-over-HTTP plugin, and Decent served from the same node. The pieces are documented separately:
 
 - [`docs/overview.md`](docs/overview.md) — what the pieces are
 - [`docs/architecture.md`](docs/architecture.md) — how they fit together
 - [`docs/api.md`](docs/api.md) — RPC surface and message shapes
 - [`docs/api-reference.md`](docs/api-reference.md) — generated reference of every built-in RPC method
 - [`docs/cli.md`](docs/cli.md) — full command reference
-- [`docs/frontend.md`](docs/frontend.md) — Decent and ssbski frontend internals
+- [`docs/frontend.md`](docs/frontend.md) — Decent frontend and skin internals
 - [`docs/docs-maintenance.md`](docs/docs-maintenance.md) — how the docs are organized, served, and kept accurate
 
 These current-behavior docs are also served by the running server at

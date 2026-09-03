@@ -61,9 +61,8 @@ The frontend lives in `decent/` and ships as one browser app with multiple serve
 All skins are the same JavaScript bundle pointed at the same local SSB node. The modern
 skins can be switched live from the Themes UI; the entry-point ports still provide useful
 defaults for bookmarks and installed PWAs. `npm run build:web` produces every stylesheet.
-The two public instances on the network are
-[decent.evbogue.com](https://decent.evbogue.com/) and
-[ssbski.evbogue.com](https://ssbski.evbogue.com/).
+The public instance on the network is
+[ssb.evbogue.com](https://ssb.evbogue.com/).
 
 The same HTTP server (per skin) also serves:
 - blob upload/download routes,

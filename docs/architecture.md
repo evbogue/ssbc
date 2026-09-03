@@ -119,9 +119,8 @@ with different default skins:
 
 The server injects each entry point's default as `<html data-skin="...">`. The modern
 skins (`decent2`, `ssbpro`, and `ssbski`) can also be switched live in the browser by
-updating that attribute and swapping the active stylesheet. The two public instances are
-[decent.evbogue.com](https://decent.evbogue.com/) and
-[ssbski.evbogue.com](https://ssbski.evbogue.com/).
+updating that attribute and swapping the active stylesheet. The public instance is
+[ssb.evbogue.com](https://ssb.evbogue.com/).
 
 ### Routing summary
 
