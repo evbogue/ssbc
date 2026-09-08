@@ -40,11 +40,11 @@ session unless Ev says otherwise in the current conversation.
 
 ### Rhythm of work
 
-1. **Pull before starting.** `git pull` on the current branch.  Ev frequently commits between
-   sessions; assume the tree has moved.
-2. **Start sbot and keep it running.** For normal repo work, start the local server with
-   `node bin.js start` after pulling if it is not already running, and leave it running at
-   the end of the session unless Ev explicitly asks you to stop it.  This keeps Decent,
+1. **Run preflight before starting.** `npm run agent:preflight` pulls the current branch with
+   `--ff-only`, checks the working tree and remotes, and starts sbot if port 8989 is not
+   already listening. Ev frequently commits between sessions; assume the tree has moved.
+2. **Keep sbot running.** Leave the local server running at the end of the session unless Ev
+   explicitly asks you to stop it. This keeps Decent,
    the skin aliases, WebSocket access, blob routes, docs, and the `ssb` git remote live.
    If a test needs isolated ports or a burner sbot, run that separately; do not use the
    live default server for write-path experiments.
@@ -601,10 +601,10 @@ Kill stuck browser processes with `pkill -9 -f "ms-playwright"` if needed.
 This repository is actively developed with AI agents as collaborators.  Notes for future
 sessions:
 
-- **Always pull before starting work.** The human developer pushes to the same feature branch
-  between sessions.  New files or refactors may have landed since the last session.
-- **Keep sbot running.** If `node bin.js start` is not already running, start it near the
-  beginning of the session and leave it running.  Do not stop it after pushing to `ssb`.
+- **Run `npm run agent:preflight` before starting work.** It performs the fast-forward pull,
+  reports working-tree and remote state, and starts sbot when needed. New files or refactors
+  may have landed since the last session.
+- **Keep sbot running.** Do not stop it after pushing to `ssb`.
 - **Read files you haven't seen before a pull introduces them** — don't assume you know what
   they do from the name alone.  `render-embedded-post.js` is a real example of a new shared
   helper that changed how both `repost.js` and `post.js` work.

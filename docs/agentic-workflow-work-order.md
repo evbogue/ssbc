@@ -14,10 +14,12 @@ Do not duplicate these as new work:
 - `AGENTS.md` now says to start `node bin.js start` after pulling if sbot is not already running, and to leave it running unless Ev explicitly asks to stop it.
 - Public SSB web hostnames now consolidate to `https://ssb.evbogue.com`; old SSB hostnames redirect there.
 - Repo docs now use `ssb.evbogue.com` as the canonical public instance.
+- `npm run agent:preflight` performs the fast-forward pull, reports the working tree and
+  remotes, and starts sbot only when port 8989 is not already listening.
 
 ## 1. Add an agent preflight command
 
-Create a script such as `scripts/agent-preflight.sh` and a matching npm alias, for example:
+Implemented by `scripts/agent-preflight.sh` and its npm alias:
 
 ```bash
 npm run agent:preflight
