@@ -298,7 +298,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: var(--d2-topbar-h);
-  gap: 7px;
+  gap: 0;
   padding: 0 14px;
   border-radius: 0;
   box-shadow: inset 0 2px 0 transparent;
@@ -321,14 +321,27 @@ body {
 }
 
 .nav__icon { font-size: 1.05rem; }
-/* Show the nav text labels in the top bar (base hides them for ssbski's
-   icon-only rail). High specificity so it wins; the mobile query below
-   re-hides them with matching specificity. */
 .navbar .nav.pull-left .nav__label {
-  display: inline-block;
+  display: none;
   font-size: 0.85rem;
   font-weight: 600;
   line-height: 1;
+}
+
+.nav-connect-btn {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+}
+
+.settings-btn {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+}
+
+.nav-connect-btn__label {
+  display: none;
 }
 
 /* search box: light glossy inset field at the top of the right column */

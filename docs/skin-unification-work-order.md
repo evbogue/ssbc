@@ -1,6 +1,7 @@
 # Work Order: One app, one vocabulary, three live-switchable skins
 
-**Status:** Ready for implementation — decisions resolved below.
+**Status:** Phase 4 (Themes page) implemented and verified. Phases 5–6 remain
+follow-up work for server consolidation, tests, and cleanup.
 **Scope:** Collapse the four separate skin "apps" into **one app** with a runtime **Themes** picker. Unify the vocabulary on **ssb-default lingo**. Reduce to **three pure-CSS skins**: `decent2`, `ssbpro`, `ssbski`. Retire the legacy single-column `decent` skin.
 **Type:** Convergence refactor. Net effect: delete ~50 skin-conditional JS branches, replace with a single skin accessor + one lexicon; make skins 100% CSS so they can be swapped live.
 **Intent:** Today the "skins" are deployed as separate ports/PWAs and differ in three ways — CSS, **vocabulary** (Subscribe vs Follow, Groups vs Channels, Feed/Discover vs Public), and a handful of **JS-built DOM/feature** differences. This work order makes the components, words, and feature set identical across skins, leaving only CSS to vary. Once that's true, switching skin is just: set `data-skin` on `<html>` + swap the `<link>` href — **live, no reload, no rebuild.**
@@ -57,6 +58,16 @@ node bin.js start        # starts sbot + all UI ports + ws bridge
 > - Browser caches `index.html` and registers a **service worker** — hard-reload / cache-bust after a build when live-verifying (see `memory/project_ssbpro_verify_cache.md`).
 > - Start the local sbot early; the UI is useless without it.
 > - **Verify live switching specifically:** load one skin, open Themes, pick another, and confirm wording, layout, and the current route's view all change with **no page reload** and **no duplicated live-stream subscriptions** (watch the network/ws panel).
+
+Phase 4 verification completed on 2026-09-08:
+
+- The Themes modal exposes `decent2`, `ssbpro`, and `ssbski` previews plus the
+  shared light/dark control.
+- Switching between all three skins updates the stylesheet, `data-skin`, brand
+  treatment, rail/topbar presentation, and compose placement without a reload.
+- A selected skin persists when reloading a different skin port.
+- The live scroller remained free of horizontal overflow at the verified desktop
+  viewport.
 
 Success criteria:
 - One running port can present all three skins; selection persists across reloads.

@@ -310,7 +310,15 @@ body {
 }
 
 .nav-connect-btn {
-  min-width: 104px;
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
+}
+
+.settings-btn {
+  min-width: 40px;
+  width: 40px;
+  padding: 0;
 }
 
 .theme-toggle:hover,
@@ -333,11 +341,16 @@ body {
   font-size: 0.82rem;
 }
 
+.nav-connect-btn__label {
+  display: none;
+}
+
 .nav__icon {
   font-size: 1.25rem;
 }
 
 .nav__label {
+  display: none;
   font-size: 0.75rem;
   line-height: 1.1;
 }
@@ -1991,13 +2004,13 @@ body {
    wide empty pill. Re-assert the desktop presentation above 980px. */
 @media (min-width: 981px) {
   .nav__label {
-    display: block;
+    display: none;
   }
 
   .navbar .nav.pull-left li a {
     justify-content: center;
-    gap: 1px;
-    padding: 0 13px;
+    gap: 0;
+    padding: 0 16px;
   }
 
   .navbar-avatar {

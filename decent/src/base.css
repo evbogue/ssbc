@@ -4023,6 +4023,40 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   .compose-trigger__button::after { display: none; }
 }
 
+@media (min-width: 1101px) and (max-width: 1300px) {
+  html[data-skin="ssbski"] {
+    --sky-rail-width: 240px;
+  }
+
+  html[data-skin="ssbski"] .navbar .nav.pull-left li a {
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 0 16px;
+  }
+
+  html[data-skin="ssbski"] .nav__label {
+    display: inline;
+  }
+
+  html[data-skin="ssbski"] .navbar-avatar {
+    justify-content: flex-start;
+    padding: 8px 12px;
+  }
+
+  html[data-skin="ssbski"] .navbar-avatar__meta {
+    display: flex;
+  }
+
+  html[data-skin="ssbski"] .compose-trigger {
+    left: 16px;
+    width: calc(var(--sky-rail-width) - 32px);
+  }
+
+  html[data-skin="ssbski"] .compose-trigger__button::after {
+    display: inline;
+  }
+}
+
 /* Drop the right column */
 @media (max-width: 1100px) {
   .navbar .pull-right { display: none; }
