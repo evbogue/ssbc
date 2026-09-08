@@ -17,7 +17,7 @@
   "scripts": {
     "start": "node bin.js start",
     "agent:preflight": "bash scripts/agent-preflight.sh",
-    "build:web": "node decent/scripts/style.js && mkdir -p decent/build && browserify decent/src/main.js | indexhtmlify --title \"Decent SSB\" > decent/build/index.html && node decent/scripts/postprocess-index.js",
+    "build:web": "bash decent/scripts/build-web.sh",
     "build:demo": "node light/demo/build.js",
     "sync:scuttlebot-docs": "bash scripts/sync-scuttlebot-docs.sh",
     "gen:api-reference": "node scripts/gen-api-reference.js",

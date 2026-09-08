@@ -1,6 +1,6 @@
 # Work Order: Follow-ups from the mobile layout audit
 
-**Status:** Backlog — the correctness items are done (see *Already resolved*); §1–§4 are open.
+**Status:** Backlog — the correctness items and §1.1 are done (see *Already resolved*); the rest of §1–§4 is open.
 **Scope:** Everything noticed while auditing ssbski/ssbpro at phone width that is still outstanding. Two buckets: things that are broken or risky (§1–§2), and surfaces nobody has actually looked at on a phone yet (§3–§4).
 **Type:** Mixed — one deploy-safety fix, some naming and dead-code debt, and a verification checklist.
 **Intent:** `f4e1c32` fixed the layout defects visible on the Public feed and profile at 375px. It did not audit the rest of the app, and the deploy that shipped it exposed a build-script fault that briefly took the public node down. This work order is the honest remainder.
@@ -13,6 +13,8 @@
 
 **Fixed in the follow-up:** the scroll column now recovers when it starts with no height — a `ResizeObserver` in `decent/src/scroller.js` re-runs the same check a scroll event would, once the box actually has a size. decent2's mobile lightbox no longer reserves 56px for a tab bar it doesn't have, and clears its fixed 52px top bar instead.
 
+**Fixed in this follow-up:** `npm run build:web` now uses `pipefail`, builds into a temporary `index.html`, and refuses HTML below 100 KiB before atomically replacing the served bundle. A Browserify failure leaves the previous bundle in place.
+
 **Decision — tap-to-react stays as it is.** A single tap on the heart publishes a permanent `vote` message with no confirmation (`decent/src/modules/ui/like.js:876-880`), and toggling publishes a second one. This was reviewed and deliberately kept: tap-to-like matching Twitter/Bluesky is the expected interaction, and the cost is a couple of extra messages in an append-only log. Recorded here so it isn't raised again as a defect.
 
 ## How to build, run, and verify
@@ -23,14 +25,14 @@ npm run build:web        # REQUIRED after any decent/src change — the page ser
 ```
 
 - Cache-bust when live-verifying: the browser HTTP-caches `index.html` and a service worker is registered. Append `?nocache=N`.
-- **Check the bundle size after every build** until §1.1 is fixed: a healthy `decent/build/index.html` is ~3.2 MB. ~1 KB means the build failed and reported success. The README deploy steps now include this check.
+- A healthy `decent/build/index.html` is ~3.2 MB. The build rejects suspicious HTML below 100 KiB and leaves the prior bundle in place if it fails; still check that the output contains the intended change.
 - If you verify in the in-app Claude browser, take a screenshot *before* measuring geometry — a hidden pane reports `window.innerWidth === 0` and zero-height rects, which fakes both a stalled feed and a misplaced compose button.
 
 ---
 
 ## 1. Deploy safety (do this first)
 
-### 1.1 `build:web` reports success when the bundle fails to build
+### 1.1 `build:web` reports success when the bundle fails to build — **done**
 
 `package.json:19` pipes browserify into indexhtmlify:
 
@@ -42,9 +44,9 @@ If browserify errors, the pipeline's exit status comes from `indexhtmlify`, whic
 
 **This happened on 2026-08-15.** `/root/ssbc/node_modules` predated the `jsqr` dependency, browserify failed with `Can't walk dependency graph: Cannot find module 'jsqr'`, and the public node served an empty page for a minute or two before it was noticed.
 
-**Fix:** run the pipeline under `set -o pipefail` (the script runs via `sh`, so this may need `bash -c`), or bundle to a temp file, check the exit code, then pipe. Additionally have `decent/scripts/postprocess-index.js` assert a minimum output size and exit non-zero with a clear message.
+**Resolved on 2026-09-08.** `decent/scripts/build-web.sh` runs the pipeline with `pipefail`, writes to a temporary sibling of `index.html`, then atomically renames it only after `postprocess-index.js` accepts the output. The postprocessor rejects HTML below 100 KiB with a clear failure message.
 
-**Verify:** temporarily break a `require` in `decent/src/modules/core/app.js`; `npm run build:web` must exit non-zero and must not leave a truncated `index.html` in place. Revert the break.
+**Verified:** a temporary missing import makes `npm run build:web` exit non-zero and leaves the existing `index.html` byte-for-byte unchanged.
 
 ### 1.2 The deploy procedure never installs server dependencies
 

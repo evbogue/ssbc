@@ -5,7 +5,7 @@
 **Type:** Workflow hardening. Net effect: turn repeated agent rituals into scripts, make handoffs cleaner, and reduce the chance of broken builds or half-finished pushes.
 **Intent:** This repository is being developed by multiple AI agents plus a human maintainer. The current `AGENTS.md` captures the rules well, but many rules still rely on memory and manual sequencing. This work order converts the remaining suggestions from the September 3, 2026 session into concrete, testable repo improvements.
 
-> **Context for whoever picks this up cold:** `ssbc` is a Node.js SSB server plus the Decent browser frontend. The agent workflow has a few non-obvious invariants: pull before work, keep local sbot running, build web changes with an output-size check, test before committing, commit every finished chunk, and push to both `origin` and the local git-over-SSB `ssb` remote. The app's `npm run build:web` can historically appear successful even when the generated bundle is empty, so workflow automation should be defensive.
+> **Context for whoever picks this up cold:** `ssbc` is a Node.js SSB server plus the Decent browser frontend. The agent workflow has a few non-obvious invariants: pull before work, keep local sbot running, build web changes with an output-size check, test before committing, commit every finished chunk, and push to both `origin` and the local git-over-SSB `ssb` remote. `npm run build:web` now preserves the prior bundle when Browserify or post-processing fails; workflow automation should verify the expected change as well as build integrity.
 
 ## Already implemented in this session
 
@@ -16,6 +16,8 @@ Do not duplicate these as new work:
 - Repo docs now use `ssb.evbogue.com` as the canonical public instance.
 - `npm run agent:preflight` performs the fast-forward pull, reports the working tree and
   remotes, and starts sbot only when port 8989 is not already listening.
+- `npm run build:web` uses `pipefail`, a temporary output file, and a 100 KiB minimum bundle
+  check before replacing `decent/build/index.html`.
 
 ## 1. Add an agent preflight command
 
@@ -52,7 +54,7 @@ npm run verify:web -- decent-profile-qr
 The command should:
 
 - run `npm run build:web`;
-- fail if `decent/build/index.html` is suspiciously small, especially around the known broken-build size of ~1 KB;
+- report the final `decent/build/index.html` size and rely on `build:web` to reject suspicious output;
 - accept an optional string argument and grep `decent/build/index.html` for that string;
 - print the final bundle size;
 - optionally curl the running local app at `http://127.0.0.1:8989/` when sbot is running.

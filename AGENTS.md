@@ -52,12 +52,10 @@ session unless Ev says otherwise in the current conversation.
    branch in a working state.  Don't mix unrelated changes in one chunk.
 4. **Build after every change — then check that it built.** Run `npm run build:web` for
    frontend edits; it rebuilds the shared JS bundle plus every stylesheet (`base.css`,
-   the three skin files, and the legacy `style.css`).  **A clean exit is not a working
-   build.**  The script pipes browserify into indexhtmlify, so a bundler error still exits
-   0 and writes a ~1 KB `decent/build/index.html` — valid HTML, empty `<script>`, no app.
-   Confirm the file is ~3.2 MB (`ls -la decent/build/index.html`), then grep the built
-   output for a string from your change.  A broken build is never an acceptable stopping
-   point, and a build that *looks* clean has taken the public node down.
+   the three skin files, and the legacy `style.css`). The build uses `pipefail`, writes to a
+   temporary file, and rejects HTML below 100 KiB before atomically replacing the served
+   bundle. Confirm the file is ~3.2 MB (`ls -la decent/build/index.html`), then grep the
+   built output for a string from your change.
 5. **Test before committing.** `npm test` must pass cleanly (0 failures).  If you touched the
    UI, verify the change in the browser before declaring done — at 375px as well as desktop,
    on every network skin (see "Verify at phone width, on every skin").
@@ -615,10 +613,9 @@ sessions:
 - **The human reviews upstream and may refactor between sessions.** If a pull brings in
   substantial changes, summarize what landed before continuing — don't silently assume the
   prior state.
-- **Build and verify before committing — and don't trust the exit code.** Run
-  `npm run build:web`, then confirm `decent/build/index.html` is ~3.2 MB.  Around 1 KB means
-  browserify failed and the pipe swallowed it: the page is empty but the command reported
-  success.  See "Rhythm of work" step 3.
+- **Build and verify before committing.** `npm run build:web` now fails before replacing the
+  served bundle when Browserify or post-processing fails, or when the generated HTML is below
+  100 KiB. Confirm `decent/build/index.html` is still about 3.2 MB and contains your change.
 - **Match the file's existing style.** Decent frontend modules use `var`; server modules use
   `const`/`let`.  Don't introduce style inconsistencies as a side-effect of feature work.
 - **Session takeaway from the skin convergence:** the goal is one cohesive Decent app with

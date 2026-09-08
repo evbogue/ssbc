@@ -43,10 +43,10 @@ Best first slices:
 
 File: `docs/mobile-audit-work-order.md`
 
-The highest-priority item inside this order is `build:web` safety. A bundler failure can
-produce a tiny, valid-looking `decent/build/index.html` and still exit cleanly because of
-the pipeline. That can take the public node down. Fixing this belongs with the workflow
-work above and should happen before broad frontend work.
+`build:web` safety is complete: a failed bundle build cannot replace the served
+`decent/build/index.html`. The next workflow slice is `npm run verify:web`, which should
+confirm a specific expected string is present in the successful bundle before a frontend
+change is declared done.
 
 Keep the naming cleanup (`isSsbproSkin` meaning network skin, hidden inline compose DOM)
 as a near-term cleanup because it removes traps that caused real cross-skin defects.

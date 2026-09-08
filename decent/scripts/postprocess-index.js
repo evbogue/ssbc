@@ -1,8 +1,11 @@
 var fs = require('fs')
 var path = require('path')
 
-var htmlPath = path.join(__dirname, '..', 'build', 'index.html')
-if (!fs.existsSync(htmlPath)) process.exit(0)
+var htmlPath = process.argv[2] || path.join(__dirname, '..', 'build', 'index.html')
+var minimumHtmlBytes = 100 * 1024
+
+if (!fs.existsSync(htmlPath))
+  throw new Error('Cannot post-process missing bundle: ' + htmlPath)
 
 var iconsSource = path.join(__dirname, '..', 'src', 'icons')
 var iconsBuild = path.join(__dirname, '..', 'build', 'icons')
@@ -10,6 +13,12 @@ if (fs.existsSync(iconsSource))
   fs.cpSync(iconsSource, iconsBuild, {recursive: true})
 
 var html = fs.readFileSync(htmlPath, 'utf8')
+if (Buffer.byteLength(html) < minimumHtmlBytes)
+  throw new Error(
+    'Refusing to publish a suspiciously small web bundle (' +
+    Buffer.byteLength(html) + ' bytes; expected at least ' + minimumHtmlBytes + ')'
+  )
+
 if (html.indexOf('decent-preload') !== -1) process.exit(0)
 
 var headClose = html.indexOf('</head>')

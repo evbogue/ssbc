@@ -186,16 +186,13 @@ cd /root/ssbc
 git pull
 npm install                # deps the pull may have added — see the warning below
 npm run build:web          # REQUIRED — build/ is gitignored, pull won't update it
-ls -la decent/build/index.html   # ~3.2 MB = good; ~1 KB = the build failed
+ls -la decent/build/index.html   # healthy bundles are about 3.2 MB
 ```
 
-> **`npm run build:web` can fail and still report success.** It pipes browserify
-> into indexhtmlify; if browserify errors, the pipe's exit status comes from
-> indexhtmlify, which happily wraps an empty stream and writes a ~1 KB
-> `index.html` — valid HTML, empty `<script>`, no app. This has taken the public
-> node down. The usual trigger is a dependency added since the last deploy, hence
-> the `npm install`: `git pull` never updates `node_modules`. **Always check the
-> file size before restarting.**
+`npm run build:web` builds into a temporary file and exits non-zero if Browserify or
+post-processing fails, or if the generated HTML is suspiciously small. It preserves the
+previous served bundle on failure. Run `npm install` before it because `git pull` never
+updates `node_modules`.
 
 Then restart the running node. It lives in tmux session `7` (find it with
 `tmux list-panes -a -F '#{session_name} #{pane_current_command} #{pane_current_path}'`):
