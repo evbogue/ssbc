@@ -1,6 +1,8 @@
 # Work Order: Skin architecture refactor — extract a shared `base.css`
 
-**Status:** Ready for implementation
+**Status:** Superseded by the current `base.css` implementation and
+`docs/skin-unification-work-order.md`. Keep this file as historical context for
+why the shared component layer exists; do not implement it as written.
 **Scope:** `ssbski` + `ssbpro` skins only. Decent's legacy `style.css` is **out of scope** (see §7).
 **Type:** Pure structural refactor. **Zero intended visual change** to any of the three apps. Success is measured by pixel-identical before/after screenshots, not by new features.
 **Intent:** Today `ssbpro-style.css` `@import`s the *entire* `ssbski-style.css` (a sibling skin, not a base) and then overrides ~2,285 lines of it to retune colours and layout. ssbski mixes three concerns in one 4,153-line file: a CSS reset, the Bluesky visual identity (palette, font, logo), and the structural layout/component CSS that ssbpro actually reuses. The result is fragile: a change to ssbski's structure can silently break ssbpro, and ssbpro must override whole rule blocks just to change a colour. This work order separates **structure** (shared) from **identity** (per-skin) so each skin file becomes a thin palette + identity layer over a common `base.css`.

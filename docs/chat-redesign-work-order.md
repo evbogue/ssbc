@@ -1,7 +1,11 @@
 # Work Order: ssbski Chat (DM) redesign — Bluesky-style conversations
 
-**Status:** Ready for implementation
-**Skin:** ssbski only (the Bluesky-style skin). Decent's plain `style.css` skin keeps the existing flat "Private" tab behaviour unless trivially shared.
+**Status:** Re-scope before implementation. The DM correctness issues are still
+important, but the skin-specific "ssbski only" plan should now be folded into
+the one-app direction in `docs/skin-unification-work-order.md`: build one shared
+Private/DM experience, then let skins style it.
+
+**Original skin target:** ssbski only (the Bluesky-style skin). Decent's plain `style.css` skin keeps the existing flat "Private" tab behaviour unless trivially shared.
 **Intent:** Replace the current flat "all private messages in one reverse-chronological column" Chat tab with a real messenger: a conversation list (inbox) plus a per-conversation thread view with aligned chat bubbles, an inline bottom-anchored composer, a "new chat" recipient picker, and immediate (optimistic) rendering of sent/received messages. The target look is Bluesky's Messages screen.
 
 > **Context for whoever picks this up cold:** `ssbc` is a SQLite-backed Secure Scuttlebutt (SSB) server with a WebSocket bridge. The browser frontend lives in `decent/src/` and is built into `decent/build/index.html` (a single inlined bundle). Two skins are served from the same bundle, distinguished only by which stylesheet is linked: **Decent** (`style.css`, port 8989) and **ssbski** (`ssbski-style.css`, port 8990). The DM feature is the same code for both skins today; this work order upgrades the **ssbski** experience.

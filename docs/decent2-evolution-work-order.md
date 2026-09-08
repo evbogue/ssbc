@@ -1,6 +1,9 @@
 # Work Order: `decent2` — a "Bootstrap 2, evolved" skin alongside the original
 
-**Status:** ✅ Implemented (first cut). Decisions resolved: **A = recreate the look in clean CSS** (no real Bootstrap loaded), **B = top navbar** (the mockup layout).
+**Status:** ✅ Implemented (first cut); remaining items are low-priority polish
+until the one-app skin model in `docs/skin-unification-work-order.md` is stable.
+
+Decisions resolved: **A = recreate the look in clean CSS** (no real Bootstrap loaded), **B = top navbar** (the mockup layout).
 
 > **AS BUILT — correction to the original premise.** This work order first assumed decent2 could be "pure CSS like ssbpro." That was wrong: `app.js` renders **skin-conditional DOM** (`isNetworkSkin` gates the entire three-zone scaffold — feed-header, nav labels, right column, brand). A new CSS-only skin falls into the classic single-column Decent DOM. So decent2 also required **additive** `app.js` changes: `isDecent2` detection, `isNetworkSkin |= isDecent2`, and a new `isTopbar = isSsbpro || isDecent2` gating the shared top-bar DOM (left stack, profile placement), plus 3-way branding (right-brand word/logo, document title). These changes are additive only — ssbpro/ssbski/decent flag values are unchanged, so those skins are byte-for-byte unaffected (verified). The shared `.ssbpro-left-stack` class name is reused as-is (decent2 styles it); rename to a neutral name is deferred cleanup.
 >

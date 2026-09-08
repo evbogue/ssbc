@@ -1,5 +1,10 @@
 # Work Order: Remaining ssbpro Professional Networking Work
 
+**Status:** Mostly implemented. Remaining value is cross-skin regression QA and
+folding durable pieces into the shared Decent model. Treat the per-stage plan
+below as implementation history, not a fresh backlog to execute from top to
+bottom.
+
 **Audience:** Claude or another implementation agent.
 
 **Repo:** `/Users/evbogue/Code/ssbc`

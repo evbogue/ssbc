@@ -40,6 +40,7 @@ The following are **not** current-behavior documentation:
 - `docs/scuttlebot.io/` — generated historical archive (served at `/docs/archive`)
 - `vendor/scuttlebot.io/` — vendored source for that archive
 - work orders and proposals (e.g. `docs/*-work-order.md`)
+- `docs/work-orders.md` — backlog triage for work orders, not shipped behavior
 
 ## How `/docs` is served
 
@@ -109,3 +110,8 @@ Feature-specific documentation stays in that feature's work order until the
 feature lands. For example, `docs/git-identity-work-order.md` owns documentation
 of the proposed `git-identity` message unless and until that feature is
 implemented. Do not move proposed behavior into a canonical page before it is real.
+
+Use `docs/work-orders.md` as the current triage index for proposals and work
+orders. If an old work order becomes historical or superseded, mark that status
+in the work order itself and update the index instead of letting stale "ready"
+language stand unqualified.

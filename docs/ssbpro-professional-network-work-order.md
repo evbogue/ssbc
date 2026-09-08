@@ -1,6 +1,6 @@
 # Work Order: ssbpro Bio Improvement Platform
 
-> **Status (implemented):** The QR / identity-exchange UI no longer lives as
+> **Status (implemented / historical):** The QR / identity-exchange UI no longer lives as
 > separate buttons on the self profile. It is a single top-nav **Connect**
 > button that opens a modal with three tabs — **My QR**, **Paste code**, and
 > **Scan QR** (camera + image-upload fallback, camera requested only on
@@ -12,6 +12,9 @@
 > `docs/ssbpro-remaining-work-order.md` for the per-stage breakdown. The
 > sections below are the original design intent and may describe earlier
 > placements (e.g. profile-level QR buttons) that have since moved into Connect.
+> Future work should be treated as shared Decent behavior where possible, with
+> `ssbpro` carrying visual identity in CSS rather than new product-specific
+> message types or profile fields.
 
 **Skin:** ssbpro only, served by `plugins/ssbpro-ui.js` on port `8991`.
 

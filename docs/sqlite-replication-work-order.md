@@ -1,5 +1,8 @@
 # SQLite DB / Replication Compatibility — Work Order
 
+**Status:** Core replication work is done. Remaining items are medium/low
+priority follow-ups unless a concrete live-stream compatibility bug appears.
+
 Context: Dominic suggested reverting ssbc/ssb-server commit
 [`1fff829` ("rm compatability")](https://github.com/ssbc/ssb-server/commit/1fff82937bac4da80e8fd0ed573f35f1fd1c153f),
 which removed the `compatibility` version-matrix test and the `ssb-db` pin from
