@@ -7,8 +7,25 @@ const http = require('http')
 const test = require('tape')
 const { join } = require('path')
 const { spawn, execFile } = require('child_process')
+const gitPlugin = require('../plugins/git-server')
 
 const bin = join(__dirname, '../bin.js')
+
+test('git.create uses the shared websocket port when Decent has no dedicated port', function (t) {
+  t.plan(3)
+
+  const api = gitPlugin.init({
+    publish: function (content, cb) {
+      t.equal(content.name, 'shared-port-repo', 'publishes the requested repository name')
+      cb(null, { key: '%repo.sha256' })
+    }
+  }, { ws: { port: 8989 } })
+
+  api.create({ name: 'shared-port-repo' }, function (err, url) {
+    t.error(err, 'creates the repository record')
+    t.equal(url, 'http://127.0.0.1:8989/git/%25repo.sha256', 'returns the shared listener URL')
+  })
+})
 
 function tmpDir(name) {
   return fs.mkdtempSync(join(os.tmpdir(), name))

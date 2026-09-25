@@ -1327,7 +1327,10 @@ module.exports = {
         sbot.publish({ type: 'git-repo', name: opts.name || undefined }, (err, msg) => {
           if (err) return cb(err)
           const host = (config.decent && config.decent.host) || '127.0.0.1'
-          const port = (config.decent && config.decent.port) || 8888
+          // Decent shares the WebSocket listener unless a dedicated port is set.
+          // Keep the clone URL aligned with the listener that serves /git/.
+          const port = (config.decent && config.decent.port) ||
+            (config.ws && config.ws.port) || 8888
           const url  = 'http://' + host + ':' + port + '/git/' + encodeURIComponent(msg.key)
           cb(null, url)
         })
