@@ -11,15 +11,19 @@ const gitPlugin = require('../plugins/git-server')
 
 const bin = join(__dirname, '../bin.js')
 
-test('git.create uses the shared websocket port when Decent has no dedicated port', function (t) {
+test('git.create retains the shared websocket port when UI plugins initialize', function (t) {
   t.plan(3)
 
+  const config = { ws: { port: 8989 } }
   const api = gitPlugin.init({
     publish: function (content, cb) {
       t.equal(content.name, 'shared-port-repo', 'publishes the requested repository name')
       cb(null, { key: '%repo.sha256' })
     }
-  }, { ws: { port: 8989 } })
+  }, config)
+
+  // UI plugins add their endpoint API after git-server initializes.
+  config.decent = { port: 8992 }
 
   api.create({ name: 'shared-port-repo' }, function (err, url) {
     t.error(err, 'creates the repository record')
