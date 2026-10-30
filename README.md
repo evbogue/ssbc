@@ -102,6 +102,8 @@ node bin.js invite.accept "CODE"     # accept an invite from another pub
 
 `ssb.evbogue.com` is one public node running on the network.
 
+Muse: see the [connection invite and instructions](docs/muse-invite.md).
+
 ---
 
 ## Git over SSB
