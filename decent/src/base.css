@@ -4588,3 +4588,57 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
     font-size: 0.95rem;
   }
 }
+
+/* The mobile composer occupies the visible screen, including above a keyboard.
+ * Scope the overlay rules so preview and other lightboxes keep their layouts. */
+@media (max-width: 600px) {
+  html[data-skin] .compose-lightbox {
+    top: var(--compose-viewport-top, 0px) !important;
+    bottom: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 100dvh;
+    height: var(--compose-viewport-height, 100dvh);
+    padding: 0;
+    overflow: hidden !important;
+  }
+  html[data-skin] .compose-lightbox > .lightbox__content {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  html[data-skin] .compose-modal {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    border: 0;
+    border-radius: 0;
+    overflow: auto;
+  }
+  html[data-skin] .compose-modal__header,
+  html[data-skin] .compose-modal__hint,
+  html[data-skin] .compose-modal__quote-hint,
+  html[data-skin] .compose-modal .compose__controls { flex-shrink: 0; }
+  html[data-skin] .compose-modal > .compose,
+  html[data-skin] .compose-modal > .compose > .column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  html[data-skin] .compose-modal textarea {
+    flex: 1;
+    height: auto !important;
+    min-height: 60px;
+    box-sizing: border-box;
+    resize: none;
+    font-size: 16px;
+  }
+}

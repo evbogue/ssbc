@@ -130,7 +130,7 @@ exports.create = function (api) {
     // profile). Set before suggest-box wires up so it's plain editable text.
     if (opts.initialText) ta.value = opts.initialText
 
-    if(opts.shrink !== false) {
+    if(opts.shrink !== false && !modal) {
       var blur
       ta.addEventListener('focus', function () {
         clearTimeout(blur)
@@ -165,10 +165,28 @@ exports.create = function (api) {
     function ensureLightbox () {
       if (lb) return
       lb = lightbox()
+      lb.classList.add('compose-lightbox')
       document.body.appendChild(lb)
       lb.addEventListener('click', function (ev) {
         if (ev.target === lb) closeModal()
       })
+    }
+
+    // Mobile keyboards resize/pan the visual viewport, not always the page.
+    // Keep these measurements local to this composer and listen only while open.
+    function syncComposeViewport () {
+      var viewport = window.visualViewport
+      lb.style.setProperty('--compose-viewport-height', (viewport ? viewport.height : window.innerHeight) + 'px')
+      lb.style.setProperty('--compose-viewport-top', (viewport ? viewport.offsetTop : 0) + 'px')
+    }
+
+    function listenComposeViewport (listen) {
+      var method = listen ? 'addEventListener' : 'removeEventListener'
+      window[method]('resize', syncComposeViewport)
+      if (window.visualViewport) {
+        window.visualViewport[method]('resize', syncComposeViewport)
+        window.visualViewport[method]('scroll', syncComposeViewport)
+      }
     }
 
     function showModal (fromEl) {
@@ -191,7 +209,10 @@ exports.create = function (api) {
         if (lastQuoteMsg) updateQuoteHint(lastQuoteMsg)
       }
 
+      if (modalTimer) clearTimeout(modalTimer)
       lb.show(modalContent)
+      syncComposeViewport()
+      listenComposeViewport(true)
       document.body.classList.add('lightbox-open')
       // The controls row and the tall textarea are normally revealed by the
       // textarea's focus handler, but a programmatic .focus() doesn't always
@@ -213,6 +234,8 @@ exports.create = function (api) {
 
     function closeModal () {
       if (!lb || !modalContent) return
+      listenComposeViewport(false)
+      ta.blur()
       modalContent.classList.remove('compose-modal--animate')
       if (modalTimer) clearTimeout(modalTimer)
       modalTimer = setTimeout(function () {
