@@ -113,7 +113,7 @@ exports.create = function (api) {
                 promptText: path === 'friends'
                   ? 'Write to your friends...'
                   : 'Write a public message...',
-                triggerLabel: 'Compose',
+                triggerLabel: 'New post',
                 listenReplyEvents: true,
                 autoOpen: autoOpen,
                 initialQuote: initialQuote

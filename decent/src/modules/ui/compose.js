@@ -418,6 +418,8 @@ exports.create = function (api) {
         'aria-hidden': 'true'
       }, 'edit'))
 
+      trigger.setAttribute('aria-label', label)
+
       if (opts.initialQuote) {
         api.sbot_get(opts.initialQuote, function (err, value) {
           if (err || !value || !value.content || typeof value.content !== 'object') return

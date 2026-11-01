@@ -4499,3 +4499,20 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
   vertical-align: middle;
   margin-left: 2px;
 }
+
+/* Keep the mobile composer discoverable after the inline prompt is hidden.
+ * Skin-qualified rules also override the topbar skins' icon-only FABs. */
+@media (max-width: 600px) {
+  html[data-skin] .compose-trigger { width: auto; }
+  html[data-skin] .compose-trigger__button {
+    width: auto;
+    min-width: 52px;
+    padding: 0 16px;
+    border-radius: 999px;
+  }
+  html[data-skin] .compose-trigger__button::after {
+    display: inline;
+    content: 'New post';
+    font-size: 0.95rem;
+  }
+}
