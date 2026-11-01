@@ -4,6 +4,7 @@ var pull      = require('pull-stream')
 var human     = require('human-time')
 var highlight = require('../../highlight')
 var selfId    = require('../../keys').id
+var loadTree  = require('./load-tree')
 
 exports.needs = {
   markdown:            'first',
@@ -676,11 +677,14 @@ exports.create = function (api) {
       opts.extra || null)
   }
 
-  function renderTreeScreen(repoId, ref, pathParts, container) {
+  function renderTreeScreen(repoId, ref, pathParts, container, alternatives) {
     container.textContent = 'Loading…'
-    var apiPath = 'tree/' + encodeURIComponent(ref) +
-      (pathParts.length ? '/' + pathParts.join('/') : '')
-    fetchJson(gitApiUrl(repoId, apiPath), function (err, data) {
+    loadTree(ref, alternatives, function (candidate, cb) {
+      var apiPath = 'tree/' + encodeURIComponent(candidate) +
+        (pathParts.length ? '/' + pathParts.join('/') : '')
+      fetchJson(gitApiUrl(repoId, apiPath), cb)
+    }, function (err, data, loadedRef) {
+      ref = loadedRef
       if (err) {
         container.innerHTML = ''
         if (err.status === 404 && pathParts.length === 0) {
@@ -1505,7 +1509,13 @@ exports.create = function (api) {
             }))
             return
           }
-          renderTreeScreen(repoId, getDefaultRef(data), [], content)
+          var branches = (data.refs || []).filter(function (r) {
+            return /^refs\/heads\//.test(r.name)
+          }).map(function (r) { return shortRefName(r.name) })
+          // Prefer main as the recovery branch for old repositories with a
+          // stale master HEAD, then try the other advertised branches.
+          if (branches.indexOf('main') !== -1) branches.unshift('main')
+          renderTreeScreen(repoId, getDefaultRef(data), [], content, branches)
         })
       } else if (sub === 'tree') {
         var treeRef   = parts[3] ? decodeURIComponent(parts[3]) : 'HEAD'
