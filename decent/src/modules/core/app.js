@@ -135,15 +135,13 @@ module.exports = {
             )
           )
         }))
-        var settings = h('button.theme-toggle.settings-btn.settings-btn--rail', {type: 'button'},
-          h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+        var settings = makeSettingsButton('settings-btn--rail')
         var topbar = h('div.topbar-actions',
           h('button.nav-connect-btn', {type: 'button'},
             h('span.material-symbols-outlined.nav-connect-btn__icon', {'aria-hidden': 'true'}, 'qr_code_2'),
             h('span.nav-connect-btn__label', 'Connect')
           ),
-          h('button.theme-toggle.settings-btn', {type: 'button'},
-            h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+          makeSettingsButton()
         )
         var header = h('div.navbar',
           h('div.navbar-inner',
@@ -684,7 +682,10 @@ module.exports = {
           title: 'Themes & settings',
           'aria-label': 'Themes & settings',
           onclick: showThemesModal
-        }, h('span.material-symbols-outlined.theme-toggle__icon', {'aria-hidden': 'true'}, 'settings'))
+        },
+          h('span.material-symbols-outlined.theme-toggle__icon' + (variant === 'settings-btn--rail' ? '.nav__icon' : ''), {'aria-hidden': 'true'}, 'settings'),
+          h('span.theme-toggle__label' + (variant === 'settings-btn--rail' ? '.nav__label' : ''), 'Settings')
+        )
       }
 
       function showThemesModal () {

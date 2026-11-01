@@ -582,16 +582,51 @@ html[data-skin="ssbski"] .settings-btn--rail {
   order: 50;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
-  padding: 10px 12px;
+  min-height: 50px;
+  padding: 0 16px;
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: var(--sky-muted);
+  color: var(--sky-text);
+  font: inherit;
+  font-weight: 500;
   cursor: pointer;
 }
 html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover); color: var(--sky-text); }
+
+/* Match the labelled rail at wide widths and its icon-only compact layout. */
+@media (min-width: 601px) and (max-width: 1100px) {
+  html[data-skin="ssbski"] { --sky-rail-width: 80px; }
+
+  html[data-skin="ssbski"] .settings-btn--rail {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-skin="ssbski"] .settings-btn--rail {
+    width: 48px;
+    height: 48px;
+    min-height: 0;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* Desktop topbar actions have room for names; compact layouts keep icons. */
+html[data-skin] .topbar-actions .settings-btn .theme-toggle__label { display: none; }
+@media (min-width: 1101px) {
+  html[data-skin] .topbar-actions .settings-btn,
+  html[data-skin] .topbar-actions .nav-connect-btn {
+    width: auto;
+    padding: 0 12px;
+  }
+  html[data-skin] .topbar-actions .settings-btn .theme-toggle__label,
+  html[data-skin] .topbar-actions .nav-connect-btn__label { display: inline; }
+}
 
 /* ── Shared settings/connect modal shell ────────────────────────────────── */
 .qr-connect-modal {
