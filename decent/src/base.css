@@ -2907,6 +2907,11 @@ html[data-skin="ssbski"] .settings-btn--rail:hover { background: var(--sky-hover
 
 .git-readme-content { line-height: 1.6; }
 
+.git-readme-content img {
+  max-width: 100%;
+  height: auto;
+}
+
 .git-readme-content h1,
 .git-readme-content h2,
 .git-readme-content h3 { margin-top: 1em; margin-bottom: 0.4em; }
@@ -3411,6 +3416,12 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 }
 
 @media (max-width: 640px) {
+  /* Keep filenames and ages in view; the latest commit is already above the
+   * table, and each file's history remains available in the browser. */
+  .git-tree-table .git-tree-commit { display: none; }
+  .git-tree-table .git-tree-name { white-space: normal; overflow-wrap: anywhere; }
+  .git-tree-table td { padding: 8px; }
+
   .git-forge-tabs { gap: 4px; }
   .git-forge-tab { justify-content: center; padding: 8px 10px; }
   .git-forge-tab-label { display: none; }
@@ -4482,8 +4493,8 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 
 /* New-profile-photo thumbnail inside an "about" mini message. */
 .about-mini__photo {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   object-fit: cover;
   vertical-align: middle;
@@ -4504,6 +4515,25 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
  * rules add outer gutters and larger avatar columns after importing base.css.
  * Qualify these rules so the shared phone layout wins over those overrides. */
 @media (max-width: 600px) {
+  /* Topbar skins need room for connect, settings, and the profile shortcut.
+   * The bottom-tab skin keeps its existing fixed-size navigation targets. */
+  html[data-skin="ssbpro"] .navbar .nav.pull-left,
+  html[data-skin="decent2"] .navbar .nav.pull-left {
+    gap: 0;
+  }
+
+  html[data-skin="ssbpro"] .navbar .nav.pull-left li,
+  html[data-skin="decent2"] .navbar .nav.pull-left li {
+    flex: 1;
+    min-width: 0;
+  }
+
+  html[data-skin="ssbpro"] .navbar .nav.pull-left li a,
+  html[data-skin="decent2"] .navbar .nav.pull-left li a {
+    width: 100%;
+    padding: 0;
+  }
+
   html[data-skin] .screen__content.column {
     margin-left: 0;
     margin-right: 0;

@@ -61,7 +61,7 @@ exports.create = function (api) {
 
     function thumb (link, cls) {
       return h('a', {href: "#" + id},
-        h('img.' + cls, {src: api.blob_url(asLink(link))}))
+        h('img', {className: cls, src: api.blob_url(asLink(link))}))
     }
 
     // A name change keeps the familiar "self-identifies as <name>" phrasing,
