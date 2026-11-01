@@ -725,35 +725,39 @@ module.exports = {
           grid,
           h('div.themes-section',
             h('div.themes-section__label', 'Appearance'),
-            makeThemeToggle()
+            makeAppearanceControl()
           )
         )
         getTopbarLightbox().show(modal)
       }
 
-      function makeThemeToggle () {
-        var icon = h('span.material-symbols-outlined.theme-toggle__icon', {
-          'aria-hidden': 'true'
+      function makeAppearanceControl () {
+        var buttons = ['light', 'dark'].map(function (theme) {
+          var icon = h('span.material-symbols-outlined', theme === 'light' ? 'light_mode' : 'dark_mode')
+          icon.setAttribute('aria-hidden', 'true')
+          return h('button.appearance-option', {
+            type: 'button',
+            onclick: function () {
+              rememberDecentTheme(theme)
+              render()
+            }
+          },
+            icon,
+            h('span', theme === 'light' ? 'Light' : 'Dark')
+          )
         })
-        var label = h('span.theme-toggle__label')
-        var button = h('button.theme-toggle', {
-          type: 'button',
-          title: 'Toggle light/dark mode',
-          onclick: function () {
-            rememberDecentTheme(getResolvedDecentTheme() === 'dark' ? 'light' : 'dark')
-            render()
-          }
-        }, icon, label)
 
         function render () {
-          var next = getResolvedDecentTheme() === 'dark' ? 'light' : 'dark'
-          icon.textContent = next === 'dark' ? 'dark_mode' : 'light_mode'
-          label.textContent = next === 'dark' ? 'Dark' : 'Light'
-          button.setAttribute('aria-label', 'Switch to ' + next + ' mode')
+          var active = getResolvedDecentTheme()
+          buttons.forEach(function (button, i) {
+            button.setAttribute('aria-pressed', active === (i === 0 ? 'light' : 'dark') ? 'true' : 'false')
+          })
         }
 
         render()
-        return button
+        var control = h('div.appearance-control', {role: 'group'}, buttons)
+        control.setAttribute('aria-label', 'Appearance')
+        return control
       }
 
       function makeConnectButton () {

@@ -773,6 +773,40 @@ html[data-skin] .topbar-actions .settings-btn .theme-toggle__label { display: no
   border-top: 1px solid var(--sky-border);
 }
 .themes-section__label { font-weight: 600; color: var(--sky-text); }
+.appearance-control {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--sky-border);
+  border-radius: 10px;
+  background: var(--sky-surface-soft);
+}
+.appearance-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--sky-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.appearance-option .material-symbols-outlined { font-size: 1.15rem; }
+.appearance-option:hover { color: var(--sky-text); background: var(--sky-hover); }
+.appearance-option[aria-pressed="true"] {
+  border-color: var(--sky-border-strong);
+  background: var(--sky-surface);
+  color: var(--sky-blue);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.appearance-option:focus-visible { outline: 2px solid var(--sky-blue); outline-offset: 1px; }
 .qr-connect-close {
   display: inline-flex;
   align-items: center;
