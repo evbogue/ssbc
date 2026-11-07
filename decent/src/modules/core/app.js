@@ -82,6 +82,8 @@ module.exports = {
       }
 
       function renderRoute (route, container) {
+        // Expanded map previews own observers and pointer capture outside the view.
+        document.dispatchEvent(new Event('decent:route-change'))
         var view = api.screen_view(route)
         if (!view) {
           view = h('div.scroller__wrapper',
@@ -785,6 +787,7 @@ module.exports = {
         {route: 'friends', label: labelForRoute('friends', 'Friends'), icon: 'groups'},
         {route: 'private', label: labelForRoute('private', 'Private'), icon: 'mail_lock'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
+        {route: 'scuttlegrounds', label: 'Scuttlegrounds', icon: 'planet'},
         {route: 'key', label: 'Keys', icon: 'vpn_key'}
       ]
 

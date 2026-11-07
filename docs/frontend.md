@@ -168,6 +168,21 @@ The same HTTP server also supports git routes.
 
 This matters because Decent is not only a social/feed UI. In this repo, it also participates in a broader local experience that includes git-over-SSB behavior.
 
+## Scuttlegrounds map preview
+
+The Scuttlegrounds navigation item opens `#scuttlegrounds`, a read-only isometric map
+study for Strange Scuttle Battlegrounds. The card shows sample Expedition and Bloom
+colonies on a 12×12 alien landscape. Expand map opens a full-viewport view with tile
+inspection, drag-to-pan, pinch/wheel zoom, zoom buttons and Fit map. Arrow keys pan,
+plus/minus zoom, and 0 fits the map; Escape closes the expanded view.
+
+This preview uses procedural Canvas graphics and has no gameplay or publication controls.
+Sample factories and units illustrate the art direction, rather than a match's initial
+state. A v1 `scuttlegrounds` creation message can render the same visual-study card;
+it does not yet load or simulate a match. The map renderer is separate from its data,
+so a later sprite/Pixi renderer can use the same map. Closing the expanded view or changing
+routes releases its resize observer and pointer handlers. Preview cards have no live loop.
+
 ## Practical development loop
 
 Typical frontend work looks like:

@@ -1,9 +1,11 @@
 # Strange Scuttle Battlegrounds — implementation work order
 
-Working short name: **Scuttlegrounds**. Status: **specified, not implemented**.
+Working short name: **Scuttlegrounds**. Status: **map art preview implemented; game not implemented**.
 Requested by Ev at LAN JAM, Ferris and Co., November 2026. Source baseline inspected:
 `24c6ba0`. This order authorizes a bounded game implementation, not a general game
-platform. No game code or assets were produced while writing this order.
+platform. The first follow-up implements only a read-only procedural Canvas map at
+`#scuttlegrounds`, including full-viewport phone controls. It is an art/layout review
+slice, not completion of the rules, protocol or Pixi integration phases below.
 
 ## Outcome and scope
 
