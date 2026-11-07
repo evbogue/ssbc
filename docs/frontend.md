@@ -170,6 +170,17 @@ This matters because Decent is not only a social/feed UI. In this repo, it also 
 
 ## Scuttlegrounds map preview
 
+Each world's **Local match** button opens a playable two-player match on one device.
+Each side starts with an HQ, two workers and 60 minerals. Select a piece, choose an
+action, and tap a highlighted target tile. HQs produce workers; workers mine deposits
+automatically while stationary and can construct factories; factories produce infantry,
+hovercraft and siege walkers. Mineral costs reserve against the current round's budget.
+Ready submits that side's orders and passes planning to the other side. Both ready sides
+resolve simultaneously. Force round treats unsubmitted sides as idle. Destroying the
+other HQ wins; mutual destruction or the 40-round limit draws. Local matches save and
+replay their round history in this browser, independently for each world. This mode
+does not publish SSB messages. The art sandbox remains available through Expand map.
+
 The Scuttlegrounds navigation item opens `#scuttlegrounds`, a local visual sandbox for
 Strange Scuttle Battlegrounds. Two cards show an industrial Expedition frontier and a
 stranger Bloom homeworld on the same 12×12 grid. Generated pixel sprites draw all terrain,

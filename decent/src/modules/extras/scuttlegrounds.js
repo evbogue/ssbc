@@ -1,5 +1,7 @@
 var h = require('hyperscript')
 var createMap = require('../../scuttlegrounds/map-preview')
+var openGame = require('../../scuttlegrounds/game-view')
+var localSession = require('../../scuttlegrounds/local-session')
 
 exports.needs = {}
 exports.gives = {screen_view: true, message_content: true}
@@ -17,9 +19,11 @@ function makeCard (worldName) {
   card.appendChild(h('div.sg-card-footer',
     h('div', h('strong', 'The Expedition × The Bloom'),
       h('p', '12 × 12 alien terrain · finite mineral deposits · two colonies')),
-    expand
+    h('div.sg-card-buttons',expand,h('button.sg-button.sg-button-primary',{type:'button',onclick:function () {
+      openGame(localSession(worldName,window.localStorage))
+    }},'Local match'))
   ))
-  card.appendChild(h('p.sg-preview-note', 'Sprite terrain, colonies and resources. Expand to preview eight-direction movement. Gameplay is not active.'))
+  card.appendChild(h('p.sg-preview-note', 'Local match: plan both sides, gather minerals, build and battle. Progress saves in this browser. Expand map opens the art sandbox.'))
   createMap(preview, {world: worldName})
 
   function open () {
@@ -115,7 +119,7 @@ exports.create = function () {
       if (route !== 'scuttlegrounds') return
       var view = h('div.column.scroller.sg-preview-page',
         h('div.scroller__wrapper',
-          h('div.sg-page-heading', h('span.sg-eyebrow', 'LAN JAM · MAP STUDY'),
+          h('div.sg-page-heading', h('span.sg-eyebrow', 'LAN JAM · COLONY CONQUEST'),
             h('h1', 'Scuttlegrounds'),
             h('p', 'Two sprite worlds, Expedition mech suits and faceless Bloom monsters. Expand either map to explore and preview movement.')),
           h('article.sg-demo-message', makeCard('expedition')),

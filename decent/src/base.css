@@ -65,6 +65,15 @@
 .sg-asset-status:empty { display: none; }
 .sg-map-canvas { image-rendering: pixelated; }
 .sg-button:disabled { cursor: default; opacity: .45; }
+.sg-card-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.sg-game-hud { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 8px 14px; font-size: 12px; border-bottom: 1px solid var(--sky-border); }
+.sg-game-panel { padding: 10px max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); max-height: 43vh; overflow-y: auto; border-top: 1px solid var(--sky-border); }
+.sg-game-panel .sg-unit-picker { width: 100%; max-width: none; }
+.sg-game-status { font-size: 12px; margin: 0 0 8px; line-height: 1.5; }
+.sg-game-info { margin: 8px 0; font-size: 12px; color: var(--sky-muted); }
+.sg-game-actions, .sg-game-round-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sg-game-orders { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.sg-game-log { margin-top: 8px; font-size: 11px; color: var(--sky-muted); overflow-wrap: anywhere; }
 @media (max-width: 600px) {
   .sg-card { padding: 12px; }
   .sg-card-heading { flex-wrap: wrap; }

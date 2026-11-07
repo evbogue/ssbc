@@ -1,6 +1,6 @@
 # Strange Scuttle Battlegrounds — implementation work order
 
-Working short name: **Scuttlegrounds**. Status: **sprite worlds and directional movement preview implemented; game not implemented**.
+Working short name: **Scuttlegrounds**. Status: **local two-player rules and game UI implemented; SSB multiplayer pending**.
 Requested by Ev at LAN JAM, Ferris and Co., November 2026. Source baseline inspected:
 `24c6ba0`. This order authorizes a bounded game implementation, not a general game
 platform. Follow-ups implement a local Canvas sandbox at `#scuttlegrounds`: full-viewport

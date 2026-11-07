@@ -1,6 +1,7 @@
 var map = require('./map')
 var movement = require('./movement-preview')
 var createSprites = require('./sprites')
+var rules = require('./rules')
 
 module.exports = function createMapPreview (host, options) {
   options = options || {}
@@ -16,9 +17,13 @@ module.exports = function createMapPreview (host, options) {
   var ctx = canvas.getContext('2d')
   var width = 0, height = 0, scale = 1, fitScale = 1, offsetX = 0, offsetY = 0
   var selected = null, destroyed = false, pointers = {}, gesture = null, moved = false
-  var pieces = map.pieces.map(function (p) { return p.concat([p[3] === 'bloom' ? 5 : 1]) })
+  var gameState = options.state || null, plan = [], hints = []
+  function gamePieces (state) {
+    return state.entities.map(function (e) { return [e.x,e.y,e.type,state.players[e.owner].faction,e.facing,e] })
+  }
+  var pieces = gameState ? gamePieces(gameState) : map.pieces.map(function (p) { return p.concat([p[3] === 'bloom' ? 5 : 1]) })
   var selectedUnit = -1, animation = null, animationFrame = 0, hitBoxes = []
-  var world = options.world === 'bloom' ? 'bloom' : 'expedition'
+  var world = (gameState ? gameState.world : options.world) === 'bloom' ? 'bloom' : 'expedition'
   var depleted = false
   var sprites = createSprites(function (failed) {
     if (destroyed) return
@@ -66,7 +71,7 @@ module.exports = function createMapPreview (host, options) {
     var unit = pieces[selectedUnit]
     if (!unit) return
     var info = {unitIndex: selectedUnit, facing: movement.directions[unit[4]], moving: !!animation,
-      x: unit[0], y: unit[1], label: label(unit)}
+      x: unit[0], y: unit[1], label: label(unit), entity: unit[5] || null}
     canvas.setAttribute('data-selected-unit', String(selectedUnit))
     canvas.setAttribute('data-facing', info.facing)
     canvas.setAttribute('data-unit-position', unit[0] + ',' + unit[1])
@@ -74,7 +79,7 @@ module.exports = function createMapPreview (host, options) {
     options.onSelect(info.label + ' · facing ' + info.facing + ' · [' + info.x + ', ' + info.y + ']' + (extra ? ' · ' + extra : ''), info)
   }
   function selectUnit (index, focus) {
-    if (animation || !movement.isUnit(pieces[index])) return
+    if (animation || (gameState ? !pieces[index] : !movement.isUnit(pieces[index]))) return
     selectedUnit = index; selected = null
     if (focus) {
       var p = map.project(pieces[index][0],pieces[index][1])
@@ -117,6 +122,12 @@ module.exports = function createMapPreview (host, options) {
     draw()
     if (animation) animationFrame = requestAnimationFrame(animate)
   }
+  function health (piece,x,y) {
+    if (!piece[5]) return
+    var ratio = piece[5].hp/rules.stats[piece[2]].hp
+    ctx.fillStyle = '#111b2a'; ctx.fillRect(x-18,y+18,36,5)
+    ctx.fillStyle = ratio > 0.4 ? '#9cf0bd' : '#ff9b9b'; ctx.fillRect(x-17,y+19,34*ratio,3)
+  }
   function draw () {
     if (destroyed || !ctx || !width || !height) return
     canvas.setAttribute('data-zoom', (scale/fitScale).toFixed(3))
@@ -139,16 +150,36 @@ module.exports = function createMapPreview (host, options) {
       }
     }
     drawGrid()
+    hints.forEach(function (tile) {
+      var p = map.project(tile.x,tile.y)
+      poly([[p.x,p.y-24],[p.x+48,p.y],[p.x,p.y+24],[p.x-48,p.y]],'#a1e4ce38','#b2edd49c')
+    })
+    if (gameState) plan.forEach(function (o) {
+      var e = rules.entity(gameState,o[0])
+      if (!e) return
+      var path = o[1] === 'move' ? o[2] : (o[1] === 'attack' || o[1] === 'build' || o[1] === 'train') ? [[o[o.length-2],o[o.length-1]]] : []
+      if (!path.length) return
+      var p = map.project(e.x,e.y)
+      ctx.beginPath(); ctx.moveTo(p.x,p.y)
+      path.forEach(function (tile) { p = map.project(tile[0],tile[1]); ctx.lineTo(p.x,p.y) })
+      ctx.strokeStyle = o[1] === 'attack' ? '#ff9e9e' : '#ffe3a2'; ctx.lineWidth = 2/scale; ctx.stroke()
+      ellipse(p.x,p.y,7,4,ctx.strokeStyle)
+    })
     hitBoxes = []
-    var objects = map.deposits.map(function (d) { return {deposit: true, x: d[0], y: d[1], index: -1} })
+    var deposits = gameState ? gameState.deposits.map(function (d) { return [d.x,d.y,d.remaining] }) : map.deposits
+    var objects = deposits.map(function (d) { return {deposit: true, remaining: d[2], x: d[0], y: d[1], index: -1} })
     objects = objects.concat(pieces.map(function (piece, index) {
       var moving = animation && animation.index === index
       return {piece: piece, index: index, x: moving ? animation.x : piece[0], y: moving ? animation.y : piece[1]}
     }))
     objects.sort(function (a,b) { return (a.x+a.y)-(b.x+b.y) || a.index-b.index }).forEach(function (item) {
       var p = map.project(item.x,item.y), piece = item.piece
-      if (item.deposit) { sprites.world(ctx,world,depleted ? 'exhausted' : 'resource',p.x,p.y); return }
-      if (!movement.isUnit(piece)) { sprites.world(ctx,piece[3],piece[2],p.x,p.y); return }
+      if (item.deposit) { sprites.world(ctx,world,(gameState ? !item.remaining : depleted) ? 'exhausted' : 'resource',p.x,p.y); return }
+      if (!movement.isUnit(piece)) {
+        if (item.index === selectedUnit) poly([[p.x,p.y-23],[p.x+47,p.y],[p.x,p.y+23],[p.x-47,p.y]],'#d0ffdb22','#e4ffe5')
+        sprites.world(ctx,piece[3],piece[2],p.x,p.y)
+        health(piece,p.x,p.y); return
+      }
       ellipse(p.x,p.y+7,35,14,'#11192c77')
       ellipse(p.x,p.y+7,36,15,null,piece[3] === 'bloom' ? '#e9a6d1aa' : '#85d9f0aa')
       if (item.index === selectedUnit) {
@@ -156,6 +187,7 @@ module.exports = function createMapPreview (host, options) {
       }
       var bounds = sprites.draw(ctx,piece,p.x,p.y)
       if (bounds) { bounds.index = item.index; hitBoxes.push(bounds) }
+      health(piece,p.x,p.y)
     })
     if (selected) {
       var sp = map.project(selected.x,selected.y)
@@ -231,6 +263,7 @@ module.exports = function createMapPreview (host, options) {
         var tile = map.unproject(wx,wy)
         if (tile.x >= 0 && tile.x < 12 && tile.y >= 0 && tile.y < 12) {
           var piece = map.at(pieces,tile.x,tile.y)
+          if (gameState && options.onTile) { options.onTile(tile.x,tile.y); delete pointers[e.pointerId]; beginGesture(); return }
           if (movement.isUnit(piece)) selectUnit(pieces.indexOf(piece),false)
           else if (selectedUnit >= 0 && !piece) moveSelected(tile.x,tile.y)
           else {
@@ -274,6 +307,16 @@ module.exports = function createMapPreview (host, options) {
     width = 1230; height = 740; fit()
   }
   return {fit: fit, zoom: zoom, turn: turn,
+    setGameState: function (state,orders,id,legal) {
+      gameState = state; pieces = gamePieces(state); world = state.world
+      plan = orders || []; hints = legal || []
+      selectedUnit = pieces.findIndex(function (p) { return p[5].id === id })
+      selected = null; draw()
+    },
+    focusEntity: function (id) {
+      var index = pieces.findIndex(function (p) { return p[5] && p[5].id === id })
+      if (index >= 0) selectUnit(index,true)
+    },
     setWorld: function (name) {
       if (name !== 'expedition' && name !== 'bloom') return
       world = name; canvas.setAttribute('data-world',name); draw()
