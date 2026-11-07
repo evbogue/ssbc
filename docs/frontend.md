@@ -170,18 +170,33 @@ This matters because Decent is not only a social/feed UI. In this repo, it also 
 
 ## Scuttlegrounds map preview
 
-The Scuttlegrounds navigation item opens `#scuttlegrounds`, a read-only isometric map
-study for Strange Scuttle Battlegrounds. The card shows sample Expedition and Bloom
-colonies on a 12×12 alien landscape. Expand map opens a full-viewport view with tile
-inspection, drag-to-pan, pinch/wheel zoom, zoom buttons and Fit map. Arrow keys pan,
-plus/minus zoom, and 0 fits the map; Escape closes the expanded view.
+The Scuttlegrounds navigation item opens `#scuttlegrounds`, a local visual sandbox for
+Strange Scuttle Battlegrounds. Two cards show an industrial Expedition frontier and a
+stranger Bloom homeworld on the same 12×12 grid. Generated pixel sprites draw all terrain,
+HQs, factories, resources and units through the existing Canvas renderer. Buildings retain
+their faction's appearance on either world. World switching changes the terrain and
+resource palette; Exhausted deposits previews the spent-resource sprites.
 
-This preview uses procedural Canvas graphics and has no gameplay or publication controls.
-Sample factories and units illustrate the art direction, rather than a match's initial
-state. A v1 `scuttlegrounds` creation message can render the same visual-study card;
-it does not yet load or simulate a match. The map renderer is separate from its data,
-so a later sprite/Pixi renderer can use the same map. Closing the expanded view or changing
-routes releases its resize observer and pointer handlers. Preview cards have no live loop.
+Expand map opens a full-viewport view with tile inspection, drag-to-pan, pinch/wheel
+zoom, zoom buttons and Fit map. Select a unit by tapping it or using Choose a unit,
+then tap empty ground to animate a local movement preview. Eight independently drawn
+views cover east, southeast, south, southwest, west, northwest, north and northeast;
+the renderer picks the facing at each isometric path step. Turn buttons let you inspect
+all eight views without moving. Views are static sprites, not walking animation cycles.
+Local moves avoid occupied tiles but are not the proposed game's turn/movement rules.
+
+Arrow keys pan, plus/minus zoom, and 0 fits the map; Escape closes the expanded view.
+World changes retain the current preview's positions. Closing resets them; no movement,
+resource depletion or orders are published to SSB. Sample factories and units illustrate
+the art direction, rather than a match's initial state. A v1 `scuttlegrounds` creation
+message can render the same visual-study card; it does not load or simulate a match yet.
+
+Original transparent atlases, exact frame rectangles and generation prompts live in
+`decent/src/scuttlegrounds/assets/`. `build:web` copies four PNG atlases into
+`decent/build/scuttlegrounds/`; image files are loaded from local static routes and shared
+between map views. Nearest-neighbor sampling keeps pixel edges crisp. Closing or changing
+routes releases resize observers, pointer handlers, image callbacks and movement frames.
+Preview cards have no live animation loop. Rules and protocol remain unimplemented.
 
 ## Practical development loop
 

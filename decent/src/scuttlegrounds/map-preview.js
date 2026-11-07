@@ -1,4 +1,6 @@
 var map = require('./map')
+var movement = require('./movement-preview')
+var createSprites = require('./sprites')
 
 module.exports = function createMapPreview (host, options) {
   options = options || {}
@@ -8,12 +10,22 @@ module.exports = function createMapPreview (host, options) {
   canvas.setAttribute('role', 'img')
   if (options.interactive) {
     canvas.tabIndex = 0
-    canvas.setAttribute('aria-label', 'Alien colony map. Drag to pan, pinch or use buttons to zoom. Arrow keys pan; plus and minus zoom; 0 fits the map.')
+    canvas.setAttribute('aria-label', 'Alien colony map. Drag to pan, pinch or use buttons to zoom. Select a unit then tap empty ground to preview movement. Arrow keys pan; plus and minus zoom; 0 fits the map.')
   }
   host.appendChild(canvas)
   var ctx = canvas.getContext('2d')
   var width = 0, height = 0, scale = 1, fitScale = 1, offsetX = 0, offsetY = 0
   var selected = null, destroyed = false, pointers = {}, gesture = null, moved = false
+  var pieces = map.pieces.map(function (p) { return p.concat([p[3] === 'bloom' ? 5 : 1]) })
+  var selectedUnit = -1, animation = null, animationFrame = 0, hitBoxes = []
+  var world = options.world === 'bloom' ? 'bloom' : 'expedition'
+  var depleted = false
+  var sprites = createSprites(function (failed) {
+    if (destroyed) return
+    canvas.setAttribute('data-sprites', failed ? 'failed' : 'ready')
+    if (options.onAssetStatus) options.onAssetStatus(failed ? 'Sprite images could not load. Reload to retry.' : '')
+    draw()
+  })
 
   function poly (points, fill, stroke) {
     ctx.beginPath()
@@ -27,151 +39,81 @@ module.exports = function createMapPreview (host, options) {
     if (fill) { ctx.fillStyle = fill; ctx.fill() }
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke() }
   }
-  function line (points, color, weight) {
-    ctx.beginPath()
-    points.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]) })
-    ctx.strokeStyle = color; ctx.lineWidth = weight || 2; ctx.stroke()
-  }
-  function block (x, y, w, d, h, top, left, right) {
-    poly([[x-w,y], [x,y+d/2], [x,y+d/2-h], [x-w,y-h]], left)
-    poly([[x,y+d/2], [x+w,y], [x+w,y-h], [x,y+d/2-h]], right)
-    poly([[x-w,y-h], [x,y-d/2-h], [x+w,y-h], [x,y+d/2-h]], top, '#ffffff25')
-  }
-  function crystal (x, y, n) {
-    var h = 14 + n * 4
-    poly([[x-5,y], [x-7,y-h+5], [x,y-h-4], [x+6,y-h+3], [x+5,y+2]], '#4cd8ca', '#b5ffe0')
-    poly([[x,y-h-4], [x+6,y-h+3], [x+5,y+2], [x,y-1]], '#278f96')
-    line([[x-3,y-h+3], [x-2,y-3]], '#d6fff3', 1)
-  }
   function terrain (x, y) {
-    var p = map.project(x, y), px = p.x, py = p.y
-    var n = (x * 37 + y * 17 + x * y * 3) % 11
-    var colors = ['#5b526c', '#61566f', '#655a76', '#584f67', '#6a5c78']
-    // Individual tile faces give the terrain an old isometric-game silhouette.
-    poly([[px-48,py], [px,py+24], [px,py+35], [px-48,py+11]], '#302e43')
-    poly([[px,py+24], [px+48,py], [px+48,py+11], [px,py+35]], '#24283b')
-    poly([[px,py-24], [px+48,py], [px,py+24], [px-48,py]], colors[n % 5], '#8e80902b')
-    // Mineral seams, small stones and vegetation, all fixed rather than random.
-    poly([[px-27,py+1], [px-12,py-7], [px+13,py+3], [px-4,py+12]], n % 3 ? '#79708630' : '#9fb09b35')
-    if (!map.at(map.pieces, x, y) && !map.at(map.deposits, x, y)) {
-      if (n === 2 || n === 8) {
-        ellipse(px+7, py, 17, 8, '#49455e', '#756982')
-        ellipse(px+7, py-1, 10, 4, '#3d3d55')
-        line([[px-5,py-6], [px+5,py-10], [px+18,py-6]], '#ab98ae65', 2)
-      } else if (n === 1 || n === 7) {
-        for (var i = 0; i < 3; i++) {
-          var sx = px - 14 + i * 13, sy = py + i % 2 * 5
-          line([[sx,sy], [sx-2,sy-10-i*3], [sx+3,sy-17-i*2]], '#284c53', 3)
-          ellipse(sx+2, sy-15-i*2, 5, 3, '#89b6ae')
-        }
-      } else if (n === 5) {
-        block(px+8, py+2, 9, 10, 5, '#918297', '#65566e', '#49485d')
-      }
-    }
-    if (map.at(map.deposits, x, y)) {
-      ellipse(px, py+3, 26, 12, '#214d5f70', '#5fbbb38a')
-      crystal(px-12, py+2, 1); crystal(px+9, py-1, 3); crystal(px+1, py+8, 0)
-    }
-    var piece = map.at(map.pieces, x, y)
-    if (piece) drawPiece(px, py, piece[2], piece[3])
-    if (selected && selected.x === x && selected.y === y) {
-      poly([[px,py-23], [px+47,py], [px,py+23], [px-47,py]], '#b8f0d51a', '#e4ffe5')
-    }
+    var p = map.project(x,y)
+    var variant = (x*37+y*17+x*y*3)%11
+    // Quiet base tiles dominate; details are traversable decoration only.
+    variant = variant < 8 ? 0 : variant-7
+    sprites.world(ctx,world,'terrain',p.x,p.y,variant)
   }
-  function drawPiece (x, y, type, faction) {
-    var bloom = faction === 'bloom', color = bloom ? '#e8a2da' : '#81c7ef'
-    ellipse(x, y+7, type === 'hq' ? 33 : 23, type === 'hq' ? 14 : 10, '#1b203969')
-    ellipse(x, y+4, type === 'hq' || type === 'factory' ? 32 : 18, 10, null, bloom ? '#ed8bce85' : '#86d3f085')
-    if (bloom) {
-      if (type === 'hq' || type === 'factory') {
-        for (var j = 0; j < 5; j++) {
-          var angle = j * Math.PI * 2 / 5
-          line([[x,y], [x+Math.cos(angle)*23,y+Math.sin(angle)*11],
-            [x+Math.cos(angle)*37,y+Math.sin(angle)*17]], '#986694', 5)
-        }
-        ellipse(x, y-9, 29, 19, '#76537d', '#e8a2da')
-        ellipse(x-4, y-20, 21, type === 'hq' ? 29 : 17, '#ac76ab', '#f3bcdf')
-        ellipse(x-10, y-28, 9, 13, '#e2a6c8aa')
-        ellipse(x+3, y-16, 8, 11, '#80e8cd', '#cbfff2')
-        if (type === 'factory') {
-          ellipse(x+19, y-5, 13, 10, '#cf99c4', '#f1c0e5')
-          ellipse(x+20, y-7, 5, 4, '#73e6b8')
-        } else {
-          line([[x+12,y-34], [x+20,y-53], [x+17,y-64]], '#d0a2ce', 3)
-          ellipse(x+17,y-64,4,4,'#9affd7')
-        }
-      } else if (type === 'walker') {
-        ;[-1,1].forEach(function (side) {
-          line([[x+side*8,y-19], [x+side*23,y-7], [x+side*28,y+6]], '#b383b3', 7)
-          line([[x+side*6,y-23], [x+side*17,y-16], [x+side*20,y-3]], '#d5a3cc', 6)
-        })
-        ellipse(x,y-30,22,21,'#ac76ab','#f1bbdf')
-        ellipse(x-7,y-38,7,9,'#e1abcba0')
-        poly([[x+2,y-32],[x+23,y-42],[x+28,y-35],[x+7,y-23]],'#7ae6c3','#d1ffdf')
-      } else if (type === 'hovercraft') {
-        line([[x-12,y-4],[x-19,y+7],[x-14,y+14]],'#d9a3d0',2)
-        line([[x+8,y-3],[x+17,y+8],[x+11,y+15]],'#d9a3d0',2)
-        ellipse(x,y-17,23,13,'#b78ebc','#f4c4e5')
-        ellipse(x-7,y-21,9,5,'#eed0e7')
-        ellipse(x+10,y-14,5,4,'#82efd0')
-      } else {
-        ellipse(x,y-4,12,7,'#9b6b9f','#e8b1d9')
-        ellipse(x-1,y-12,8,type === 'worker' ? 8 : 12,'#c991bd','#f4c3df')
-        ellipse(x+2,y-15,3,3,'#aaffdb')
-        if (type === 'infantry') line([[x+4,y-10],[x+15,y-17]],'#78edd2',4)
+  function label (piece) {
+    return (piece[3] === 'bloom' ? 'Bloom' : 'Expedition') + ' ' +
+      ({hq: 'HQ', factory: 'factory', worker: 'worker', infantry: 'infantry', hovercraft: 'hovercraft', walker: 'siege walker'})[piece[2]]
+  }
+  function notify (extra) {
+    if (!options.onSelect) return
+    var unit = pieces[selectedUnit]
+    if (!unit) return
+    var info = {unitIndex: selectedUnit, facing: movement.directions[unit[4]], moving: !!animation,
+      x: unit[0], y: unit[1], label: label(unit)}
+    canvas.setAttribute('data-selected-unit', String(selectedUnit))
+    canvas.setAttribute('data-facing', info.facing)
+    canvas.setAttribute('data-unit-position', unit[0] + ',' + unit[1])
+    canvas.setAttribute('data-moving', info.moving ? 'true' : 'false')
+    options.onSelect(info.label + ' · facing ' + info.facing + ' · [' + info.x + ', ' + info.y + ']' + (extra ? ' · ' + extra : ''), info)
+  }
+  function selectUnit (index, focus) {
+    if (animation || !movement.isUnit(pieces[index])) return
+    selectedUnit = index; selected = null
+    if (focus) {
+      var p = map.project(pieces[index][0],pieces[index][1])
+      scale = Math.max(scale,fitScale*2)
+      offsetX = width/2-p.x*scale; offsetY = height/2-(p.y-35)*scale
+    }
+    notify('tap empty ground to preview movement'); draw()
+  }
+  function turn (amount) {
+    if (animation || selectedUnit < 0) return
+    pieces[selectedUnit][4] = (pieces[selectedUnit][4]+amount+8)%8
+    notify(); draw()
+  }
+  function moveSelected (x, y) {
+    if (animation || selectedUnit < 0) return
+    var path = movement.findPath(pieces,selectedUnit,x,y)
+    if (!path) { notify('no clear path to that tile'); return }
+    var unit = pieces[selectedUnit]
+    animation = {index: selectedUnit, path: path, step: 0, started: null, x: unit[0], y: unit[1]}
+    unit[4] = movement.facing(path[0][0]-unit[0],path[0][1]-unit[1],unit[4])
+    notify('moving locally'); animationFrame = requestAnimationFrame(animate)
+  }
+  function animate (now) {
+    animationFrame = 0
+    if (destroyed || !animation) return
+    if (animation.started === null) animation.started = now
+    var unit = pieces[animation.index], target = animation.path[animation.step]
+    var progress = Math.min(1,(now-animation.started)/220)
+    animation.x = unit[0]+(target[0]-unit[0])*progress
+    animation.y = unit[1]+(target[1]-unit[1])*progress
+    if (progress === 1) {
+      unit[0] = target[0]; unit[1] = target[1]; animation.step++
+      if (animation.step === animation.path.length) { animation = null; notify('movement preview complete') }
+      else {
+        var next = animation.path[animation.step]
+        unit[4] = movement.facing(next[0]-unit[0],next[1]-unit[1],unit[4])
+        animation.started = now; notify('moving locally')
       }
-      return
     }
-    if (type === 'hq') {
-      block(x, y+4, 34, 37, 7, '#9db2bc', '#566b82', '#34495f')
-      ellipse(x,y-5,27,13,'#365471','#a2d9eb')
-      ctx.beginPath(); ctx.ellipse(x,y-9,25,26,0,Math.PI,Math.PI*2)
-      ctx.fillStyle = '#669db7'; ctx.fill(); ctx.strokeStyle = '#b7e8ee'; ctx.stroke()
-      line([[x-22,y-13],[x,y-8],[x+23,y-13]],'#bce7ed',2)
-      line([[x,y-34],[x,y-9]],'#a9dce7',2)
-      block(x+14,y+12,9,11,12,'#d3d8d7','#879aa9','#58738c')
-      ctx.fillStyle = '#87f2da'; ctx.fillRect(x+11,y-1,6,5)
-      line([[x-25,y-9],[x-25,y-49]],'#c7d8df',2)
-      poly([[x-24,y-49],[x-9,y-44],[x-24,y-40]],'#80d3f1')
-    } else if (type === 'factory') {
-      block(x,y+5,32,34,25,'#b6bcc8','#7d859c','#4d617e')
-      block(x-9,y-20,16,17,12,'#d7d9dc','#97a4b4','#617a95')
-      block(x+17,y-9,5,6,35,'#a5b6c8','#657a92','#3f5971')
-      line([[x+6,y+8],[x+6,y-7],[x+24,y-16]],'#182d4c',5)
-      for (var k = 0; k < 3; k++) line([[x-24+k*7,y-14+k*3],[x-24+k*7,y-7+k*3]],'#98eddf',2)
-    } else if (type === 'walker') {
-      ;[-1,1].forEach(function (side) {
-        line([[x+side*8,y-25],[x+side*21,y-11],[x+side*26,y+5]],'#a5bac9',6)
-        line([[x+side*4,y-28],[x+side*15,y-20],[x+side*19,y-3]],'#708da8',5)
-        block(x+side*26,y+6,6,6,3,'#b9cad4','#5b738e','#36546e')
-      })
-      block(x,y-18,19,21,18,'#d2dae0','#8b9fb4','#4f708b')
-      line([[x+1,y-35],[x+29,y-45]],'#7c9bb0',7)
-      line([[x+24,y-43],[x+32,y-46]],'#bafde5',4)
-      line([[x-10,y-28],[x-3,y-25]],'#93f4e4',3)
-    } else if (type === 'hovercraft') {
-      ellipse(x,y+1,23,9,'#83d9f04a','#80d8eb')
-      poly([[x-27,y-8],[x+8,y-21],[x+27,y-6],[x-4,y+4]],'#8ebbd0','#d6edf2')
-      poly([[x-27,y-8],[x-4,y+4],[x-4,y+9],[x-25,y-3]],'#3e607f')
-      block(x,y-9,9,10,8,'#c3d7e1','#6c96b5','#456785')
-      line([[x+5,y-17],[x+20,y-22]],'#c3e7ed',3)
-    } else {
-      line([[x-3,y-6],[x-5,y+2]],'#cedce2',3)
-      line([[x+3,y-6],[x+5,y+2]],'#8ca5bb',3)
-      block(x,y-8,5,7,9,color,'#739cb7','#456780')
-      ellipse(x,y-22,5,6,'#d7e4e8')
-      line([[x-3,y-23],[x+3,y-22]],'#315779',3)
-      if (type === 'infantry') line([[x+5,y-12],[x+16,y-18]],'#cee6e7',3)
-      else block(x-8,y-3,4,5,5,'#e1b66b','#a78059','#74624f')
-    }
+    draw()
+    if (animation) animationFrame = requestAnimationFrame(animate)
   }
   function draw () {
     if (destroyed || !ctx || !width || !height) return
+    canvas.setAttribute('data-zoom', (scale/fitScale).toFixed(3))
     var dpr = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr)
     ctx.setTransform(dpr,0,0,dpr,0,0)
     var gradient = ctx.createLinearGradient(0,0,width,height)
-    gradient.addColorStop(0,'#141e32'); gradient.addColorStop(1,'#29213b')
+    gradient.addColorStop(0,world === 'bloom' ? '#24162e' : '#161e29'); gradient.addColorStop(1,world === 'bloom' ? '#39233e' : '#302a29')
     ctx.fillStyle = gradient; ctx.fillRect(0,0,width,height)
     for (var i = 0; i < 70; i++) {
       ctx.fillStyle = i % 3 ? '#a9c6dc35' : '#d4c8ee60'
@@ -184,6 +126,28 @@ module.exports = function createMapPreview (host, options) {
         var y = depth - x
         if (y >= 0 && y < map.size) terrain(x,y)
       }
+    }
+    hitBoxes = []
+    var objects = map.deposits.map(function (d) { return {deposit: true, x: d[0], y: d[1], index: -1} })
+    objects = objects.concat(pieces.map(function (piece, index) {
+      var moving = animation && animation.index === index
+      return {piece: piece, index: index, x: moving ? animation.x : piece[0], y: moving ? animation.y : piece[1]}
+    }))
+    objects.sort(function (a,b) { return (a.x+a.y)-(b.x+b.y) || a.index-b.index }).forEach(function (item) {
+      var p = map.project(item.x,item.y), piece = item.piece
+      if (item.deposit) { sprites.world(ctx,world,depleted ? 'exhausted' : 'resource',p.x,p.y); return }
+      if (!movement.isUnit(piece)) { sprites.world(ctx,piece[3],piece[2],p.x,p.y); return }
+      ellipse(p.x,p.y+7,35,14,'#11192c77')
+      ellipse(p.x,p.y+7,36,15,null,piece[3] === 'bloom' ? '#e9a6d1aa' : '#85d9f0aa')
+      if (item.index === selectedUnit) {
+        poly([[p.x,p.y-23],[p.x+47,p.y],[p.x,p.y+23],[p.x-47,p.y]],'#d0ffdb22','#e4ffe5')
+      }
+      var bounds = sprites.draw(ctx,piece,p.x,p.y)
+      if (bounds) { bounds.index = item.index; hitBoxes.push(bounds) }
+    })
+    if (selected) {
+      var sp = map.project(selected.x,selected.y)
+      poly([[sp.x,sp.y-23],[sp.x+47,sp.y],[sp.x,sp.y+23],[sp.x-47,sp.y]],'#b8f0d51a','#e4ffe5')
     }
     ctx.font = '600 12px monospace'; ctx.textAlign = 'center'
     ctx.fillStyle = '#a8d6ef'; ctx.fillText('THE EXPEDITION',600,23)
@@ -199,7 +163,16 @@ module.exports = function createMapPreview (host, options) {
   function resize () {
     var rect = host.getBoundingClientRect()
     if (!rect.width || !rect.height || destroyed) return
-    width = rect.width; height = rect.height; fit()
+    if (!width || !height) { width = rect.width; height = rect.height; fit(); return }
+    // Inspector text can resize the map on phones. Keep the selected unit in view
+    // rather than resetting the camera whenever a control wraps to another line.
+    var centerX = (width/2-offsetX)/scale, centerY = (height/2-offsetY)/scale
+    var relativeZoom = scale/fitScale
+    width = rect.width; height = rect.height
+    fitScale = Math.min(width/1230,height/740)
+    scale = fitScale*relativeZoom
+    offsetX = width/2-centerX*scale; offsetY = height/2-centerY*scale
+    draw()
   }
   function zoom (factor, cx, cy) {
     cx = cx == null ? width / 2 : cx; cy = cy == null ? height / 2 : cy
@@ -241,12 +214,25 @@ module.exports = function createMapPreview (host, options) {
     canvas.onpointerup = function (e) {
       if (!pointers[e.pointerId]) return
       var p = coords(e)
-      if (!moved && Object.keys(pointers).length === 1) {
-        var tile = map.unproject((p.x-offsetX)/scale,(p.y-offsetY)/scale)
+      if (!moved && !animation && Object.keys(pointers).length === 1) {
+        var wx = (p.x-offsetX)/scale, wy = (p.y-offsetY)/scale
+        var tile = map.unproject(wx,wy)
         if (tile.x >= 0 && tile.x < 12 && tile.y >= 0 && tile.y < 12) {
-          selected = tile
-          if (options.onSelect) options.onSelect(map.describe(tile.x,tile.y) + ' · [' + tile.x + ', ' + tile.y + ']')
-          draw()
+          var piece = map.at(pieces,tile.x,tile.y)
+          if (movement.isUnit(piece)) selectUnit(pieces.indexOf(piece),false)
+          else if (selectedUnit >= 0 && !piece) moveSelected(tile.x,tile.y)
+          else {
+            var hit = hitBoxes.slice().reverse().filter(function (box) {
+              return wx >= box.x && wx <= box.x+box.width && wy >= box.y && wy <= box.y+box.height
+            })[0]
+            if (hit && !piece) selectUnit(hit.index,false)
+            else {
+              selectedUnit = -1; selected = tile
+              var deposit = map.at(map.deposits,tile.x,tile.y)
+              if (options.onSelect) options.onSelect(piece ? label(piece) : deposit ? (depleted ? 'Exhausted mineral deposit · visual preview' : 'Mineral deposit · ' + deposit[2] + ' minerals') : 'Open terrain · buildable ground', null)
+              draw()
+            }
+          }
         }
       }
       delete pointers[e.pointerId]; beginGesture()
@@ -267,6 +253,7 @@ module.exports = function createMapPreview (host, options) {
     }
   }
   // Cards use a fixed-size drawing scaled by CSS, with no observers or live loop.
+  canvas.setAttribute('data-world',world)
   var observer = null
   if (options.interactive) {
     observer = new ResizeObserver(resize)
@@ -274,8 +261,17 @@ module.exports = function createMapPreview (host, options) {
   } else {
     width = 1230; height = 740; fit()
   }
-  return {fit: fit, zoom: zoom, destroy: function () {
+  return {fit: fit, zoom: zoom, turn: turn,
+    setWorld: function (name) {
+      if (name !== 'expedition' && name !== 'bloom') return
+      world = name; canvas.setAttribute('data-world',name); draw()
+    },
+    setDepleted: function (value) { depleted = !!value; draw() }, selectUnit: function (index) { selectUnit(index,true) },
+    units: pieces.map(function (piece,index) { return movement.isUnit(piece) ? {index: index, label: label(piece) + ' [' + piece[0] + ', ' + piece[1] + ']'} : null }).filter(Boolean),
+    destroy: function () {
     destroyed = true
+    if (animationFrame) cancelAnimationFrame(animationFrame)
+    animation = null; sprites.dispose()
     if (observer) observer.disconnect()
     Object.keys(pointers).forEach(function (id) {
       if (canvas.hasPointerCapture(Number(id))) canvas.releasePointerCapture(Number(id))

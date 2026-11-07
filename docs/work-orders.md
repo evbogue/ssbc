@@ -126,7 +126,8 @@ historical context for why `base.css` exists, but do not implement it as written
 
 File: [Scuttlegrounds implementation work order](scuttlegrounds-work-order.md)
 
-Status: read-only map art preview implemented; gameplay remains specified, not implemented.
+Status: two sprite worlds and eight-facing unit movement previews implemented;
+gameplay remains specified, not implemented.
 Explicitly requested by Ev for a LAN JAM colony-conquest
 game: two factions, a shared isometric map, phone/full-viewport play, and simultaneous
 SSB commit/reveal rounds coordinated by a player host. The order defines rules, protocol,

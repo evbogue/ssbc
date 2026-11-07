@@ -4,12 +4,13 @@ var createMap = require('../../scuttlegrounds/map-preview')
 exports.needs = {}
 exports.gives = {screen_view: true, message_content: true}
 
-function makeCard () {
+function makeCard (worldName) {
+  worldName = worldName === 'bloom' ? 'bloom' : 'expedition'
   var card = h('section.sg-card')
   var preview = h('div.sg-map-preview')
   var expand = h('button.sg-button.sg-button-primary', {type: 'button', onclick: open}, 'Expand map')
   card.appendChild(h('div.sg-card-heading',
-    h('div', h('span.sg-eyebrow', 'STRANGE SCUTTLE BATTLEGROUNDS'), h('h2', 'A foothold on strange ground.')),
+    h('div', h('span.sg-eyebrow', 'STRANGE SCUTTLE BATTLEGROUNDS'), h('h2', worldName === 'bloom' ? 'The Bloom homeworld.' : 'An Expedition frontier.')),
     h('span.sg-badge', 'Map preview')
   ))
   card.appendChild(preview)
@@ -18,8 +19,8 @@ function makeCard () {
       h('p', '12 × 12 alien terrain · finite mineral deposits · two colonies')),
     expand
   ))
-  card.appendChild(h('p.sg-preview-note', 'Visual study with sample buildings and units. Gameplay is not active.'))
-  createMap(preview)
+  card.appendChild(h('p.sg-preview-note', 'Sprite terrain, colonies and resources. Expand to preview eight-direction movement. Gameplay is not active.'))
+  createMap(preview, {world: worldName})
 
   function open () {
     if (document.querySelector('.sg-fullscreen')) return
@@ -27,6 +28,22 @@ function makeCard () {
     var previousOverflow = document.body.style.overflow
     var status = h('div.sg-inspector', 'Select a tile to inspect terrain, minerals or colony pieces.')
     status.setAttribute('aria-live', 'polite')
+    var assetStatus = h('p.sg-asset-status', 'Loading directional sprites…')
+    assetStatus.setAttribute('role', 'status')
+    var roster = h('select.sg-unit-picker', {onchange: function () {
+      if (roster.value !== '') scene.selectUnit(Number(roster.value))
+    }}, h('option', {value: ''}, 'Choose a unit'))
+    roster.setAttribute('aria-label', 'Choose a unit')
+    var turnLeft = h('button.sg-button', {type: 'button', disabled: true, onclick: function () { scene.turn(-1) }}, '↶')
+    var turnRight = h('button.sg-button', {type: 'button', disabled: true, onclick: function () { scene.turn(1) }}, '↷')
+    turnLeft.setAttribute('aria-label', 'Turn unit counterclockwise')
+    turnRight.setAttribute('aria-label', 'Turn unit clockwise')
+    var facing = h('span.sg-facing', '8 facings')
+    var worldPicker = h('select.sg-world-picker', {onchange: function () { scene.setWorld(worldPicker.value) }},
+      h('option', {value: 'expedition'}, 'Expedition world'), h('option', {value: 'bloom'}, 'Bloom world'))
+    worldPicker.value = worldName
+    worldPicker.setAttribute('aria-label', 'World')
+    var exhausted = h('input', {type: 'checkbox', onchange: function () { scene.setDepleted(exhausted.checked) }})
     var world = h('div.sg-world')
     var closeButton = h('button.sg-button', {type: 'button', onclick: close}, 'Close')
     closeButton.setAttribute('aria-label', 'Close map')
@@ -40,7 +57,10 @@ function makeCard () {
           h('span.sg-legend-expedition', '◆ Expedition'),
           h('span.sg-legend-bloom', '● Bloom'),
           h('span.sg-legend-minerals', '♦ Minerals')),
+        h('div.sg-world-controls', worldPicker, h('label.sg-exhausted-toggle', exhausted, 'Exhausted deposits')),
+        assetStatus,
         status,
+        h('div.sg-unit-controls', roster, turnLeft, facing, turnRight),
         h('div.sg-map-toolbar',
           h('span.sg-map-hint', 'Drag to pan · pinch / scroll to zoom'),
           h('button.sg-button.sg-zoom-out', {type: 'button', onclick: function () { scene.zoom(0.8) }}, '−'),
@@ -53,7 +73,18 @@ function makeCard () {
     modal.querySelector('.sg-zoom-in').setAttribute('aria-label', 'Zoom in')
     document.body.appendChild(modal)
     document.body.style.overflow = 'hidden'
-    var scene = createMap(world, {interactive: true, onSelect: function (text) { status.textContent = text }})
+    var scene = createMap(world, {interactive: true, world: worldName,
+      onAssetStatus: function (text) { assetStatus.textContent = text },
+      onSelect: function (text, info) {
+        status.textContent = text
+        roster.value = info ? String(info.unitIndex) : ''
+        roster.disabled = !!(info && info.moving)
+        turnLeft.disabled = turnRight.disabled = !info || info.moving
+        facing.textContent = info ? info.facing : '8 facings'
+      }})
+    scene.units.forEach(function (unit) {
+      roster.appendChild(h('option', {value: String(unit.index)}, unit.label))
+    })
     closeButton.focus()
     document.addEventListener('decent:route-change', close)
     document.addEventListener('keydown', keydown)
@@ -86,8 +117,9 @@ exports.create = function () {
         h('div.scroller__wrapper',
           h('div.sg-page-heading', h('span.sg-eyebrow', 'LAN JAM · MAP STUDY'),
             h('h1', 'Scuttlegrounds'),
-            h('p', 'Explore the first colony-conquest landscape. Expand the map to look around.')),
-          h('article.sg-demo-message', makeCard())))
+            h('p', 'Two sprite worlds, Expedition mech suits and faceless Bloom monsters. Expand either map to explore and preview movement.')),
+          h('article.sg-demo-message', makeCard('expedition')),
+          h('article.sg-demo-message', makeCard('bloom'))))
       view.title = 'Scuttlegrounds'
       return view
     },

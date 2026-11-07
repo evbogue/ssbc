@@ -1,11 +1,13 @@
 # Strange Scuttle Battlegrounds — implementation work order
 
-Working short name: **Scuttlegrounds**. Status: **map art preview implemented; game not implemented**.
+Working short name: **Scuttlegrounds**. Status: **sprite worlds and directional movement preview implemented; game not implemented**.
 Requested by Ev at LAN JAM, Ferris and Co., November 2026. Source baseline inspected:
 `24c6ba0`. This order authorizes a bounded game implementation, not a general game
-platform. The first follow-up implements only a read-only procedural Canvas map at
-`#scuttlegrounds`, including full-viewport phone controls. It is an art/layout review
-slice, not completion of the rules, protocol or Pixi integration phases below.
+platform. Follow-ups implement a local Canvas sandbox at `#scuttlegrounds`: full-viewport
+phone controls, two generated sprite worlds, faction buildings/resources, and eight-facing
+unit sprites with local movement previews. It is an art/layout review slice, not completion
+of the rules, protocol or Pixi integration phases below. Canvas already handles these
+sprites; engine migration is not needed for this slice. See `docs/frontend.md` for controls.
 
 ## Outcome and scope
 
