@@ -55,6 +55,18 @@ BOTTOM ROW left to right:
 4 EXHAUSTED RESOURCE DEPOSIT: broken dark plum shell stumps and collapsed pale mineral shards, faint dying green seams, no large standing crystals, same single-tile footprint. Not an open toothy hole.
 Resources and buildings align with the same2:1 isometric ground plane. All8sprites isolated, consistent pixel density, clean alpha edges, no red/yellow/magenta matte fringe or stray pixels. No characters or equipment. Match approved faceless mineral-shell/plum/lime Bloom faction.
 
+## Quiet terrain revision
+
+`terrain-v2.png` replaces the busy ground tiles at runtime. Generated with the built-in
+image tool; original alpha is preserved. Buildings, resources and directional units
+continue using the original atlases. The map draws a separate grid over this terrain.
+
+Use case: stylized-concept. Asset type: production TRANSPARENT PNG sprite atlas with EXACTLY TWO isometric ground tile sprites, left and right, for a readable pixel-art strategy game. One horizontal row, two equal square cells on a 2:1 landscape canvas. Real alpha transparency around both separate diamond tiles. No text, labels, frame, buildings, resources, plants, rocks, crystals or objects. Tiles must be geometrically identical flat2:1 diamonds with a VERY THIN dark vertical side below the front two edges. Fixed elevated isometric camera; crisp hard pixel edges.
+CRITICAL art direction: deliberately QUIET, MINIMAL, visually restful ground. At least95 percent of each tile top must be uninterrupted FLAT MIDTONE COLOR. No tiny texture, noise, dithering, tessellation, rock slabs, repeated cracks, chips, cobblestone, veins, neon patterns, raised decorations, outlines dividing the interior, or high contrast details. These are calm background surfaces so detailed characters and buildings remain readable. Permit only one or two tiny VERY FAINT marks, close in value to the main color. Pixel art does not require texture; use large simple uniform color areas. Hard outlines on tile exterior only. No gradients or soft airbrush.
+LEFT TILE: Expedition frontier soil, muted dusty gray-brown clay, subdued cool taupe top, slightly darker thin side faces, a hint of fine packed soil conveyed by two small extremely subtle marks, otherwise entirely flat.
+RIGHT TILE: Bloom world crust, muted dusty plum/slate-violet, slightly darker thin side faces, eerie alien character conveyed ONLY by plum color with at most one tiny very dim desaturated green mark. NO glowing veins or shell fragments.
+Both tiles same size, shape, elevation and geometric 2:1 top surface; diamond width fills about80 percent of its square cell. Ground tops meet seamless regular diamond edges when repeated; do not put tall or overlapping features on edges. No shadow or ground outside diamonds. The priority is a map that is comfortable for human eyes, with separate runtime grid lines providing tile boundaries.
+
 ## Bloom cleanup
 
 Preserve the 8×4 sheet, all units and viewing angles, remove stray background halos, preserve alpha transparency and faceless shells. Source images were copied intact; only frame metadata was derived for runtime sprite selection.

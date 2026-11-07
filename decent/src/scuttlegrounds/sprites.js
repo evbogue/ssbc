@@ -1,11 +1,12 @@
 var atlas = require('./assets/sprites-v1.json')
 var worlds = require('./assets/worlds-v1.json')
+var terrain = require('./assets/terrain-v2.json')
 var cache = null
 
 module.exports = function createSprites (onLoad) {
   if (!cache) {
-    cache = {images: {}, pending: 4, failed: false, listeners: []}
-    var files = {}
+    cache = {images: {}, pending: 5, failed: false, listeners: []}
+    var files = {terrain: terrain.file}
     Object.keys(atlas.factions).forEach(function (faction) {
       files[faction] = atlas.factions[faction].file
       files[faction+'-world'] = worlds.worlds[faction].file
@@ -27,14 +28,14 @@ module.exports = function createSprites (onLoad) {
   if (cache.pending) cache.listeners.push(onLoad)
   else Promise.resolve().then(function () { if (onLoad) onLoad(cache.failed) })
   return {
-    world: function (ctx, faction, type, x, y, variant) {
-      var img = cache.images[faction+'-world']
+    world: function (ctx, faction, type, x, y) {
+      var ground = type === 'terrain'
+      var img = cache.images[ground ? 'terrain' : faction+'-world']
       if (!img.complete || !img.naturalWidth) return
-      var index = type === 'terrain' ? variant : worlds.types.indexOf(type)
-      var frame = worlds.worlds[faction].frames[index]
-      var w = type === 'terrain' ? 98 : ({hq: 108, factory: 102, resource: 76, exhausted: 72})[type]
+      var frame = ground ? terrain.frames[faction] : worlds.worlds[faction].frames[worlds.types.indexOf(type)]
+      var w = ground ? 98 : ({hq: 108, factory: 102, resource: 76, exhausted: 72})[type]
       var h = w*frame[3]/frame[2]
-      var top = type === 'terrain' ? y-24 : y+16-h
+      var top = ground ? y-24 : y+16-h
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(img,frame[0],frame[1],frame[2],frame[3],Math.round(x-w/2),Math.round(top),Math.round(w),Math.round(h))
     },

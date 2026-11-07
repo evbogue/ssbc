@@ -175,7 +175,9 @@ Strange Scuttle Battlegrounds. Two cards show an industrial Expedition frontier 
 stranger Bloom homeworld on the same 12×12 grid. Generated pixel sprites draw all terrain,
 HQs, factories, resources and units through the existing Canvas renderer. Buildings retain
 their faction's appearance on either world. World switching changes the terrain and
-resource palette; Exhausted deposits previews the spent-resource sprites.
+resource palette; Exhausted deposits previews the spent-resource sprites. Ground uses
+quiet, low-contrast terrain sprites so units and resources stand out. A separate grid
+marks the logical tile boundaries beneath pieces, with stable line weight as you zoom.
 
 Expand map opens a full-viewport view with tile inspection, drag-to-pan, pinch/wheel
 zoom, zoom buttons and Fit map. Select a unit by tapping it or using Choose a unit,
@@ -192,7 +194,7 @@ the art direction, rather than a match's initial state. A v1 `scuttlegrounds` cr
 message can render the same visual-study card; it does not load or simulate a match yet.
 
 Original transparent atlases, exact frame rectangles and generation prompts live in
-`decent/src/scuttlegrounds/assets/`. `build:web` copies four PNG atlases into
+`decent/src/scuttlegrounds/assets/`. `build:web` copies five PNG atlases into
 `decent/build/scuttlegrounds/`; image files are loaded from local static routes and shared
 between map views. Nearest-neighbor sampling keeps pixel edges crisp. Closing or changing
 routes releases resize observers, pointer handlers, image callbacks and movement frames.

@@ -41,10 +41,20 @@ module.exports = function createMapPreview (host, options) {
   }
   function terrain (x, y) {
     var p = map.project(x,y)
-    var variant = (x*37+y*17+x*y*3)%11
-    // Quiet base tiles dominate; details are traversable decoration only.
-    variant = variant < 8 ? 0 : variant-7
-    sprites.world(ctx,world,'terrain',p.x,p.y,variant)
+    sprites.world(ctx,world,'terrain',p.x,p.y)
+  }
+  function drawGrid () {
+    ctx.beginPath()
+    // Boundaries use the same half-tile coordinates as picking, not sprite edges.
+    for (var i = 0; i <= map.size; i++) {
+      var a = map.project(i-0.5,-0.5), b = map.project(i-0.5,map.size-0.5)
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y)
+      a = map.project(-0.5,i-0.5); b = map.project(map.size-0.5,i-0.5)
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y)
+    }
+    ctx.strokeStyle = world === 'bloom' ? '#251c35b3' : '#302a2fb3'
+    ctx.lineWidth = (options.interactive ? 1.25 : 2)/scale
+    ctx.stroke()
   }
   function label (piece) {
     return (piece[3] === 'bloom' ? 'Bloom' : 'Expedition') + ' ' +
@@ -127,6 +137,7 @@ module.exports = function createMapPreview (host, options) {
         if (y >= 0 && y < map.size) terrain(x,y)
       }
     }
+    drawGrid()
     hitBoxes = []
     var objects = map.deposits.map(function (d) { return {deposit: true, x: d[0], y: d[1], index: -1} })
     objects = objects.concat(pieces.map(function (piece, index) {

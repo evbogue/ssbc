@@ -1,0 +1,19 @@
+{
+  "file": "terrain-v2.png",
+  "width": 1774,
+  "height": 887,
+  "frames": {
+    "expedition": [
+      50,
+      241,
+      786,
+      418
+    ],
+    "bloom": [
+      938,
+      241,
+      786,
+      418
+    ]
+  }
+}

@@ -7,6 +7,7 @@ const map = require('../decent/src/scuttlegrounds/map')
 const movement = require('../decent/src/scuttlegrounds/movement-preview')
 const units = require('../decent/src/scuttlegrounds/assets/sprites-v1.json')
 const worlds = require('../decent/src/scuttlegrounds/assets/worlds-v1.json')
+const terrain = require('../decent/src/scuttlegrounds/assets/terrain-v2.json')
 
 test('isometric movement chooses all eight screen facings and keeps facing at rest', (t) => {
   const cases = [[1, -1, 'E'], [1, 0, 'SE'], [1, 1, 'S'], [0, 1, 'SW'],
@@ -39,9 +40,11 @@ test('local movement preview routes around pieces without mutating the shared ma
   t.end()
 })
 
-test('all 80 sprite frames stay inside their shipped PNG atlases', (t) => {
+test('all 82 sprite frames stay inside their shipped PNG atlases', (t) => {
   let count = 0
-  for (const [collection, directional] of [[units.factions, true], [worlds.worlds, false]]) {
+  const ground = Object.assign({}, terrain, { frames: Object.values(terrain.frames) })
+  for (const [collection, directional, expected] of [[units.factions, true, 32],
+    [worlds.worlds, false, 8], [{ ground }, false, 2]]) {
     for (const data of Object.values(collection)) {
       const bytes = fs.readFileSync(path.join(__dirname, '../decent/src/scuttlegrounds/assets', data.file))
       t.equal(bytes.subarray(1, 4).toString(), 'PNG', 'source is a PNG')
@@ -49,13 +52,13 @@ test('all 80 sprite frames stay inside their shipped PNG atlases', (t) => {
       t.equal(bytes.readUInt32BE(20), data.height, 'atlas height matches frame metadata')
       t.equal(bytes[25], 6, 'PNG preserves RGBA transparency')
       const frames = directional ? data.frames.flat() : data.frames
-      t.equal(frames.length, directional ? 32 : 8, 'atlas has every required view or world object')
+      t.equal(frames.length, expected, 'atlas has every required view or world object')
       for (const [x, y, w, h] of frames) {
         t.ok(x >= 0 && y >= 0 && w > 0 && h > 0 && x + w <= data.width && y + h <= data.height, 'frame is fully inside source image')
         count++
       }
     }
   }
-  t.equal(count, 80, '64 directional units and 16 world objects are indexed')
+  t.equal(count, 82, '64 directional units, 16 world objects and two quiet ground tiles are indexed')
   t.end()
 })
