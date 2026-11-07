@@ -58,4 +58,3 @@ Resources and buildings align with the same2:1 isometric ground plane. All8sprit
 ## Bloom cleanup
 
 Preserve the 8×4 sheet, all units and viewing angles, remove stray background halos, preserve alpha transparency and faceless shells. Source images were copied intact; only frame metadata was derived for runtime sprite selection.
-
