@@ -176,7 +176,8 @@ stranger Bloom homeworld on the same 12×12 grid. Generated pixel sprites draw a
 HQs, factories, resources and units through the existing Canvas renderer. Buildings retain
 their faction's appearance on either world. World switching changes the terrain and
 resource palette; Exhausted deposits previews the spent-resource sprites. Ground uses
-quiet, low-contrast terrain sprites so units and resources stand out. A separate grid
+quiet terrain sprites with a restrained layer of the original rock/organic texture,
+so the ground has detail while units and resources stand out. A separate grid
 marks the logical tile boundaries beneath pieces, with stable line weight as you zoom.
 
 Expand map opens a full-viewport view with tile inspection, drag-to-pan, pinch/wheel

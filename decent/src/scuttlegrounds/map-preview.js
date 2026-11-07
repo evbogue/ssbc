@@ -41,7 +41,8 @@ module.exports = function createMapPreview (host, options) {
   }
   function terrain (x, y) {
     var p = map.project(x,y)
-    sprites.world(ctx,world,'terrain',p.x,p.y)
+    var detail = (x*37+y*17+x*y*3)%11
+    sprites.world(ctx,world,'terrain',p.x,p.y,detail < 8 ? 0 : detail-7)
   }
   function drawGrid () {
     ctx.beginPath()

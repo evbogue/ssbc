@@ -28,7 +28,7 @@ module.exports = function createSprites (onLoad) {
   if (cache.pending) cache.listeners.push(onLoad)
   else Promise.resolve().then(function () { if (onLoad) onLoad(cache.failed) })
   return {
-    world: function (ctx, faction, type, x, y) {
+    world: function (ctx, faction, type, x, y, variant) {
       var ground = type === 'terrain'
       var img = cache.images[ground ? 'terrain' : faction+'-world']
       if (!img.complete || !img.naturalWidth) return
@@ -38,6 +38,22 @@ module.exports = function createSprites (onLoad) {
       var top = ground ? y-24 : y+16-h
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(img,frame[0],frame[1],frame[2],frame[3],Math.round(x-w/2),Math.round(top),Math.round(w),Math.round(h))
+      if (ground) {
+        // Keep the quiet base, with a subdued layer of the original world texture.
+        // Clip to the top face so the grid and tile silhouette remain precise.
+        var detail = cache.images[faction+'-world']
+        if (!detail.complete || !detail.naturalWidth) return
+        var texture = worlds.worlds[faction].frames[variant || 0]
+        ctx.save()
+        ctx.beginPath()
+        ctx.moveTo(x,y-24); ctx.lineTo(x+48,y)
+        ctx.lineTo(x,y+24); ctx.lineTo(x-48,y); ctx.closePath()
+        ctx.clip()
+        ctx.globalAlpha *= 0.32
+        ctx.drawImage(detail,texture[0],texture[1],texture[2],texture[3],
+          Math.round(x-w/2),Math.round(y-24),Math.round(w),Math.round(w*texture[3]/texture[2]))
+        ctx.restore()
+      }
     },
     draw: function (ctx, piece, x, y) {
       var img = cache.images[piece[3]], row = atlas.types.indexOf(piece[2])
