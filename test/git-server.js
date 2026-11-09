@@ -4,6 +4,7 @@ const fs = require('fs')
 const os = require('os')
 const net = require('net')
 const http = require('http')
+const { DatabaseSync } = require('node:sqlite')
 const test = require('tape')
 const { join } = require('path')
 const { spawn, execFile } = require('child_process')
@@ -168,6 +169,10 @@ test('git smart http server supports create push clone and json api', function (
             t.equal(repoValue.content.name, 'git-e2e-test', 'git.create stores the repo name, not the raw JSON string')
 
             fs.writeFileSync(join(workPath, 'README.md'), '# git-ssb e2e\n\nhello from test\n')
+            // Enough distinct objects to exceed the SSB limit if every object ID is included.
+            for (let i = 0; i < 200; i++) {
+              fs.writeFileSync(join(workPath, 'object-' + i), String(i))
+            }
 
             run('git', ['init'], { cwd: workPath, env }, function (err) {
               t.error(err, 'git init succeeds')
@@ -181,7 +186,7 @@ test('git smart http server supports create push clone and json api', function (
                   t.error(err, 'set git user.email')
                   if (err) return
 
-                  run('git', ['add', 'README.md'], { cwd: workPath, env }, function (err) {
+                  run('git', ['add', '.'], { cwd: workPath, env }, function (err) {
                     t.error(err, 'git add succeeds')
                     if (err) return
 
@@ -198,8 +203,14 @@ test('git smart http server supports create push clone and json api', function (
                           if (err) return
 
                           run('git', ['push', 'ssb', 'main'], { cwd: workPath, env }, function (err) {
-                            t.error(err, 'git push over smart http succeeds')
+                            t.error(err, 'large git push succeeds without optional object IDs')
                             if (err) return
+                            const db = new DatabaseSync(join(appPath, 'ssb.db'), { readOnly: true })
+                            const update = db.prepare("SELECT raw FROM messages WHERE type = 'git-update' ORDER BY rowid DESC LIMIT 1").get()
+                            db.close()
+                            const signedUpdate = JSON.parse(update.raw)
+                            t.ok(JSON.stringify(signedUpdate, null, 2).length <= 8192, 'signed update fits the replication limit')
+                            t.equal(signedUpdate.content.object_ids, undefined, 'oversized object list is omitted')
 
                             run('git', ['clone', remoteUrl, 'repo'], { cwd: clonePath, env }, function (err) {
                               t.error(err, 'git clone over smart http succeeds')
