@@ -14,7 +14,6 @@ module.exports = {
   "query.js":  require('./query.js'),
   "raw.js": require('./raw.js'),
   "search.js": require('./search'),
-  "scuttlegrounds.js": require('./scuttlegrounds'),
   "split.js":  require('./split.js'),
   "versions.js":  require('./versions.js')
 }

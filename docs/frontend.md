@@ -168,50 +168,6 @@ The same HTTP server also supports git routes.
 
 This matters because Decent is not only a social/feed UI. In this repo, it also participates in a broader local experience that includes git-over-SSB behavior.
 
-## Scuttlegrounds map preview
-
-Each world's **Local match** button opens a playable two-player match on one device.
-Each side starts with an HQ, two workers and 60 minerals. Select a piece, choose an
-action, and tap a highlighted target tile. HQs produce workers; workers mine deposits
-automatically while stationary and can construct factories; factories produce infantry,
-hovercraft and siege walkers. Mineral costs reserve against the current round's budget.
-Ready submits that side's orders and passes planning to the other side. Both ready sides
-resolve simultaneously. Force round treats unsubmitted sides as idle. Destroying the
-other HQ wins; mutual destruction or the 40-round limit draws. Local matches save and
-replay their round history in this browser, independently for each world. This mode
-does not publish SSB messages. The art sandbox remains available through Expand map.
-
-The Scuttlegrounds navigation item opens `#scuttlegrounds`, a local visual sandbox for
-Strange Scuttle Battlegrounds. Two cards show an industrial Expedition frontier and a
-stranger Bloom homeworld on the same 12×12 grid. Generated pixel sprites draw all terrain,
-HQs, factories, resources and units through the existing Canvas renderer. Buildings retain
-their faction's appearance on either world. World switching changes the terrain and
-resource palette; Exhausted deposits previews the spent-resource sprites. Ground uses
-quiet terrain sprites with a restrained layer of the original rock/organic texture,
-so the ground has detail while units and resources stand out. A separate grid
-marks the logical tile boundaries beneath pieces, with stable line weight as you zoom.
-
-Expand map opens a full-viewport view with tile inspection, drag-to-pan, pinch/wheel
-zoom, zoom buttons and Fit map. Select a unit by tapping it or using Choose a unit,
-then tap empty ground to animate a local movement preview. Eight independently drawn
-views cover east, southeast, south, southwest, west, northwest, north and northeast;
-the renderer picks the facing at each isometric path step. Turn buttons let you inspect
-all eight views without moving. Views are static sprites, not walking animation cycles.
-Local moves avoid occupied tiles but are not the proposed game's turn/movement rules.
-
-Arrow keys pan, plus/minus zoom, and 0 fits the map; Escape closes the expanded view.
-World changes retain the current preview's positions. Closing resets them; no movement,
-resource depletion or orders are published to SSB. Sample factories and units illustrate
-the art direction, rather than a match's initial state. A v1 `scuttlegrounds` creation
-message can render the same visual-study card; it does not load or simulate a match yet.
-
-Original transparent atlases, exact frame rectangles and generation prompts live in
-`decent/src/scuttlegrounds/assets/`. `build:web` copies five PNG atlases into
-`decent/build/scuttlegrounds/`; image files are loaded from local static routes and shared
-between map views. Nearest-neighbor sampling keeps pixel edges crisp. Closing or changing
-routes releases resize observers, pointer handlers, image callbacks and movement frames.
-Preview cards have no live animation loop. Rules and protocol remain unimplemented.
-
 ## Practical development loop
 
 Typical frontend work looks like:

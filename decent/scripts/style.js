@@ -50,11 +50,3 @@ fs.copyFileSync(srcPlainCss, destPlainCss)
 // ssbski brand logo (rail wordmark + favicon), served from the build dir
 if (fs.existsSync(srcSsbskiLogo))
   fs.copyFileSync(srcSsbskiLogo, destSsbskiLogo)
-
-// Directional sprites are local runtime assets, not embedded into the JS bundle.
-const spritesDir = path.join(__dirname, '..', 'src', 'scuttlegrounds', 'assets')
-const spritesBuildDir = path.join(buildDir, 'scuttlegrounds')
-fs.mkdirSync(spritesBuildDir, { recursive: true })
-for (const file of ['expedition-directions-v1.png', 'bloom-directions-v1.png',
-  'expedition-world-v1.png', 'bloom-world-v1.png', 'terrain-v2.png'])
-  fs.copyFileSync(path.join(spritesDir, file), path.join(spritesBuildDir, file))

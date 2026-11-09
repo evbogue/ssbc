@@ -120,19 +120,6 @@ File: `docs/skin-architecture-refactor-work-order.md`
 This has been overtaken by the current `base.css` and skin-unification work. Keep it as
 historical context for why `base.css` exists, but do not implement it as written.
 
-## Requested game prototype
-
-### Strange Scuttle Battlegrounds (Scuttlegrounds)
-
-File: [Scuttlegrounds implementation work order](scuttlegrounds-work-order.md)
-
-Status: sprite worlds and local two-player matches implemented; SSB multiplayer pending.
-Explicitly requested by Ev for a LAN JAM colony-conquest
-game: two factions, a shared isometric map, phone/full-viewport play, and simultaneous
-SSB commit/reveal rounds coordinated by a player host. The order defines rules, protocol,
-integration, delivery phases and acceptance checks. This is a bounded requested prototype,
-not a change to the project's general priority ladder or a claim of current functionality.
-
 ## Cleanup Rules
 
 - Mark landed work orders as implemented or superseded at the top of the file.

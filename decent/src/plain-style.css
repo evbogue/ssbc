@@ -152,26 +152,6 @@ pre { max-width: 100%; overflow: auto; }
 }
 .themes-section { display: none; }
 
-.sg-map-preview { aspect-ratio: 1230 / 740; }
-.sg-map-canvas { display: block; width: 100%; height: 100%; }
-.sg-fullscreen {
-  position: fixed;
-  inset: 0;
-  z-index: 1001;
-  display: flex;
-  flex-direction: column;
-  background: Canvas;
-}
-.sg-world { position: relative; flex: 1; min-height: 0; overflow: hidden; }
-.sg-world canvas { touch-action: none; }
-.sg-map-header, .sg-map-toolbar, .sg-game-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.sg-game-panel { max-height: 43dvh; overflow: auto; }
-
 @media (width > 980px) {
   /* The desktop header shares the screen grid with the sidebar. */
   .screen::before {
