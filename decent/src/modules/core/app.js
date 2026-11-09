@@ -47,7 +47,6 @@ module.exports = {
       if (previewMode && querySkin) skin.set(querySkin, {persist: false})
       var isSsbski = activeSkin === 'ssbski'
       var isSsbpro = activeSkin === 'ssbpro'
-      var isDecent2 = activeSkin === 'decent2'
       var isNetworkSkin = activeSkin !== 'decent'
       // Expose the active skin to CSS so skin-specific layout/visual rules can
       // be selected with html[data-skin="…"] (and swapped live in the Themes
@@ -105,10 +104,9 @@ module.exports = {
       var topbarLightbox = null
 
       function renderSkinPreview (name) {
-        var brand = name === 'ssbpro' ? 'SSBPRO' : name === 'decent2' ? 'DECENT2' : 'SSBSKI'
-        var logo = name === 'ssbski' ? '/ssbski-logo.png'
-          : name === 'ssbpro' ? '/icons/ssbpro-512.png'
-          : '/icons/decent-512.png'
+        var branding = brandFor(name)
+        var brand = branding.word
+        var logo = branding.logo
         var avatar = h('span.avatar.avatar--thumbnail', {style: {
           display: 'inline-block',
           width: '40px',
@@ -650,10 +648,11 @@ module.exports = {
 
       function currentIsTopbar () {
         var s = currentSkin()
-        return s === 'ssbpro' || s === 'decent2'
+        return s === 'ssbpro' || s === 'decent2' || s === 'plain'
       }
 
       function brandFor (name) {
+        if (name === 'plain') return {word: 'Decent', logo: '/icons/decent-512.png', tag: 'Decent · SSB'}
         if (name === 'ssbpro') return {word: 'SSBPRO', logo: '/icons/ssbpro-512.png', tag: 'ssbpro · SSB'}
         if (name === 'decent2') return {word: 'DECENT2', logo: '/icons/decent-512.png', tag: 'decent2 · SSB'}
         return {word: 'SSBSKI', logo: '/ssbski-logo.png', tag: 'ssbski · SSB'}
@@ -662,7 +661,10 @@ module.exports = {
       function updateBranding (name) {
         var b = brandFor(name)
         var word = document.querySelector('.right-brand__word')
-        if (word) word.textContent = b.word
+        if (word) {
+          word.textContent = b.word
+          word.parentNode.setAttribute('aria-label', b.word.toLowerCase() + ' home')
+        }
         var logo = document.querySelector('.right-brand__logo')
         if (logo) { logo.setAttribute('src', b.logo); logo.setAttribute('alt', b.word.toLowerCase()) }
         var tag = document.querySelector('.right-footer__tag')
@@ -679,15 +681,16 @@ module.exports = {
       }
 
       function makeSettingsButton (variant) {
-        return h('button.theme-toggle.settings-btn' + (variant ? '.' + variant : ''), {
+        var button = h('button.theme-toggle.settings-btn' + (variant ? '.' + variant : ''), {
           type: 'button',
           title: 'Themes & settings',
-          'aria-label': 'Themes & settings',
           onclick: showThemesModal
         },
           h('span.material-symbols-outlined.theme-toggle__icon' + (variant === 'settings-btn--rail' ? '.nav__icon' : ''), {'aria-hidden': 'true'}, 'settings'),
           h('span.theme-toggle__label' + (variant === 'settings-btn--rail' ? '.nav__label' : ''), 'Settings')
         )
+        button.setAttribute('aria-label', 'Themes & settings')
+        return button
       }
 
       function showThemesModal () {
@@ -697,21 +700,30 @@ module.exports = {
           var frame = h('iframe.theme-preview__frame', {
             src: '/?skin=' + name + '&preview=1',
             loading: 'lazy',
-            tabindex: '-1',
-            'aria-hidden': 'true'
+            tabIndex: -1
           })
+          frame.setAttribute('aria-hidden', 'true')
           var tile = h('button.theme-preview' + (name === active ? '.theme-preview--active' : ''), {
             type: 'button',
             onclick: function () {
               applySkin(name, true)
               Array.prototype.forEach.call(grid.querySelectorAll('.theme-preview'), function (t) {
                 t.classList.remove('theme-preview--active')
+                t.setAttribute('aria-pressed', 'false')
               })
               tile.classList.add('theme-preview--active')
+              tile.setAttribute('aria-pressed', 'true')
             }
-          }, h('div.theme-preview__viewport', frame), h('span.theme-preview__label', name))
+          }, h('div.theme-preview__viewport', frame), h('span.theme-preview__label', name === 'plain' ? 'Plain' : name))
+          tile.setAttribute('aria-pressed', String(name === active))
           grid.appendChild(tile)
         })
+
+        var close = h('button.qr-connect-close', {
+          type: 'button',
+          onclick: function () { getTopbarLightbox().close() }
+        }, h('span.material-symbols-outlined', 'close'))
+        close.setAttribute('aria-label', 'Close')
 
         var modal = h('div.qr-connect-modal.themes-modal',
           h('div.qr-connect-header',
@@ -719,10 +731,7 @@ module.exports = {
               h('div.qr-connect-title', 'Themes'),
               h('div.qr-connect-subtitle', 'Pick a look. It applies instantly.')
             ),
-            h('button.qr-connect-close', {
-              type: 'button', 'aria-label': 'Close',
-              onclick: function () { getTopbarLightbox().close() }
-            }, h('span.material-symbols-outlined', {'aria-hidden': 'true'}, 'close'))
+            close
           ),
           grid,
           h('div.themes-section',
@@ -877,17 +886,16 @@ module.exports = {
 
       // Network skins render a large brand tile at the bottom of the right
       // column. Decent keeps its own header, so this only renders for skins.
-      var brandWord = isSsbpro ? 'SSBPRO' : isDecent2 ? 'DECENT2' : 'SSBSKI'
-      var brandLogo = isSsbpro ? '/icons/ssbpro-512.png' : isDecent2 ? '/icons/decent-512.png' : '/ssbski-logo.png'
+      var branding = brandFor(activeSkin)
       var rightBrand = isNetworkSkin ? h('a.right-brand', {
         href: '#/',
-        'aria-label': brandWord.toLowerCase() + ' home'
+        'aria-label': branding.word.toLowerCase() + ' home'
       }, [
         h('img.right-brand__logo', {
-          src: brandLogo,
-          alt: brandWord.toLowerCase()
+          src: branding.logo,
+          alt: branding.word.toLowerCase()
         }),
-        h('span.right-brand__word', brandWord)
+        h('span.right-brand__word', branding.word)
       ]) : null
 
       // Right-column card built from real SSB data. Prefer channel/hashtag
@@ -1074,7 +1082,7 @@ module.exports = {
                 h('a.right-footer__link', {href: '#repos'}, 'Repositories'),
                 h('a.right-footer__link', {href: '/docs'}, 'Docs'),
                 h('a.right-footer__link', {href: '#key'}, 'Keys'),
-                h('span.right-footer__tag', (isSsbpro ? 'ssbpro' : isDecent2 ? 'decent2' : 'ssbski') + ' · SSB')
+                h('span.right-footer__tag', branding.tag)
               ]) : null,
               rightBrand
             )
@@ -1106,7 +1114,10 @@ module.exports = {
         if (!skinLeftStack) return
         var existing = skinLeftStack.querySelector('.compose-trigger')
         if (!currentIsTopbar() || window.innerWidth <= 980) {
-          if (existing && renderTarget) renderTarget.appendChild(existing)
+          if (existing && renderTarget) {
+            if (currentSkin() === 'plain') renderTarget.prepend(existing)
+            else renderTarget.appendChild(existing)
+          }
           return
         }
         // A route change builds a fresh composer, so prefer the new trigger and

@@ -139,7 +139,7 @@ Decent includes a git-forge UI for browsing repos, branches, and commits in the 
 ![A Decent profile page with avatar, bio, and feed](docs/img/decent.png)
 
 The browser UI is Decent: one shared app built from `decent/`, talking to one local SSB
-node. It ships with three live-switchable modern skins:
+node. It ships with four live-switchable skins:
 
 - **decent2** — the default Decent skin, a modernized take on the classic client.
 - **ssbski** — a Bluesky-style skin alias served by `plugins/ssbski-ui.js` on its own port
@@ -148,6 +148,9 @@ node. It ships with three live-switchable modern skins:
 - **ssbpro** — a professional-network skin alias served by `plugins/ssbpro-ui.js` on its own
   port (default `8991`), with Feed/Network tabs, profile-forward cards, and a right
   discovery column.
+- **Plain** — browser-default typography, links, and controls with a layout stylesheet
+  that keeps the feed, navigation, and dialogs usable on narrow screens. Choose it in
+  **Settings → Themes**.
 
 The main Decent entry point is served by `plugins/decent-ui.js`, defaults to `decent2`,
 and is normally available at `http://127.0.0.1:8989/`. Public instance:
@@ -156,8 +159,7 @@ and is normally available at `http://127.0.0.1:8989/`. Public instance:
 ![The ssbski skin: Discover/Following tabs and an Active people sidebar](docs/img/ssbski.png)
 
 All modern skins are the **same JavaScript bundle** talking to the **same local SSB node**.
-Only the stylesheet/default skin differs (`decent2-style.css`, `ssbski-style.css`, or
-`ssbpro-style.css`), and the app can switch among them live from Themes. When you run
+Each skin has its own stylesheet, and the app can switch among them live from Themes. When you run
 `npm start`, open `http://127.0.0.1:8989/` for Decent; the old skin-specific ports remain
 as compatibility aliases.
 

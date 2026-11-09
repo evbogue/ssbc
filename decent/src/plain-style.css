@@ -1,0 +1,199 @@
+/* Plain keeps browser typography, links and controls. The feed still needs
+ * its own bounded scroll area to load more messages as the user scrolls. */
+.screen {
+  display: grid;
+  grid-template: auto minmax(0, 1fr) / minmax(8rem, 1fr) minmax(0, 44rem) minmax(10rem, 1fr);
+  gap: 0.5rem 1rem;
+  height: calc(100dvh - 16px);
+  max-width: 78rem;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+.screen > .navbar,
+.navbar-inner,
+.navbar .container-fluid { display: contents; }
+.navbar .nav { grid-area: 1 / 1 / 2 / 3; }
+.topbar-actions { grid-area: 1 / 3; }
+.navbar .pull-right { grid-area: 2 / 3; overflow: auto; }
+.skin-left-stack { grid-area: 2 / 1; overflow: auto; }
+.screen__content { grid-area: 2 / 2; }
+
+.screen__content,
+.feed-host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.feed-host,
+.column.scroller { flex: 1; min-height: 0; overflow-y: auto; }
+.feed-header:not(:empty) { margin-bottom: 0.5rem; }
+.navbar .nav,
+.topbar-actions,
+.message-card > .title,
+.trending-card__head,
+.trending__item,
+.git-commit-row,
+.feed-header,
+.message_actions,
+.message_actions .actions,
+.message_actions_extra,
+.compose__controls,
+.git-forge-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+.navbar .nav { margin: 0; padding: 0; list-style: none; }
+.navbar .nav a { display: flex; align-items: center; gap: 0.25rem; }
+.navbar .nav .active a,
+.feed-header__tab--active { font-weight: bold; }
+.navbar-avatar__meta > *,
+.trending-card__copy > *,
+.trending__body > *,
+.right-footer__link { display: block; }
+.navbar-avatar-mobile,
+.navbar-avatar--rail,
+.navbar .nav__icon,
+.theme-toggle__icon,
+.nav-connect-btn__icon,
+.settings-btn--rail,
+.right-brand__logo,
+.right-footer__tag,
+.compose-prompt,
+.message-expand,
+.message-card .message_meta input,
+.reaction-pill:empty { display: none; }
+.compose-trigger { margin-block: 0.5rem; }
+.compose-trigger__button::after { content: ' ' attr(title); }
+.message-card + .message-card { margin-block-start: 1rem; }
+.message-card .collapsible { max-height: 11.5rem; overflow: hidden; }
+.message-card .collapsible--expanded,
+.message-card .showing-raw { max-height: none; }
+.is-overflowing + .message-expand,
+.collapsible--expanded + .message-expand { display: inline-block; }
+.message-card > .title .avatar img,
+.message-card > .title .avatar canvas,
+.message-card > .title .avatar svg,
+.avatar--thumbnail { width: 2rem; height: 2rem; object-fit: cover; vertical-align: middle; }
+.avatar--large { width: 7.5rem; }
+img, canvas, video, iframe, input, textarea, select, svg { max-width: 100%; }
+input, textarea, select { box-sizing: border-box; }
+.markdown img, .message_content img, video { height: auto; }
+pre { max-width: 100%; overflow: auto; }
+.markdown table, .git-tree-table, .git-blob-content, .git-diff-file { display: block; max-width: 100%; overflow: auto; }
+.compose textarea { display: block; width: 100%; }
+.chat-thread { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.chat-thread__scroll { flex: 1; overflow: auto; }
+.chat-composer { display: flex; gap: 0.5rem; }
+.chat-composer textarea { flex: 1; min-width: 0; }
+
+/* Menus open in the flow so they can wrap within narrow posts. */
+.message-more-menu:not(.message-more-menu--open),
+.reaction-tray:not(.reaction-tray--open),
+.share-tray:not(.share-tray--open),
+.reaction-picker:not(.reaction-picker--open),
+.reaction-popover:not(.reaction-popover--open),
+.git-clone-button:not(.is-open) .git-clone-popover,
+.git-ref-picker:not(.is-open) .git-ref-picker-popover { display: none; }
+.message-more-menu button { display: block; }
+.reaction-picker, .reaction-popover { max-height: 15rem; overflow: auto; }
+.reaction-heart-burst { display: none; }
+
+/* Lightboxes need an opaque surface and their own scrolling. System colors
+ * keep them legible with browser accessibility overrides. */
+.lightbox {
+  z-index: 1000;
+  background: Canvas;
+  color: CanvasText;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+.lightbox__content {
+  box-sizing: border-box;
+  max-width: 44rem;
+  margin-inline: auto;
+  padding: 1rem;
+}
+.qr-connect-header, .compose-modal__header, .profile-compose__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.qr-connect-close[aria-label] .material-symbols-outlined { display: none; }
+.qr-connect-close[aria-label]::after { content: attr(aria-label); }
+.themes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+}
+.theme-preview { min-width: 0; padding: 0.25rem; }
+.theme-preview[aria-pressed="true"] { font-weight: bold; }
+.theme-preview__viewport { height: 7rem; overflow: hidden; }
+.theme-preview__frame {
+  display: block;
+  width: 1280px;
+  max-width: none;
+  height: 800px;
+  border: 0;
+  transform: scale(0.15);
+  transform-origin: top left;
+  pointer-events: none;
+}
+.themes-section { display: none; }
+
+.sg-map-preview { aspect-ratio: 1230 / 740; }
+.sg-map-canvas { display: block; width: 100%; height: 100%; }
+.sg-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  background: Canvas;
+}
+.sg-world { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.sg-world canvas { touch-action: none; }
+.sg-map-header, .sg-map-toolbar, .sg-game-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sg-game-panel { max-height: 43dvh; overflow: auto; }
+
+@media (max-width: 980px) {
+  .screen { grid-template: auto minmax(0, 1fr) / minmax(0, 1fr); }
+  .screen > .navbar, .navbar-inner, .navbar .container-fluid { display: block; }
+  .screen__content { grid-area: 2 / 1; }
+  .navbar-avatar-mobile { display: inline-flex; }
+  .skin-left-stack,
+  .navbar .pull-right > :not(.nav-search) { display: none; }
+  .navbar .nav { margin-bottom: 0.25rem; }
+  .nav-search { width: 100%; }
+}
+
+@media (max-width: 600px) {
+  .navbar .nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+  .navbar .nav a { min-height: 44px; }
+  .navbar-avatar-mobile { min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+  .git-forge-tab-label { display: none; }
+  button { min-height: 44px; min-width: 44px; }
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select { font-size: max(1rem, 16px); }
+  .compose-lightbox {
+    top: var(--compose-viewport-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--compose-viewport-height, 100dvh);
+  }
+  .lightbox__content { padding: 0.5rem; }
+  .theme-preview__viewport { height: 5rem; }
+}
+
+@media (max-width: 980px) and (max-height: 450px) {
+  .screen > .navbar { max-height: 44dvh; overflow: auto; }
+}

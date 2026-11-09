@@ -8,9 +8,9 @@
 //   4. 'decent' — the legacy single-column skin (plain style.css, no skin link)
 //
 // 'decent' is the legacy skin: still *detectable* while its port is served, but
-// not a *selectable* option. The selectable skins are decent2/ssbpro/ssbski.
+// not a *selectable* option. The selectable skins are listed below.
 
-var SKINS = ['decent2', 'ssbpro', 'ssbski']
+var SKINS = ['decent2', 'ssbpro', 'ssbski', 'plain']
 var ALL = ['decent'].concat(SKINS)
 var STORE_KEY = 'decent:skin'
 
@@ -26,6 +26,7 @@ function detectDefault () {
     if (hasLink('ssbski')) return 'ssbski'
     if (hasLink('ssbpro')) return 'ssbpro'
     if (hasLink('decent2')) return 'decent2'
+    if (hasLink('plain')) return 'plain'
   }
   return 'decent'
 }
@@ -40,17 +41,34 @@ function get () {
   return detectDefault()
 }
 
+var pendingStylesheet
+
 function swapStylesheet (name) {
   if (SKINS.indexOf(name) === -1) return
   if (typeof document === 'undefined') return
   var current = document.querySelector('link[rel="stylesheet"][href*="-style.css"]') ||
     document.querySelector('link[rel="stylesheet"][href*="style.css"]')
-  if (current && (current.getAttribute('href') || '').indexOf('/' + name + '-style.css') !== -1) return
+  var href = '/' + name + '-style.css'
+  if (pendingStylesheet) {
+    if (pendingStylesheet.getAttribute('href').split('?')[0] === href) return
+    pendingStylesheet.remove()
+    pendingStylesheet = null
+  }
+  if (current && (current.getAttribute('href') || '').split('?')[0] === href) return
   var fresh = document.createElement('link')
   fresh.rel = 'stylesheet'
-  fresh.href = '/' + name + '-style.css?v=' + Date.now()
+  fresh.href = href + '?v=' + Date.now()
+  pendingStylesheet = fresh
   fresh.onload = function () {
-    if (current && current !== fresh && current.parentNode) current.parentNode.removeChild(current)
+    if (pendingStylesheet !== fresh) return
+    pendingStylesheet = null
+    if (current) current.remove()
+    var fallback = document.querySelector('style[data-decent-style]')
+    if (fallback) fallback.remove()
+  }
+  fresh.onerror = function () {
+    if (pendingStylesheet === fresh) pendingStylesheet = null
+    fresh.remove()
   }
   document.head.appendChild(fresh)
 }
@@ -62,7 +80,7 @@ exports.swapStylesheet = swapStylesheet
 
 // Convenience predicates mirroring the historical app.js flags.
 exports.isNetwork = function () { return get() !== 'decent' }
-exports.isTopbar = function () { var s = get(); return s === 'ssbpro' || s === 'decent2' }
+exports.isTopbar = function () { var s = get(); return s === 'ssbpro' || s === 'decent2' || s === 'plain' }
 
 // Persist + reflect a skin choice, then swap the active stylesheet. Passing
 // {persist:false} lets preview frames use a skin without overwriting the user's

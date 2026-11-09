@@ -13,6 +13,8 @@ const srcSsbproCss  = path.join(__dirname, '..', 'src', 'ssbpro-style.css')
 const destSsbproCss = path.join(buildDir, 'ssbpro-style.css')
 const srcDecent2Css  = path.join(__dirname, '..', 'src', 'decent2-style.css')
 const destDecent2Css = path.join(buildDir, 'decent2-style.css')
+const srcPlainCss = path.join(__dirname, '..', 'src', 'plain-style.css')
+const destPlainCss = path.join(buildDir, 'plain-style.css')
 const srcSsbskiLogo  = path.join(__dirname, '..', 'src', 'ssbski-logo.png')
 const destSsbskiLogo = path.join(buildDir, 'ssbski-logo.png')
 // app.js requires ../../style.css.json to inline styles as a fallback when
@@ -42,6 +44,8 @@ if (fs.existsSync(srcSsbproCss))
 
 if (fs.existsSync(srcDecent2Css))
   fs.copyFileSync(srcDecent2Css, destDecent2Css)
+
+fs.copyFileSync(srcPlainCss, destPlainCss)
 
 // ssbski brand logo (rail wordmark + favicon), served from the build dir
 if (fs.existsSync(srcSsbskiLogo))
