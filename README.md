@@ -106,6 +106,45 @@ Muse: see the [connection invite and instructions](docs/muse-invite.md).
 
 ---
 
+## Recent-first feed sync
+
+`recentSync` can fetch a classic SSB feed from a peer that runs this module. The
+first pull starts at the newest message the peer has. Each pull downloads up to
+32 messages by default, walking backwards by sequence and `previous` hash.
+
+```bash
+node bin.js recentSync.pull --id "$FEED_ID" --remote "$PEER_ADDRESS" --limit 32
+node bin.js recentSync.read --id "$FEED_ID" --limit 32
+```
+
+Use the peer's SSB multiserver address, such as `net:host:8008~shs:PUBLIC_KEY`,
+for `PEER_ADDRESS`. Run `pull` again with the same feed ID to backfill another
+page. SQLite saves the cursor across restarts. `read` also accepts `--before N`
+for an exclusive sequence bound. Its results can span a gap between the staged
+suffix and the local prefix.
+
+Each page verifies the feed author, signatures, message IDs, and chain links.
+The first head is the one the peer supplied, so a peer can withhold newer
+messages. When the suffix reaches sequence 1 or links to the local feed, the
+module promotes it in bounded batches through the regular SSB write path.
+Before promotion, use `recentSync.read` to see the staged messages. Decent and
+normal replication use the canonical store.
+
+The pull result reports `received` and `promoted` for the current call,
+`sequence` for the local canonical tip, `newest` for the newest local message,
+and `before` for the next reverse page. A null `before` with `complete: false`
+means the next pull will promote another local batch. After `complete: true`,
+another pull checks the peer for a newer head. If a peer cannot supply the
+pending history, retry from a peer with the same chain or run
+`node bin.js recentSync.reset "$FEED_ID"` to discard the staged suffix.
+
+To use recent-first sync for a followed feed without simultaneously fetching
+it from sequence 1 through the friends graph, list its ID under
+`recentSync.feeds` in `~/.ssb/config` and restart the node. Pulls for those feeds
+are explicit. The node's own feed always uses classic replication.
+
+---
+
 ## Git over SSB
 
 Your git repositories live in your SSB log. Anyone who follows you can clone them.

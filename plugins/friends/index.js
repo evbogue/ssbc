@@ -25,6 +25,9 @@ exports.manifest = {
 exports.init = function (sbot, config) {
   const max = (config.friends && config.friends.hops) ||
               (config.replicate && config.replicate.hops) || 3
+  const recentFeeds = new Set(config.recentSync && Array.isArray(config.recentSync.feeds)
+    ? config.recentSync.feeds : [])
+  recentFeeds.delete(sbot.id)
   const layered = LayeredGraph({ max, start: sbot.id })
 
   function isFollowing(opts, cb) {
@@ -60,7 +63,7 @@ exports.init = function (sbot, config) {
     pull.drain((data) => {
       if (data.sync) return
       for (const k in data) {
-        sbot.replicate.request(k, data[k] >= 0)
+        sbot.replicate.request(k, data[k] >= 0 && !recentFeeds.has(k))
       }
     })
   )

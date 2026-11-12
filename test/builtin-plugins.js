@@ -33,7 +33,8 @@ const EXPECTED_ORDER = [
   'ssb-query',
   'ssb-links',
   'ssb-ws',
-  'ssb-ooo-stub'
+  'ssb-ooo-stub',
+  'recentSync'
 ]
 
 test('built-in registry preserves the historical mount order', (t) => {
@@ -58,7 +59,7 @@ test('applyTo mounts every built-in plugin in order', (t) => {
   t.end()
 })
 
-test('static manifests cover the 83-method built-in baseline', (t) => {
+test('static manifests cover the 87-method built-in baseline', (t) => {
   let total = 0
   for (const entry of registry.referenceEntries()) {
     const manifest = entry.module && entry.module.manifest
@@ -68,7 +69,7 @@ test('static manifests cover the 83-method built-in baseline', (t) => {
       total += Object.keys(manifest).length
     }
   }
-  t.equal(total, 83, 'derived static method count matches the audited baseline')
+  t.equal(total, 87, 'derived static method count matches the audited baseline')
   t.end()
 })
 

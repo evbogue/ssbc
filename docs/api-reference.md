@@ -591,6 +591,42 @@ Provided by the `ssb-ooo-stub` plugin. This is a compatibility stub; its methods
 
 **Stub / no-op in this build.** Return inline help for the `ooo` namespace.
 
+## `recentSync`
+
+Provided by the `recentSync` plugin.
+
+### `recentSync.history` — `source`
+
+Serve a bounded page of canonical classic feed messages in descending sequence order.
+
+**Arguments:**
+
+- `opts` — Feed id, optional exclusive before sequence, and a limit from 1 to 128 (default 32).
+
+### `recentSync.pull` — `async`
+
+Fetch one reverse-history page or promote a bounded batch into the canonical store. Requires local or master access.
+
+**Arguments:**
+
+- `opts` — Feed id, remote multiserver address, and optional limit from 1 to 128 (default 32). The cursor is stored locally.
+
+### `recentSync.read` — `source`
+
+Read local staged and canonical messages in descending sequence order. A sequence gap can exist between these ranges. Requires local or master access.
+
+**Arguments:**
+
+- `opts` — Feed id, optional exclusive before sequence, and optional page limit (default 32).
+
+### `recentSync.reset` — `async`
+
+Discard the staged suffix for a feed so a new pull can start at a different peer's head. Requires local or master access.
+
+**Arguments:**
+
+- `id` — Classic SSB feed id.
+
 ---
 
-_Coverage: 83 of 83 built-in static manifest methods documented._
+_Coverage: 87 of 87 built-in static manifest methods documented._

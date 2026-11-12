@@ -297,5 +297,21 @@
   },
   "ooo.help": {
     "summary": "Return inline help for the `ooo` namespace."
+  },
+  "recentSync.history": {
+    "summary": "Serve a bounded page of canonical classic feed messages in descending sequence order.",
+    "args": { "opts": "Feed id, optional exclusive before sequence, and a limit from 1 to 128 (default 32)." }
+  },
+  "recentSync.pull": {
+    "summary": "Fetch one reverse-history page or promote a bounded batch into the canonical store. Requires local or master access.",
+    "args": { "opts": "Feed id, remote multiserver address, and optional limit from 1 to 128 (default 32). The cursor is stored locally." }
+  },
+  "recentSync.read": {
+    "summary": "Read local staged and canonical messages in descending sequence order. A sequence gap can exist between these ranges. Requires local or master access.",
+    "args": { "opts": "Feed id, optional exclusive before sequence, and optional page limit (default 32)." }
+  },
+  "recentSync.reset": {
+    "summary": "Discard the staged suffix for a feed so a new pull can start at a different peer's head. Requires local or master access.",
+    "args": { "id": "Classic SSB feed id." }
   }
 }
