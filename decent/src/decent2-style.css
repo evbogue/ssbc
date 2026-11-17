@@ -1,38 +1,22 @@
-/*
- * decent2 skin — "Bootstrap 2, evolved".
- *
- * THIN SKIN over the shared base.css. It is a network skin (app.js gives it the
- * three-zone scaffold via isNetworkSkin/isTopbar) laid out with a top navbar.
- * It keeps the tactile Bootstrap 2 aesthetic — gradients, bevels, glossy
- * buttons, wells, the dark gradient navbar — recreated in clean tokenised CSS
- * (no actual Bootstrap loaded; the ui-server strips it). The sibling original
- * `decent` skin (style.css) is the untouched ~2014 artifact; decent2 is the
- * modern reinterpretation, so the two can run side by side as an evolution.
- *
- * Structure: the rail->topbar three-zone geometry mirrors ssbpro (same DOM).
- * Identity: the glossy override layer below + the light/midnight palette.
- */
+/* Decent workspace: quiet surfaces and a persistent repository rail. */
 @import url('/base.css');
 
-/* Light is the default and also the explicit "force light" override (the shared
- * theme toggle sets data-ssbpro-theme on <html>; see app.js). The midnight block
- * below applies on OS-dark unless the user has forced light. */
 :root,
 :root[data-ssbpro-theme="light"] {
   color-scheme: light;
   /* palette consumed by base.css */
-  --sky-bg: #e7e9ec;
+  --sky-bg: #f8f8f5;
   --sky-surface: #ffffff;
-  --sky-surface-soft: #eef1f4;
+  --sky-surface-soft: #eeeee7;
   --sky-hover: #e9edf2;
-  --sky-border: #ccd1d8;
+  --sky-border: #ddded4;
   --sky-border-strong: #b2b8c1;
-  --sky-text: #2b3138;
-  --sky-muted: #717a85;
+  --sky-text: #30342c;
+  --sky-muted: #707568;
   --sky-muted-soft: #9aa2ab;
-  --sky-blue: #0088cc;
-  --sky-blue-hover: #0a64b8;
-  --sky-blue-soft: rgba(0, 136, 204, 0.12);
+  --sky-blue: #596545;
+  --sky-blue-hover: #424d33;
+  --sky-blue-soft: rgba(89, 101, 69, 0.12);
   --sky-green: #46a546;
   --sky-green-soft: rgba(70, 165, 70, 0.12);
   --sky-pink: #c43c35;
@@ -50,51 +34,24 @@
   --sky-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --sky-text-secondary: var(--sky-muted);
   --sky-accent: var(--sky-blue);
-  --sky-rail-width: 248px;
-  --sky-right-width: 300px;
-  --sky-feed-width: none;
 
-  /* layout (topbar three-zone) */
-  --d2-topbar-h: 52px;
-  --d2-page-width: 1180px;
-  --d2-left-width: 248px;
-  --d2-right-width: 300px;
-  --d2-gap: 16px;
-
-  /* gloss primitives (gradients + bevels — the Bootstrap 2 feel) */
-  --d2-surf-top: #ffffff;
-  --d2-surf-bot: #f6f7f9;
-  --d2-well-top: #f9fafb;
-  --d2-well-bot: #eef1f4;
-  --d2-nav-top: #3b4045;
-  --d2-nav-bot: #23262b;
-  --d2-nav-link: #aeb4ba;
-  --d2-btn-top: #ffffff;
-  --d2-btn-bot: #e8ebee;
-  --d2-blue2: #0a64b8;
-  --d2-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(0, 0, 0, 0.07);
-  --d2-well-inset: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  --d2-card-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.08);
-  --d2-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.18);
-  --d2-txt-emboss: 0 1px 0 rgba(255, 255, 255, 0.55);
-  --d2-txt-deboss: 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-ssbpro-theme="light"]) {
     color-scheme: dark;
-    --sky-bg: #191b1e;
-    --sky-surface: #2c2f34;
-    --sky-surface-soft: #24262b;
+    --sky-bg: #20231c;
+    --sky-surface: #23271f;
+    --sky-surface-soft: #191d17;
     --sky-hover: #313539;
-    --sky-border: #34383e;
+    --sky-border: #3a4032;
     --sky-border-strong: #474c53;
     --sky-text: #e7eaed;
     --sky-muted: #9aa2ac;
     --sky-muted-soft: #6c747e;
-    --sky-blue: #2f9fe0;
-    --sky-blue-hover: #54b2ec;
-    --sky-blue-soft: rgba(47, 159, 224, 0.18);
+    --sky-blue: #c2cdaa;
+    --sky-blue-hover: #dce5c9;
+    --sky-blue-soft: rgba(194, 205, 170, 0.18);
     --sky-green: #5bbf6a;
     --sky-green-soft: rgba(91, 191, 106, 0.16);
     --sky-pink: #e6857d;
@@ -110,22 +67,6 @@
     --sky-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     --sky-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
 
-    --d2-surf-top: #2f3237;
-    --d2-surf-bot: #25282c;
-    --d2-well-top: #282b30;
-    --d2-well-bot: #202327;
-    --d2-nav-top: #24262b;
-    --d2-nav-bot: #131518;
-    --d2-nav-link: #9097a0;
-    --d2-btn-top: #353940;
-    --d2-btn-bot: #2a2e33;
-    --d2-blue2: #1c7fc0;
-    --d2-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.45);
-    --d2-well-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-    --d2-card-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.5);
-    --d2-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
-    --d2-txt-emboss: 0 -1px 0 rgba(0, 0, 0, 0.4);
-    --d2-txt-deboss: 0 -1px 0 rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -133,18 +74,18 @@
  * the OS preference. Mirrors the @media block above. */
 :root[data-ssbpro-theme="dark"] {
   color-scheme: dark;
-  --sky-bg: #191b1e;
-  --sky-surface: #2c2f34;
-  --sky-surface-soft: #24262b;
+  --sky-bg: #20231c;
+  --sky-surface: #23271f;
+  --sky-surface-soft: #191d17;
   --sky-hover: #313539;
-  --sky-border: #34383e;
+  --sky-border: #3a4032;
   --sky-border-strong: #474c53;
   --sky-text: #e7eaed;
   --sky-muted: #9aa2ac;
   --sky-muted-soft: #6c747e;
-  --sky-blue: #2f9fe0;
-  --sky-blue-hover: #54b2ec;
-  --sky-blue-soft: rgba(47, 159, 224, 0.18);
+  --sky-blue: #c2cdaa;
+  --sky-blue-hover: #dce5c9;
+  --sky-blue-soft: rgba(194, 205, 170, 0.18);
   --sky-green: #5bbf6a;
   --sky-green-soft: rgba(91, 191, 106, 0.16);
   --sky-pink: #e6857d;
@@ -160,592 +101,79 @@
   --sky-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   --sky-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
 
-  --d2-surf-top: #2f3237;
-  --d2-surf-bot: #25282c;
-  --d2-well-top: #282b30;
-  --d2-well-bot: #202327;
-  --d2-nav-top: #24262b;
-  --d2-nav-bot: #131518;
-  --d2-nav-link: #9097a0;
-  --d2-btn-top: #353940;
-  --d2-btn-bot: #2a2e33;
-  --d2-blue2: #1c7fc0;
-  --d2-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.45);
-  --d2-well-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04), inset 0 0 0 1px rgba(0, 0, 0, 0.18);
-  --d2-card-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 3px rgba(0, 0, 0, 0.5);
-  --d2-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
-  --d2-txt-emboss: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  --d2-txt-deboss: 0 -1px 0 rgba(0, 0, 0, 0.45);
 }
 
-/* ============================================================
- * Layout shell — top navbar + three-zone band (mirrors ssbpro geometry)
- * ============================================================ */
-html,
-body {
-  font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI", Roboto, sans-serif;
-  font-size: 13.5px;
-  line-height: 1.45;
-}
 
-.screen,
-.screen.column {
-  background: var(--sky-bg);
-  padding-top: var(--d2-topbar-h);
-}
-
-.screen__content,
-.screen__content.column {
-  height: calc(100vh - var(--d2-topbar-h));
-  margin-left: calc(max(16px, (100vw - var(--d2-page-width)) / 2) + var(--d2-left-width) + var(--d2-gap));
-  margin-right: calc(max(16px, (100vw - var(--d2-page-width)) / 2) + var(--d2-right-width) + var(--d2-gap));
-  padding: 14px 0 0;
-  background: var(--sky-bg);
-}
-
-.scroller__wrapper {
-  border: 0;
-  background: transparent;
-}
-
-/* sticky centre-column header (feed tabs / section title) */
-.feed-header {
-  height: 46px;
-  max-width: var(--sky-feed-width);
-  border: 1px solid var(--sky-border);
-  border-radius: 6px;
-  background: linear-gradient(var(--d2-well-top), var(--d2-well-bot));
-  box-shadow: var(--d2-well-inset);
-}
-
-.feed-header__tab {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--sky-muted);
-}
-
-.feed-header__tab--active {
-  color: var(--sky-text);
-}
-
-.feed-header__tab--active::after {
-  width: 84px;
-  height: 3px;
-  background: linear-gradient(var(--sky-blue), var(--d2-blue2));
-}
-
-.feed-header__title {
-  font-size: 1.02rem;
-  font-weight: 700;
-}
-
-/* ---- navbar: the dark glossy Bootstrap 2 top bar ---- */
-.navbar {
-  position: fixed;
-  inset: 0 0 auto;
-  width: 100%;
-  height: var(--d2-topbar-h);
-  background: linear-gradient(var(--d2-nav-top), var(--d2-nav-bot));
-  border-right: 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 4px rgba(0, 0, 0, 0.35);
-  z-index: 80;
-}
-
-.navbar-inner { height: 100%; }
-
-.navbar .container-fluid {
-  position: relative;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  max-width: var(--d2-page-width);
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 16px;
-  gap: 16px;
-}
-
-.navbar .container-fluid::before {
-  content: 'decent';
-  display: inline-flex;
-  align-items: center;
-  align-self: stretch;
-  color: #fff;
-  font-size: 1.32rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45);
-}
-
-.navbar .container-fluid::after {
-  content: '2';
-  position: absolute;
-  left: 0;
-  display: none;
-}
-
-.navbar .nav.pull-left {
-  flex-direction: row;
-  align-items: center;
-  width: auto;
-  height: 100%;
-  gap: 2px;
-}
-
-.navbar .nav.pull-left li a {
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  min-height: var(--d2-topbar-h);
-  gap: 0;
-  padding: 0 14px;
-  border-radius: 0;
-  box-shadow: inset 0 2px 0 transparent;
-  color: var(--d2-nav-link);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-}
-
-.navbar .nav.pull-left li a:hover {
-  background: rgba(0, 0, 0, 0.18);
-  color: #fff;
-}
-
-.navbar .nav.pull-left li.active a,
-.navbar .nav.pull-left li.active a:hover {
-  background: rgba(0, 0, 0, 0.22);
-  box-shadow: inset 0 2px 0 var(--sky-blue);
-  color: #fff;
-}
-
-.nav__icon { font-size: 1.05rem; }
-.navbar .nav.pull-left .nav__label {
-  display: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.nav-connect-btn {
-  min-width: 40px;
-  width: 40px;
-  padding: 0;
-}
-
-.settings-btn {
-  min-width: 40px;
-  width: 40px;
-  padding: 0;
-}
-
-.nav-connect-btn__label {
-  display: none;
-}
-
-/* search box: light glossy inset field at the top of the right column */
-.nav-search {
-  flex: 0 0 auto;
-  width: 100%;
-  height: 36px;
-  border-radius: 6px;
-  border: 1px solid var(--sky-border-strong);
-  background: var(--sky-surface);
-  box-shadow: var(--d2-well-inset);
-  color: var(--sky-text);
-  font-size: 0.9rem;
-}
-
-/* topbar actions (right side of the dark bar): the light/dark toggle.
-   Glossy buttons tuned to read on the dark navbar gradient. */
-.topbar-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.theme-toggle,
-.nav-connect-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid rgba(0, 0, 0, 0.45);
-  border-radius: 5px;
-  background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
-  color: #e7eaee;
-  font: inherit;
-  font-weight: 600;
-  font-size: 0.82rem;
-  line-height: 1;
-  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 1px 1px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-}
-
-.theme-toggle:hover,
-.theme-toggle:focus-visible,
-.nav-connect-btn:hover,
-.nav-connect-btn:focus-visible {
-  filter: brightness(1.14);
-  color: #fff;
-  outline: none;
-}
-
-.theme-toggle__icon,
-.nav-connect-btn__icon { font-size: 1.05rem; }
-.theme-toggle__label,
-.nav-connect-btn__label { font-size: 0.82rem; }
-
-/* The compact profile avatar only belongs on mobile (it duplicates the left
-   identity card); the left stack stays visible until 880px, so hide it here. */
+:root { --sky-rail-width: 230px; --sky-right-width: 0px; --sky-feed-width: 960px; }
+html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+.screen__content, .screen__content.column { margin-left: 230px; margin-right: 0; background: var(--sky-bg); }
+.navbar { background: var(--sky-surface-soft); }
+.navbar .container-fluid { padding: 28px 16px 16px; gap: 12px; }
+html[data-skin="decent2"] .workspace-brand { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 22px; color: var(--sky-text); font-size: 24px; font-weight: 650; letter-spacing: -1px; }
+.workspace-brand span { font: 10px ui-monospace, monospace; letter-spacing: 1.5px; color: var(--sky-muted); }
+.navbar .nav.pull-left { gap: 5px; }
+.navbar .nav.pull-left li a { min-height: 42px; padding: 10px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; gap: 12px; }
+.navbar .nav.pull-left li.active a { background: var(--sky-border); color: var(--sky-text); }
+.nav__icon { font-size: 20px; }
+html[data-skin="decent2"] .navbar-avatar--rail { display: flex; border-top: 1px solid var(--sky-border); border-radius: 0; padding-top: 18px; }
+.skin-left-stack { display: none; }
+html[data-skin="decent2"] .topbar-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.topbar-actions .nav-connect-btn, .topbar-actions .settings-btn { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--sky-muted); text-align: left; font-size: 14px; }
+html[data-skin="decent2"] .topbar-actions .theme-toggle__label { display: inline; }
 .navbar-avatar-mobile { display: none; }
-
-/* ---- right column ---- */
-.navbar .pull-right {
-  top: calc(var(--d2-topbar-h) + 14px);
-  right: max(16px, calc((100vw - var(--d2-page-width)) / 2));
-  width: var(--d2-right-width);
-  height: calc(100vh - var(--d2-topbar-h) - 28px);
-  padding: 0 2px 12px 0;
-  background: var(--sky-bg);
-  border-left: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: thin;
+.navbar .pull-right { position: static; width: auto; height: auto; padding: 0; border: 0; background: transparent; order: 10; }
+.nav-search { display: block; border: 1px solid var(--sky-border); border-radius: 6px; background: var(--sky-bg); padding: 0 12px; height: 38px; }
+.discovery-panel, .right-brand { display: none; }
+.right-footer { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; border: 0; background: transparent; }
+.right-footer__tag { display: none; }
+.feed-header { max-width: none; height: 64px; border-bottom: 1px solid var(--sky-border); padding: 0 32px; justify-content: flex-start; gap: 28px; background: var(--sky-bg); }
+.feed-header__tab { flex: 0 0 auto; padding: 0 4px; font-size: 14px; }
+.feed-header__title { font-size: 18px; font-weight: 550; }
+.feed-header__tab--active::after { height: 2px; }
+.scroller__wrapper { max-width: 960px; width: 100%; margin: 0 auto; border: 0; padding: 24px 32px 100px; }
+.message { background: transparent; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--sky-border); padding-top: 24px; padding-bottom: 24px; }
+.btn, .action-btn { border-radius: 6px; }
+.compose-trigger { left: 16px; bottom: 100px; width: 198px; }
+.compose-trigger__button { border-radius: 7px; height: 42px; box-shadow: none; font-size: 14px; }
+.compose-trigger__button::after { font-size: 14px; }
+.git-forge { border-radius: 0; box-shadow: none; }
+@media (max-width: 760px) {
+  .navbar { width: 64px; }
+  .navbar .container-fluid { padding: 16px 8px; gap: 8px; }
+  html[data-skin="decent2"] .workspace-brand { padding: 0 0 14px; font-size: 12px; letter-spacing: 0; text-align: center; }
+  .workspace-brand span, .nav__label, .navbar-avatar__meta, .navbar .pull-right { display: none; }
+  .navbar .nav.pull-left li a { justify-content: center; padding: 10px; }
+  html[data-skin="decent2"] .topbar-actions .theme-toggle__label, .nav-connect-btn__label { display: none; }
+  .topbar-actions .nav-connect-btn, .topbar-actions .settings-btn { justify-content: center; padding: 10px; }
+  .screen__content, .screen__content.column { margin-left: 64px; }
+  .feed-header { height: 52px; padding: 0 16px; gap: 20px; }
+  .scroller__wrapper { padding: 8px 12px 90px; }
+  .compose-trigger { left: auto; right: 16px; bottom: 20px; width: 48px; }
+  .compose-trigger__button { width: 48px; height: 48px; padding: 0; }
+  .compose-trigger__button::after { display: none; }
+  .message { padding-top: 18px; padding-bottom: 18px; }
 }
-
-.pull-right .menu { align-self: stretch; flex: 0 0 auto; }
-
-.trending-card,
-.right-footer,
-.discovery-toggle {
-  flex: 0 0 auto;
-  border: 1px solid var(--sky-border);
-  border-radius: 6px;
-  background: linear-gradient(var(--d2-well-top), var(--d2-well-bot));
-  box-shadow: var(--d2-well-inset);
-}
-
-.discovery-panel { flex: 0 0 auto; }
-.trending-card { margin-top: 0; max-height: min(430px, calc(100vh - 280px)); overflow-y: auto; }
-.trending-card__head { font-size: 1rem; font-weight: 700; }
-.right-footer { margin-top: 0; padding: 12px 14px; gap: 6px 12px; }
-
-/* Right-column brand tile: hidden until there's a real decent2 logo to put
-   there (the placeholder icon + wordmark looked off). Re-enable when ready. */
-.right-brand { display: none; }
-
-/* ---- left column: identity well + compose ---- */
-.skin-left-stack {
-  position: fixed;
-  top: calc(var(--d2-topbar-h) + 14px);
-  left: max(16px, calc((100vw - var(--d2-page-width)) / 2));
-  width: var(--d2-left-width);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  z-index: 35;
-}
-
-.navbar-avatar {
-  position: relative;
-  order: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0;
-  padding: 0 16px 16px;
-  border-radius: 6px;
-  border: 1px solid var(--sky-border);
-  background: linear-gradient(var(--d2-surf-top), var(--d2-surf-bot));
-  box-shadow: var(--d2-card-bevel);
-}
-
-.navbar-avatar::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto;
-  height: 40px;
-  border-radius: 6px 6px 0 0;
-  background: linear-gradient(var(--d2-nav-top), var(--d2-nav-bot));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  pointer-events: none;
-}
-
-.navbar-avatar:hover { background: linear-gradient(var(--d2-surf-top), var(--d2-surf-bot)); }
-
-.navbar-avatar img,
-.navbar-avatar canvas,
-.navbar-avatar svg {
-  position: relative;
-  z-index: 1;
-  margin-top: 16px;
-  width: 56px;
-  height: 56px;
-  border: 2px solid var(--sky-surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.navbar-avatar__meta { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; max-width: 100%; }
-.navbar-avatar__name { font-size: 1rem; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-.navbar-avatar__handle { font-size: 0.8125rem; color: var(--sky-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-
-.compose-trigger { position: relative; order: 1; inset: auto; width: 100%; margin: 0; z-index: auto; }
-.compose-trigger__button {
-  height: 42px;
-  border-radius: 6px;
-  color: #fff;
-  background: linear-gradient(var(--sky-blue), var(--d2-blue2));
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  box-shadow: var(--d2-primary-bevel);
-  text-shadow: var(--d2-txt-deboss);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-/* base.css hides this label under its own 1300px breakpoint, sized for ssbski's
-   collapsing rail rather than decent2's top bar. decent2 keeps the left stack
-   (and so the inline compose button) down to 880px, where the rules further
-   down turn it into a FAB — so between 881 and 1300 the label has to come back,
-   otherwise the stack shows a wide blue bar with a lone pencil in it. */
-.compose-trigger__button::after { content: 'New post'; font-size: 0.95rem; }
-
-@media (min-width: 881px) {
-  .compose-trigger__button::after { display: inline; }
-}
-
-/* ============================================================
- * Glossy component layer (the Bootstrap 2 tactility)
- * ============================================================ */
-
-/* buttons */
-.btn {
-  color: var(--sky-text);
-  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
-  border: 1px solid var(--sky-border-strong);
-  border-radius: 5px;
-  text-shadow: var(--d2-txt-emboss);
-  box-shadow: var(--d2-bevel);
-  font-weight: 600;
-}
-.btn:hover { filter: brightness(1.03); background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot)); }
-.btn:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15); }
-.btn-primary {
-  color: #fff;
-  background: linear-gradient(var(--sky-blue), var(--d2-blue2));
-  border-color: rgba(0, 0, 0, 0.18);
-  text-shadow: var(--d2-txt-deboss);
-  box-shadow: var(--d2-primary-bevel);
-}
-
-/* post cards — glossy surface + top bevel */
-.message-card:not(.message--mini):not(.compose) {
-  border: 1px solid var(--sky-border);
-  border-radius: 6px;
-  background: linear-gradient(var(--d2-surf-top), var(--d2-surf-bot));
-  box-shadow: var(--d2-card-bevel);
-}
-.message-card:not(.message--mini):not(.compose):hover {
-  border-color: var(--sky-border-strong);
-  box-shadow: var(--d2-card-bevel), 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-
-/* mini git rows — glossy well strip */
-.message--mini.message-card {
-  border: 1px solid var(--sky-border);
-  border-radius: 6px;
-  background: linear-gradient(var(--d2-well-top), var(--d2-well-bot));
-  box-shadow: var(--d2-well-inset);
-}
-
-/* Action row — individual glossy Bootstrap buttons. The primary actions
- * (reply / repost / quote) carry an icon + text label like the mock; the
- * utility extras (raw / save / share / more) stay compact icon buttons.
- * (Not a connected btn-group: the quick-react tray injects hidden sibling
- * buttons, which makes :first/:last-child rounding unreliable.) */
-.message-card .actions {
-  width: auto;
-  max-width: none;
-  justify-content: flex-start;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.action-btn {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--sky-border-strong);
-  border-radius: 5px;
-  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
-  color: var(--sky-muted);
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-shadow: var(--d2-txt-emboss);
-  box-shadow: var(--d2-bevel);
-}
-.action-btn .action-icon { font-size: 16px; }
-.action-btn:hover {
-  filter: brightness(1.04);
-  color: var(--sky-blue);
-  background: linear-gradient(var(--d2-btn-top), var(--d2-btn-bot));
-}
-.action-btn:active { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.14); }
-.action-btn--active,
-.action-btn--reacted,
-.action-btn--reposted {
-  color: var(--sky-blue);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.14);
-}
-
-/* Text labels for the primary actions (icon + label, like the mock). */
-.action-btn--reply::after { content: 'Reply'; }
-.action-btn--repost::after { content: 'Repost'; }
-.action-btn--quote::after { content: 'Quote'; }
-.action-btn--reply::after,
-.action-btn--repost::after,
-.action-btn--quote::after { font-size: 0.8rem; font-weight: 600; }
-
-.message_actions_extra { gap: 6px; }
-
-/* reaction pill / chips — glossy rounded */
-.reaction-pill,
-.reaction-chip {
-  background: linear-gradient(var(--d2-well-top), var(--d2-well-bot));
-  border: 1px solid var(--sky-border-strong);
-  box-shadow: var(--d2-bevel);
-}
-
-/* badges (git branch) — glossy blue. The badge is an <a> inside
-   .message_content, whose link color (base.css) is more specific than a plain
-   .git-branch-badge rule, so override the text colour with matching reach. */
-.git-branch-badge {
-  background: linear-gradient(var(--sky-blue), var(--d2-blue2));
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  text-shadow: var(--d2-txt-deboss);
-  box-shadow: var(--d2-primary-bevel);
-}
-.git-branch-badge,
-.message_content a.git-branch-badge {
-  color: #fff;
-}
-.message_content a.git-branch-badge:hover {
-  color: #fff;
-  text-decoration: none;
-}
-
-/* nav-list active (left rail lists, e.g. settings) — glossy blue */
-.nav-list li a.on,
-.menu a.active {
-  color: #fff;
-  background: linear-gradient(var(--sky-blue), var(--d2-blue2));
-  text-shadow: var(--d2-txt-deboss);
-  box-shadow: var(--d2-primary-bevel);
-}
-
-/* ---- responsive: collapse the side columns ---- */
-@media (max-width: 1100px) {
-  .navbar .pull-right { display: none; }
-  .screen__content,
-  .screen__content.column {
-    margin-right: max(16px, calc((100vw - var(--d2-page-width)) / 2));
-  }
-}
-
-@media (max-width: 880px) {
-  .skin-left-stack { display: none; }
-  .screen__content,
-  .screen__content.column {
-    margin-left: 16px;
-    margin-right: 16px;
-  }
-  .navbar .nav.pull-left li a { padding: 0 11px; }
-  .navbar .nav.pull-left .nav__label { display: none; }
-
-  /* The left stack that hosts the compose button is gone at this width, so the
-     button falls back into the feed — where the rules above stretched it into a
-     full-width bar wedged under the feed tabs. Float it as a FAB instead, the
-     same shape ssbpro uses on mobile. */
-  .compose-trigger {
-    position: fixed;
-    top: auto;
-    right: 16px;
-    bottom: 16px;
-    left: auto;
-    width: 56px;
-    z-index: 50;
-  }
-
-  .compose-trigger__button {
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    border-radius: 50%;
-  }
-
-  .compose-trigger__button::after { content: ''; }
-}
-
-/* Phone: the wordmark plus five nav icons plus the action buttons are wider
-   than a 375px viewport, so the row ran off the right edge. Drop the wordmark
-   and tighten the nav, as ssbpro does at its own breakpoint. */
+/* On phones keep the reading width and use a compact bottom navigation. */
 @media (max-width: 600px) {
-  .navbar .container-fluid {
-    padding: 0 8px;
-    gap: 6px;
-  }
-
-  .navbar .container-fluid::before { display: none; }
-
-  .navbar .nav.pull-left {
-    flex: 1;
-    min-width: 0;
-    justify-content: space-around;
-  }
-
-  .navbar .nav.pull-left li a { padding: 0 6px; }
-
-  .topbar-actions {
-    flex: 0 0 auto;
-    gap: 6px;
-    margin-left: 0;
-  }
-
-  /* base.css reserves 56px at the bottom for ssbski's mobile tab bar and leaves
-     nothing at the top. decent2 has neither: its chrome is the fixed 52px strip
-     up top, which a modal would otherwise slide under. */
-  .lightbox {
-    padding-top: calc(var(--d2-topbar-h) + 16px);
-    padding-bottom: 32px;
-  }
-
-  .theme-toggle,
-  .nav-connect-btn {
-    min-width: 40px;
-    width: 40px;
-    padding: 0;
-  }
-
-  .theme-toggle__label,
-  .nav-connect-btn__label { display: none; }
-
-  /* Seven bevelled buttons — three of them carrying a text label — can't share
-     a phone-width card, so they broke into three ragged rows. Drop the labels
-     and let the row read as one strip of icons, like the other skins. */
-  .action-btn--reply::after,
-  .action-btn--repost::after,
-  .action-btn--quote::after { content: none; }
-
-  .action-btn { padding: 0 4px; }
-
-  /* Keep the group on one line — a git card's five primary actions plus the
-     four extras only fit at this padding. */
-  .message-card .actions {
-    flex-wrap: nowrap;
-    gap: 4px;
-  }
+  html[data-skin="decent2"] .navbar { inset: auto 0 0; width: 100%; height: 58px; }
+  html[data-skin="decent2"] .navbar .container-fluid { flex-direction: row; padding: 0 4px; gap: 0; }
+  html[data-skin="decent2"] .workspace-brand,
+  html[data-skin="decent2"] .navbar-avatar--rail,
+  html[data-skin="decent2"] .topbar-actions { display: none; }
+  html[data-skin="decent2"] .navbar .nav.pull-left { flex-direction: row; width: 100%; }
+  html[data-skin="decent2"] .navbar .nav.pull-left li a { height: 48px; }
+  html[data-skin="decent2"] .screen__content.column { margin: 0; height: calc(100vh - 58px); }
+  html[data-skin="decent2"] .compose-trigger { bottom: 74px; }
+  .lightbox { padding-left: 0; }
 }
+@media (max-width: 600px) {
+  html[data-skin="decent2"] .topbar-actions { display: flex; flex-direction: row; position: fixed; top: 7px; right: 8px; gap: 2px; }
+  html[data-skin="decent2"] .topbar-actions .nav-connect-btn,
+  html[data-skin="decent2"] .topbar-actions .settings-btn { width: 34px; min-height: 36px; padding: 4px; }
+  html[data-skin="decent2"] .navbar-avatar-mobile { display: flex; align-items: center; }
+  .navbar-avatar-mobile img { width: 28px; height: 28px; border-radius: 50%; }
+  html[data-skin="decent2"] .feed-header { padding-right: 118px; }
+  html[data-skin="decent2"] .feed-header__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.compose-trigger__button, .compose-trigger__button:hover { color: var(--sky-surface); }

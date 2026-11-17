@@ -791,6 +791,7 @@ module.exports = {
 
       var navItems = [
         {route: 'public', label: labelForRoute('public', 'Public'), icon: 'newspaper'},
+        {route: 'repos', label: 'Repositories', icon: 'code_blocks'},
         {route: 'friends', label: labelForRoute('friends', 'Friends'), icon: 'groups'},
         {route: 'private', label: labelForRoute('private', 'Private'), icon: 'mail_lock'},
         {route: 'notifications', label: 'Notifications', icon: 'notifications_active'},
@@ -1058,6 +1059,7 @@ module.exports = {
       var header = h('div.navbar',
         h('div.navbar-inner',
           h('div.container-fluid',
+            h('a.workspace-brand', {href: '#/', 'aria-label': 'Decent home'}, 'Decent', h('span', 'SSB WORKSPACE')),
             makeProfileLink('navbar-avatar--rail'),
             nav,
             isNetworkSkin ? makeSettingsButton('settings-btn--rail') : null,
@@ -1110,7 +1112,7 @@ module.exports = {
       function syncSkinLeftStack () {
         if (!skinLeftStack) return
         var existing = skinLeftStack.querySelector('.compose-trigger')
-        if (!currentIsTopbar() || window.innerWidth <= 980) {
+        if (!currentIsTopbar() || currentSkin() === 'decent2' || window.innerWidth <= 980) {
           if (existing && renderTarget) {
             if (currentSkin() === 'plain') renderTarget.prepend(existing)
             else renderTarget.appendChild(existing)
@@ -1135,7 +1137,7 @@ module.exports = {
       function setActive (route) {
         var items = nav.querySelectorAll('li[data-route]')
         Array.prototype.forEach.call(items, function (el) {
-          if (el.getAttribute('data-route') === route)
+          if (el.getAttribute('data-route') === (route.indexOf('git/') === 0 ? 'repos' : route))
             el.classList.add('active')
           else
             el.classList.remove('active')

@@ -4711,3 +4711,6 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
     font-size: 16px;
   }
 }
+
+/* The workspace brand is used by the Decent rail. */
+.workspace-brand { display: none; }
