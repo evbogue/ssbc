@@ -137,8 +137,9 @@ html[data-skin="decent2"] .topbar-actions .theme-toggle__label { display: inline
 .compose-trigger__button { border-radius: 7px; height: 42px; box-shadow: none; font-size: 14px; }
 .compose-trigger__button::after { font-size: 14px; }
 .git-forge { border-radius: 0; box-shadow: none; }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .navbar { width: 64px; }
+  html[data-skin="decent2"] .navbar-avatar--rail { justify-content: center; padding: 12px 0; }
   .navbar .container-fluid { padding: 16px 8px; gap: 8px; }
   html[data-skin="decent2"] .workspace-brand { padding: 0 0 14px; font-size: 12px; letter-spacing: 0; text-align: center; }
   .workspace-brand span, .nav__label, .navbar-avatar__meta, .navbar .pull-right { display: none; }
@@ -177,3 +178,9 @@ html[data-skin="decent2"] .topbar-actions .theme-toggle__label { display: inline
 }
 
 .compose-trigger__button, .compose-trigger__button:hover { color: var(--sky-surface); }
+/* Keep label visibility in step with this skin's rail width. */
+@media (min-width: 1101px) {
+  .navbar .nav__label { display: inline; }
+  .navbar-avatar__meta { display: flex; }
+  .compose-trigger__button::after { display: inline; }
+}
