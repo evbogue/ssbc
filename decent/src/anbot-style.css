@@ -1,0 +1,186 @@
+/* Decent workspace: quiet surfaces and a persistent repository rail. */
+@import url('/base.css');
+
+:root,
+:root[data-ssbpro-theme="light"] {
+  color-scheme: light;
+  /* palette consumed by base.css */
+  --sky-bg: #faf9f7;
+  --sky-surface: #ffffff;
+  --sky-surface-soft: #f0eeeb;
+  --sky-hover: #e9edf2;
+  --sky-border: #dedbd6;
+  --sky-border-strong: #b2b8c1;
+  --sky-text: #302e2b;
+  --sky-muted: #74706b;
+  --sky-muted-soft: #9aa2ab;
+  --sky-blue: #514b45;
+  --sky-blue-hover: #35312d;
+  --sky-blue-soft: rgba(81, 75, 69, 0.10);
+  --sky-green: #46a546;
+  --sky-green-soft: rgba(70, 165, 70, 0.12);
+  --sky-pink: #c43c35;
+  --sky-pink-soft: rgba(196, 60, 53, 0.12);
+  --sky-red: #bd362f;
+  --sky-red-soft: rgba(189, 54, 47, 0.12);
+  /* forge semantics — kept on the classic Bootstrap-ish hues used by base/git */
+  --sky-warn: #c09853;
+  --sky-warn-soft: #fcf8e3;
+  --sky-purple: #7b59b6;
+  --sky-purple-soft: rgba(123, 89, 182, 0.12);
+  --sky-mark: #fcf8e3;
+  --sky-mark-strong: #faf2cc;
+  --sky-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --sky-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --sky-text-secondary: var(--sky-muted);
+  --sky-accent: var(--sky-blue);
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ssbpro-theme="light"]) {
+    color-scheme: dark;
+    --sky-bg: #242321;
+    --sky-surface: #292826;
+    --sky-surface-soft: #1d1c1a;
+    --sky-hover: #313539;
+    --sky-border: #403d39;
+    --sky-border-strong: #474c53;
+    --sky-text: #e7eaed;
+    --sky-muted: #9aa2ac;
+    --sky-muted-soft: #6c747e;
+    --sky-blue: #e1dcd5;
+    --sky-blue-hover: #f4f0eb;
+    --sky-blue-soft: rgba(225, 220, 213, 0.12);
+    --sky-green: #5bbf6a;
+    --sky-green-soft: rgba(91, 191, 106, 0.16);
+    --sky-pink: #e6857d;
+    --sky-pink-soft: rgba(230, 133, 125, 0.16);
+    --sky-red: #e5736b;
+    --sky-red-soft: rgba(229, 115, 107, 0.16);
+    --sky-warn: #d4b15e;
+    --sky-warn-soft: rgba(212, 177, 94, 0.18);
+    --sky-purple: #b08ce0;
+    --sky-purple-soft: rgba(176, 140, 224, 0.18);
+    --sky-mark: rgba(212, 177, 94, 0.20);
+    --sky-mark-strong: rgba(212, 177, 94, 0.40);
+    --sky-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --sky-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+
+  }
+}
+
+/* Explicit "force dark" (toggle) — same midnight tokens, applied regardless of
+ * the OS preference. Mirrors the @media block above. */
+:root[data-ssbpro-theme="dark"] {
+  color-scheme: dark;
+  --sky-bg: #242321;
+  --sky-surface: #292826;
+  --sky-surface-soft: #1d1c1a;
+  --sky-hover: #313539;
+  --sky-border: #403d39;
+  --sky-border-strong: #474c53;
+  --sky-text: #e7eaed;
+  --sky-muted: #9aa2ac;
+  --sky-muted-soft: #6c747e;
+  --sky-blue: #e1dcd5;
+  --sky-blue-hover: #f4f0eb;
+  --sky-blue-soft: rgba(225, 220, 213, 0.12);
+  --sky-green: #5bbf6a;
+  --sky-green-soft: rgba(91, 191, 106, 0.16);
+  --sky-pink: #e6857d;
+  --sky-pink-soft: rgba(230, 133, 125, 0.16);
+  --sky-red: #e5736b;
+  --sky-red-soft: rgba(229, 115, 107, 0.16);
+  --sky-warn: #d4b15e;
+  --sky-warn-soft: rgba(212, 177, 94, 0.18);
+  --sky-purple: #b08ce0;
+  --sky-purple-soft: rgba(176, 140, 224, 0.18);
+  --sky-mark: rgba(212, 177, 94, 0.20);
+  --sky-mark-strong: rgba(212, 177, 94, 0.40);
+  --sky-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --sky-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
+
+}
+
+
+:root { --sky-rail-width: 230px; --sky-right-width: 0px; --sky-feed-width: 960px; }
+html, body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+.screen__content, .screen__content.column { margin-left: 230px; margin-right: 0; background: var(--sky-bg); }
+.navbar { background: var(--sky-surface-soft); }
+.navbar .container-fluid { padding: 28px 16px 16px; gap: 12px; }
+html[data-skin="anbot"] .workspace-brand { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 22px; color: var(--sky-text); font-size: 24px; font-weight: 650; letter-spacing: -1px; }
+.workspace-brand span { font: 10px ui-monospace, monospace; letter-spacing: 1.5px; color: var(--sky-muted); }
+.navbar .nav.pull-left { gap: 5px; }
+.navbar .nav.pull-left li a { min-height: 42px; padding: 10px 12px; border-radius: 7px; font-size: 14px; font-weight: 500; gap: 12px; }
+.navbar .nav.pull-left li.active a { background: var(--sky-border); color: var(--sky-text); }
+.nav__icon { font-size: 20px; }
+html[data-skin="anbot"] .navbar-avatar--rail { display: flex; border-top: 1px solid var(--sky-border); border-radius: 0; padding-top: 18px; }
+.skin-left-stack { display: none; }
+html[data-skin="anbot"] .topbar-actions { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.topbar-actions .nav-connect-btn, .topbar-actions .settings-btn { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 8px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--sky-muted); text-align: left; font-size: 14px; }
+html[data-skin="anbot"] .topbar-actions .theme-toggle__label { display: inline; }
+.navbar-avatar-mobile { display: none; }
+.navbar .pull-right { position: static; width: auto; height: auto; padding: 0; border: 0; background: transparent; order: 10; }
+.nav-search { display: block; border: 1px solid var(--sky-border); border-radius: 6px; background: var(--sky-bg); padding: 0 12px; height: 38px; }
+.discovery-panel, .right-brand { display: none; }
+.right-footer { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; border: 0; background: transparent; }
+.right-footer__tag { display: none; }
+.feed-header { max-width: none; height: 64px; border-bottom: 1px solid var(--sky-border); padding: 0 32px; justify-content: flex-start; gap: 28px; background: var(--sky-bg); }
+.feed-header__tab { flex: 0 0 auto; padding: 0 4px; font-size: 14px; }
+.feed-header__title { font-size: 18px; font-weight: 550; }
+.feed-header__tab--active::after { height: 2px; }
+.scroller__wrapper { max-width: 960px; width: 100%; margin: 0 auto; border: 0; padding: 24px 32px 100px; }
+.message { background: transparent; border-radius: 0; box-shadow: none; border-bottom: 1px solid var(--sky-border); padding-top: 24px; padding-bottom: 24px; }
+.btn, .action-btn { border-radius: 6px; }
+.compose-trigger { left: 16px; bottom: 100px; width: 198px; }
+.compose-trigger__button { border-radius: 7px; height: 42px; box-shadow: none; font-size: 14px; }
+.compose-trigger__button::after { font-size: 14px; }
+.git-forge { border-radius: 0; box-shadow: none; }
+@media (max-width: 1100px) {
+  .navbar { width: 64px; }
+  html[data-skin="anbot"] .navbar-avatar--rail { justify-content: center; padding: 12px 0; }
+  .navbar .container-fluid { padding: 16px 8px; gap: 8px; }
+  html[data-skin="anbot"] .workspace-brand { padding: 0 0 14px; font-size: 12px; letter-spacing: 0; text-align: center; }
+  .workspace-brand span, .nav__label, .navbar-avatar__meta, .navbar .pull-right { display: none; }
+  .navbar .nav.pull-left li a { justify-content: center; padding: 10px; }
+  html[data-skin="anbot"] .topbar-actions .theme-toggle__label, .nav-connect-btn__label { display: none; }
+  .topbar-actions .nav-connect-btn, .topbar-actions .settings-btn { justify-content: center; padding: 10px; }
+  .screen__content, .screen__content.column { margin-left: 64px; }
+  .feed-header { height: 52px; padding: 0 16px; gap: 20px; }
+  .scroller__wrapper { padding: 8px 12px 90px; }
+  .compose-trigger { left: auto; right: 16px; bottom: 20px; width: 48px; }
+  .compose-trigger__button { width: 48px; height: 48px; padding: 0; }
+  .compose-trigger__button::after { display: none; }
+  .message { padding-top: 18px; padding-bottom: 18px; }
+}
+/* On phones keep the reading width and use a compact bottom navigation. */
+@media (max-width: 600px) {
+  html[data-skin="anbot"] .navbar { inset: auto 0 0; width: 100%; height: 58px; }
+  html[data-skin="anbot"] .navbar .container-fluid { flex-direction: row; padding: 0 4px; gap: 0; }
+  html[data-skin="anbot"] .workspace-brand,
+  html[data-skin="anbot"] .navbar-avatar--rail,
+  html[data-skin="anbot"] .topbar-actions { display: none; }
+  html[data-skin="anbot"] .navbar .nav.pull-left { flex-direction: row; width: 100%; }
+  html[data-skin="anbot"] .navbar .nav.pull-left li a { height: 48px; }
+  html[data-skin="anbot"] .screen__content.column { margin: 0; height: calc(100vh - 58px); }
+  html[data-skin="anbot"] .compose-trigger { bottom: 74px; }
+  .lightbox { padding-left: 0; }
+}
+@media (max-width: 600px) {
+  html[data-skin="anbot"] .topbar-actions { display: flex; flex-direction: row; position: fixed; top: 7px; right: 8px; gap: 2px; }
+  html[data-skin="anbot"] .topbar-actions .nav-connect-btn,
+  html[data-skin="anbot"] .topbar-actions .settings-btn { width: 34px; min-height: 36px; padding: 4px; }
+  html[data-skin="anbot"] .navbar-avatar-mobile { display: flex; align-items: center; }
+  .navbar-avatar-mobile img { width: 28px; height: 28px; border-radius: 50%; }
+  html[data-skin="anbot"] .feed-header { padding-right: 118px; }
+  html[data-skin="anbot"] .feed-header__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.compose-trigger__button, .compose-trigger__button:hover { color: var(--sky-surface); }
+/* Keep label visibility in step with this skin's rail width. */
+@media (min-width: 1101px) {
+  .navbar .nav__label { display: inline; }
+  .navbar-avatar__meta { display: flex; }
+  .compose-trigger__button::after { display: inline; }
+}

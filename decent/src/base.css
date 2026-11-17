@@ -4714,3 +4714,23 @@ tr:hover .git-diff-add-comment-btn { opacity: 1; }
 
 /* The workspace brand is used by the Decent rail. */
 .workspace-brand { display: none; }
+
+/* Settings span the available viewport, including narrow desktop windows. */
+html[data-skin] .settings-lightbox { left: 0 !important; padding: 0 16px; }
+.settings-lightbox > .lightbox__content { width: 100%; max-width: 760px; padding: 0; margin: 32px auto; }
+.settings-lightbox .themes-modal { width: 100%; max-height: calc(100dvh - 64px); }
+.settings-lightbox .themes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.settings-lightbox .theme-preview { min-width: 0; }
+@media (min-width: 601px) and (max-width: 1000px) {
+  .settings-lightbox .themes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  html[data-skin] .settings-lightbox { padding: 0 12px; }
+  .settings-lightbox .themes-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.settings-lightbox .theme-preview__viewport { position: relative; height: 150px; }
+.settings-lightbox .theme-preview__frame { position: absolute; top: 0; left: 0; }
+@media (max-width: 600px) {
+  .settings-lightbox .theme-preview__viewport { height: 96px; aspect-ratio: auto; }
+}

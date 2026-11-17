@@ -144,6 +144,7 @@ module.exports = {
         var header = h('div.navbar',
           h('div.navbar-inner',
             h('div.container-fluid',
+              h('a.workspace-brand', {href: '#'}, 'Decent', h('span', 'SSB WORKSPACE')),
               profile,
               nav,
               settings,
@@ -252,6 +253,7 @@ module.exports = {
       function getTopbarLightbox () {
         if (!topbarLightbox) {
           topbarLightbox = hyperlightbox()
+          topbarLightbox.classList.add('settings-lightbox')
           document.body.appendChild(topbarLightbox)
         }
         return topbarLightbox
@@ -650,6 +652,7 @@ module.exports = {
       }
 
       function brandFor (name) {
+        if (name === 'anbot') return {word: 'Anbot', logo: '/icons/decent-512.png', tag: 'Anbot · SSB'}
         if (name === 'plain') return {word: 'Decent', logo: '/icons/decent-512.png', tag: 'Decent · SSB'}
         if (name === 'ssbpro') return {word: 'SSBPRO', logo: '/icons/ssbpro-512.png', tag: 'ssbpro · SSB'}
         if (name === 'decent2') return {word: 'DECENT2', logo: '/icons/decent-512.png', tag: 'decent2 · SSB'}
@@ -694,6 +697,11 @@ module.exports = {
       function showThemesModal () {
         var active = currentSkin()
         var grid = h('div.themes-grid')
+        var previewObserver = new ResizeObserver(function (entries) {
+          entries.forEach(function (entry) {
+            entry.target.firstChild.style.transform = 'scale(' + (entry.contentRect.width / 1280) + ')'
+          })
+        })
         skin.list().forEach(function (name) {
           var frame = h('iframe.theme-preview__frame', {
             src: '/?skin=' + name + '&preview=1',
@@ -712,14 +720,15 @@ module.exports = {
               tile.classList.add('theme-preview--active')
               tile.setAttribute('aria-pressed', 'true')
             }
-          }, h('div.theme-preview__viewport', frame), h('span.theme-preview__label', name === 'plain' ? 'Plain' : name))
+          }, h('div.theme-preview__viewport', frame), h('span.theme-preview__label', name === 'anbot' ? 'Anbot' : name === 'plain' ? 'Plain' : name))
           tile.setAttribute('aria-pressed', String(name === active))
           grid.appendChild(tile)
+          previewObserver.observe(tile.querySelector('.theme-preview__viewport'))
         })
 
         var close = h('button.qr-connect-close', {
           type: 'button',
-          onclick: function () { getTopbarLightbox().close() }
+          onclick: function () { previewObserver.disconnect(); getTopbarLightbox().close() }
         }, h('span.material-symbols-outlined', 'close'))
         close.setAttribute('aria-label', 'Close')
 
@@ -1112,7 +1121,7 @@ module.exports = {
       function syncSkinLeftStack () {
         if (!skinLeftStack) return
         var existing = skinLeftStack.querySelector('.compose-trigger')
-        if (!currentIsTopbar() || currentSkin() === 'decent2' || window.innerWidth <= 980) {
+        if (!currentIsTopbar() || currentSkin() === 'anbot' || window.innerWidth <= 980) {
           if (existing && renderTarget) {
             if (currentSkin() === 'plain') renderTarget.prepend(existing)
             else renderTarget.appendChild(existing)
@@ -1168,7 +1177,7 @@ module.exports = {
         lastRoute = route
         lastView = view
         var s = currentSkin()
-        var base = s === 'ssbpro' ? 'ssbpro' : s === 'decent2' ? 'decent2' : s === 'ssbski' ? 'ssbski' : 'Decent SSB'
+        var base = s === 'anbot' ? 'Anbot' : s === 'ssbpro' ? 'ssbpro' : s === 'decent2' ? 'decent2' : s === 'ssbski' ? 'ssbski' : 'Decent SSB'
         var suffix = suffixForRoute(route, view)
         document.title = suffix ? base + ' — ' + suffix : base
       }

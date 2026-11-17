@@ -10,7 +10,7 @@
 // 'decent' is the legacy skin: still *detectable* while its port is served, but
 // not a *selectable* option. The selectable skins are listed below.
 
-var SKINS = ['decent2', 'ssbpro', 'ssbski', 'plain']
+var SKINS = ['decent2', 'anbot', 'ssbpro', 'ssbski', 'plain']
 var ALL = ['decent'].concat(SKINS)
 var STORE_KEY = 'decent:skin'
 
@@ -26,6 +26,7 @@ function detectDefault () {
     if (hasLink('ssbski')) return 'ssbski'
     if (hasLink('ssbpro')) return 'ssbpro'
     if (hasLink('decent2')) return 'decent2'
+    if (hasLink('anbot')) return 'anbot'
     if (hasLink('plain')) return 'plain'
   }
   return 'decent'

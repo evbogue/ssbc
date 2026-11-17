@@ -45,6 +45,7 @@ if (fs.existsSync(srcSsbproCss))
 if (fs.existsSync(srcDecent2Css))
   fs.copyFileSync(srcDecent2Css, destDecent2Css)
 
+fs.copyFileSync(path.join(__dirname, '..', 'src', 'anbot-style.css'), path.join(buildDir, 'anbot-style.css'))
 fs.copyFileSync(srcPlainCss, destPlainCss)
 
 // ssbski brand logo (rail wordmark + favicon), served from the build dir
