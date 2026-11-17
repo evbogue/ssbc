@@ -5,18 +5,18 @@
 :root[data-ssbpro-theme="light"] {
   color-scheme: light;
   /* palette consumed by base.css */
-  --sky-bg: #f8f8f5;
+  --sky-bg: #faf9f7;
   --sky-surface: #ffffff;
-  --sky-surface-soft: #eeeee7;
+  --sky-surface-soft: #f0eeeb;
   --sky-hover: #e9edf2;
-  --sky-border: #ddded4;
+  --sky-border: #dedbd6;
   --sky-border-strong: #b2b8c1;
-  --sky-text: #30342c;
-  --sky-muted: #707568;
+  --sky-text: #302e2b;
+  --sky-muted: #74706b;
   --sky-muted-soft: #9aa2ab;
-  --sky-blue: #596545;
-  --sky-blue-hover: #424d33;
-  --sky-blue-soft: rgba(89, 101, 69, 0.12);
+  --sky-blue: #514b45;
+  --sky-blue-hover: #35312d;
+  --sky-blue-soft: rgba(81, 75, 69, 0.10);
   --sky-green: #46a546;
   --sky-green-soft: rgba(70, 165, 70, 0.12);
   --sky-pink: #c43c35;
@@ -40,18 +40,18 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-ssbpro-theme="light"]) {
     color-scheme: dark;
-    --sky-bg: #20231c;
-    --sky-surface: #23271f;
-    --sky-surface-soft: #191d17;
+    --sky-bg: #242321;
+    --sky-surface: #292826;
+    --sky-surface-soft: #1d1c1a;
     --sky-hover: #313539;
-    --sky-border: #3a4032;
+    --sky-border: #403d39;
     --sky-border-strong: #474c53;
     --sky-text: #e7eaed;
     --sky-muted: #9aa2ac;
     --sky-muted-soft: #6c747e;
-    --sky-blue: #c2cdaa;
-    --sky-blue-hover: #dce5c9;
-    --sky-blue-soft: rgba(194, 205, 170, 0.18);
+    --sky-blue: #e1dcd5;
+    --sky-blue-hover: #f4f0eb;
+    --sky-blue-soft: rgba(225, 220, 213, 0.12);
     --sky-green: #5bbf6a;
     --sky-green-soft: rgba(91, 191, 106, 0.16);
     --sky-pink: #e6857d;
@@ -74,18 +74,18 @@
  * the OS preference. Mirrors the @media block above. */
 :root[data-ssbpro-theme="dark"] {
   color-scheme: dark;
-  --sky-bg: #20231c;
-  --sky-surface: #23271f;
-  --sky-surface-soft: #191d17;
+  --sky-bg: #242321;
+  --sky-surface: #292826;
+  --sky-surface-soft: #1d1c1a;
   --sky-hover: #313539;
-  --sky-border: #3a4032;
+  --sky-border: #403d39;
   --sky-border-strong: #474c53;
   --sky-text: #e7eaed;
   --sky-muted: #9aa2ac;
   --sky-muted-soft: #6c747e;
-  --sky-blue: #c2cdaa;
-  --sky-blue-hover: #dce5c9;
-  --sky-blue-soft: rgba(194, 205, 170, 0.18);
+  --sky-blue: #e1dcd5;
+  --sky-blue-hover: #f4f0eb;
+  --sky-blue-soft: rgba(225, 220, 213, 0.12);
   --sky-green: #5bbf6a;
   --sky-green-soft: rgba(91, 191, 106, 0.16);
   --sky-pink: #e6857d;

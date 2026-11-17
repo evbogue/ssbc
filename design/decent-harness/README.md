@@ -2,7 +2,7 @@
 
 The before directory captures the running app before this iteration, at 1440px and 375px on decent2, ssbski, and ssbpro. The after directory records the new default workspace, repository views, dark mode, and compatibility skins.
 
-The default decent2 skin takes the ANBot study's warm surfaces, olive accent, persistent navigation, and quiet borders. Repositories become primary navigation on all skins. Decent keeps signed-feed activity, private messages, notifications, keys, working post actions, and its existing Git browser. Phones use bottom navigation and retain connect, settings, and profile access in the header.
+The default decent2 skin takes the ANBot study's warm surfaces, charcoal accent, persistent navigation, and quiet borders. Repositories become primary navigation on all skins. Decent keeps signed-feed activity, private messages, notifications, keys, working post actions, and its existing Git browser. Phones use bottom navigation and retain connect, settings, and profile access in the header.
 
 The default skin hides the discovery column and redundant large branding to give the workspace more room. Discovery itself works; it remains available in the other skins. The inspected post action controls have handlers (raw view, local save, copy link, more menu), so they were retained. No illustrative ANBot sync indicators or pretend coding controls were introduced.
 
